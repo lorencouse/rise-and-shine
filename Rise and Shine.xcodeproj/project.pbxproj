@@ -44,6 +44,7 @@
 		5C55495F2B51FEEC00758980 /* Rise and ShineUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Rise and ShineUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITests.swift; sourceTree = "<group>"; };
 		5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rise-and-Shine-Info.plist"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +95,7 @@
 		5C5549472B51FEEB00758980 /* Rise and Shine */ = {
 			isa = PBXGroup;
 			children = (
+				5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */,
 				5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */,
 				5C55494A2B51FEEB00758980 /* ContentView.swift */,
 				5C55494C2B51FEEC00758980 /* Assets.xcassets */,
@@ -425,6 +427,7 @@
 				DEVELOPMENT_TEAM = QQB33452MG;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Rise-and-Shine-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -454,6 +457,7 @@
 				DEVELOPMENT_TEAM = QQB33452MG;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Rise-and-Shine-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
