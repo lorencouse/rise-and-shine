@@ -53,8 +53,6 @@ struct SunApiResponse: Decodable {
     }
 }
 
-
-
 struct ContentView: View {
     
     var body: some View {
@@ -90,16 +88,19 @@ struct SettingsView: View {
     @State private var sunData: SunData?
     @State private var locationData: LocationManager?
     @State private var currentDate = fetchDate()
+    @State private var alarmTime: Date?
     
     var body: some View {
         NavigationView {
             Form {
+                // Use the new function for the button action
+                updateButton
+                
                 Section(header: Text("Location:")) {
                     VStack {
-                        Text(fetchLocation(locationManager: locationManager))
+                        Text("City: " + fetchLocation(locationManager: locationManager))
 
-                        // Use the new function for the button action
-                        updateButton
+                        
                     }
                 }
                 
@@ -115,9 +116,11 @@ struct SettingsView: View {
                 
                 
                 
-                Section(header: Text("Wake up time:")) {
+                Section(header: Text("Alarm time:")) {
                     HStack {
                         
+                        Text("Wake up ")
+
                         Picker("", selection: $wakeUpOffsetHours) {
                             ForEach(0..<4, id: \.self) { i in
                                 Text("\(i) hours").tag(i)
@@ -135,6 +138,15 @@ struct SettingsView: View {
                         Text("After Sunrise").tag(false)
                     }.pickerStyle(SegmentedPickerStyle())
                     
+                    if let alarmTimeString = alarmTime {
+                        
+                        Text("Alarm Time: \(formattedDateString(date: alarmTimeString)) ")
+                        
+                    }
+                    else {
+                        Text("No Alarm Set")
+                    }
+                    
                 }
                 
                 Section(header: Text("Target Hours of Sleep")) {
@@ -147,7 +159,7 @@ struct SettingsView: View {
                 
                 Section(header: Text("Wind down reminder")) {
                     VStack {
-                        Picker("Wind down reminder ", selection: $windDownTime) {
+                        Picker("Notify me ", selection: $windDownTime) {
                             ForEach(0..<60, id: \.self) { i in
                                 Text("\(i) mins").tag(i)
                             }
@@ -157,8 +169,14 @@ struct SettingsView: View {
                     
                     
                 }
+                
+                VStack {
+                    Link("Data from SunriseSunset.io", destination: URL(string: "https://sunrisesunset.io/api/")!)
+                        .padding()
+                }
+
             }
-            .navigationTitle("Settings")            .onAppear {
+            .navigationTitle("Settings").onAppear {
                 // Initialize sunData when the view appears
                 if let location = locationManager.currentLocation {
                     Task {
@@ -173,28 +191,33 @@ struct SettingsView: View {
         }
     }
     
-    private func updateSunData(latitude: Double, longitude: Double) {
+    private func updateData(latitude: Double, longitude: Double) {
         Task {
             do {
                 sunData = try await fetchSunDataFromAPI(latitude: latitude, longitude: longitude, date: currentDate ?? "2000-01-30")
+                
+                // Move the calculation of alarmTime here
+                let alarmOffset = wakeUpOffsetMinutes + (wakeUpOffsetHours*60)
+                alarmTime = calculateWakeTime(sunriseTime: sunData!.sunrise, alarmOffsetMinutes: alarmOffset, beforeSunrise: beforeSunrise)
+                
             } catch {
                 print("Error fetching sunrise data: \(error)")
             }
         }
     }
 
-    // Extracted button for better readability
     private var updateButton: some View {
-        Button("Update") {
+        Button("Refresh") {
             locationManager.locationManager.requestLocation()
             
             // Fetch sunrise data when location is available
             if let location = locationManager.currentLocation {
-                updateSunData(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                updateData(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
             }
         }
         .padding()
     }
+
     
 }
 
@@ -296,8 +319,33 @@ func fetchDate() -> String? {
     
 }
 
+func calculateWakeTime(sunriseTime: String, alarmOffsetMinutes: Int, beforeSunrise: Bool) -> Date {
+    
+    let alarmOffsetMinutes = beforeSunrise ? -alarmOffsetMinutes : alarmOffsetMinutes
+    // Step 1: Convert sunriseTime string to Date
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "h:mm:ss a"
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX") // Set the locale to ensure proper parsing
+    
+    guard let sunriseDate = dateFormatter.date(from: sunriseTime) else {
+        fatalError("Invalid date format for sunriseTime")
+    }
+    
+    // Step 2: Add alarmOffsetMinutes to get alarm time
+    let calendar = Calendar.current
+    if let alarmTime = calendar.date(byAdding: .minute, value: alarmOffsetMinutes, to: sunriseDate) {
+        return alarmTime
+    } else {
+        fatalError("Error calculating alarm time")
+    }
+}
 
-
+func formattedDateString(date: Date) -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "h:mm:ss a"
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    return dateFormatter.string(from: date)
+}
 
 class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     private let notificationCenter = UNUserNotificationCenter.current()
