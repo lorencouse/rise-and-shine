@@ -14,45 +14,7 @@ import MapKit
 import Foundation
 import Combine
 
-
-
-
-//struct SunriseSunsetResponse: Decodable {
-//    let results: SunriseSunsetResults
-//    let status: String
-//
-//    struct SunriseSunsetResults: Decodable {
-//        let date: String
-//        let sunrise: String
-//        let sunset: String
-//        let firstLight: String
-//        let lastLight: String
-//        let dawn: String
-//        let dusk: String
-//        let solarNoon: String
-//        let goldenHour: String
-//        let dayLength: String
-//        let timezone: String
-//        let utcOffset: Int
-//        
-//        enum CodingKeys: String, CodingKey {
-//            case date
-//            case sunrise
-//            case sunset
-//            case firstLight = "first_light"
-//            case lastLight = "last_light"
-//            case dawn
-//            case dusk
-//            case solarNoon = "solar_noon"
-//            case goldenHour = "golden_hour"
-//            case dayLength = "day_length"
-//            case timezone
-//            case utcOffset = "utc_offset"
-//        }
-//    }
-//}
-
-struct SunriseData: Decodable {
+struct SunData: Decodable {
     let date: String
     let sunrise: String
     let sunset: String
@@ -82,8 +44,8 @@ struct SunriseData: Decodable {
     }
 }
 
-struct SunriseResponse: Decodable {
-    let results: SunriseData
+struct SunApiResponse: Decodable {
+    let results: SunData
     let status: String
     enum CodingKeys: String, CodingKey {
         case results
@@ -125,7 +87,7 @@ struct SettingsView: View {
     @State private var beforeSunrise = true // Default to "Before Sunrise"
     @State private var targetHoursOfSleep = 8
     @State private var windDownTime = 60
-    @State private var sunriseData: SunriseData?
+    @State private var sunData: SunData?
     @State private var locationData: LocationManager?
 
     
@@ -160,7 +122,7 @@ struct SettingsView: View {
                             Task {
                                 do {
                                     if let location = locationManager.currentLocation {
-                                        sunriseData = try await fetchSunriseFromAPI(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                                        sunData = try await fetchSunDataFromAPI(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
                                     }
                                 } catch {
                                     print("Error fetching sunrise data: \(error)")
@@ -172,8 +134,8 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("Sunrise Sunset")) {
-                    if sunriseData != nil {
-                        Text("Sunrise Time: \(sunriseData!.sunrise)")
+                    if sunData != nil {
+                        Text("Sunrise Time: \(sunData!.sunrise)")
                     } else {
                         Text("Sunrise Time not available")
                     }
@@ -278,7 +240,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 }
 
-func fetchSunriseFromAPI(latitude: Double?, longitude: Double?) async throws -> SunriseData? {
+func fetchSunDataFromAPI(latitude: Double?, longitude: Double?) async throws -> SunData? {
     guard let latitude = latitude, let longitude = longitude else {
         return nil
     }
@@ -287,7 +249,7 @@ func fetchSunriseFromAPI(latitude: Double?, longitude: Double?) async throws -> 
 
     let (data, _) = try await URLSession.shared.data(from: url)
 
-    let decoded = try JSONDecoder().decode(SunriseResponse.self, from: data)
+    let decoded = try JSONDecoder().decode(SunApiResponse.self, from: data)
 
     return decoded.results
 }
