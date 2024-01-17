@@ -45,7 +45,7 @@ struct SunData: Decodable {
 }
 
 struct SunApiResponse: Decodable {
-    let results: SunData
+    let results: [SunData]
     let status: String
     enum CodingKeys: String, CodingKey {
         case results
@@ -85,10 +85,11 @@ struct SettingsView: View {
     @State private var beforeSunrise = true
     @State private var targetHoursOfSleep = 8
     @State private var windDownTime = 59
-    @State private var sunData: SunData?
+    @State private var sunData: [SunData]?
     @State private var locationData: LocationManager?
-    @State private var currentDate = fetchDate()
+    @State private var currentDate: String = fetchDate()
     @State private var alarmTime: Date?
+    @State private var bedTime: Date?
     
     var body: some View {
         NavigationView {
@@ -106,7 +107,7 @@ struct SettingsView: View {
                 
                 Section(header: Text("Sunrise Sunset")) {
                     Text("Date: " + (currentDate ?? "Failed to fetch."))
-                    if let sunrise = sunData?.sunrise, let sunset = sunData?.sunset {
+                    if let sunrise = sunData?.first?.sunrise, let sunset = sunData?.first?.sunset {
                         Text("Sunrise Time: \(sunrise)")
                         Text("Sunset Time: \(sunset)")
                     } else {
@@ -150,6 +151,14 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("Target Hours of Sleep")) {
+                    
+                    if let calcBedTime = calculateBedTime(sunriseTime: sunData?[1].sunrise ?? "06:10:00", hoursOfSleep: targetHoursOfSleep) {
+                        Text("Your bedtime is: \(calcBedTime)")
+                    }
+                    else {
+                        Text("Set Your Bed Time")
+                    }
+                    
                     Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
                         ForEach(4..<14, id: \.self) { i in
                             Text("\(i) hours").tag(i)
@@ -176,34 +185,25 @@ struct SettingsView: View {
                 }
 
             }
-            .navigationTitle("Settings").onAppear {
-                // Initialize sunData when the view appears
-                if let location = locationManager.currentLocation {
-                    Task {
-                        do {
-                            sunData = try await fetchSunDataFromAPI(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude, date: currentDate ?? "2000-01-30")
-                        } catch {
-                            print("Error fetching sunrise data: \(error)")
-                        }
-                    }
-                }
-            }
+            .navigationTitle("Settings")
+            
         }
     }
     
     private func updateData(latitude: Double, longitude: Double) {
         Task {
             do {
-                sunData = try await fetchSunDataFromAPI(latitude: latitude, longitude: longitude, date: currentDate ?? "2000-01-30")
+                sunData = try await fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: currentDate ?? "2000-01-30")
                 
                 // Move the calculation of alarmTime here
-                let alarmOffset = wakeUpOffsetMinutes + (wakeUpOffsetHours*60)
-                alarmTime = calculateWakeTime(sunriseTime: sunData!.sunrise, alarmOffsetMinutes: alarmOffset, beforeSunrise: beforeSunrise)
+                let alarmOffset = wakeUpOffsetMinutes + (wakeUpOffsetHours * 60)
+                alarmTime = calculateWakeTime(sunriseTime: sunData?.first?.sunrise ?? "", alarmOffsetMinutes: alarmOffset, beforeSunrise: beforeSunrise)
                 
             } catch {
                 print("Error fetching sunrise data: \(error)")
             }
         }
+
     }
 
     private var updateButton: some View {
@@ -287,12 +287,26 @@ func fetchLocation(locationManager: LocationManager) -> String {
     }
 }
 
-func fetchSunDataFromAPI(latitude: Double?, longitude: Double?, date: String) async throws -> SunData? {
+func fetchSunDataFromAPI(latitude: Double?, longitude: Double?, startDate: String) async throws -> [SunData]? {
     guard let latitude = latitude, let longitude = longitude else {
         return nil
     }
 
-    let url = URL(string: "https://api.sunrisesunset.io/json?lat=\(latitude)&lng=\(longitude)&date=\(date)")!
+    // Calculate endDate by adding 30 days to startDate
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    
+    guard let startDateVal = dateFormatter.date(from: startDate) else {
+        fatalError("Invalid date format for startDate")
+    }
+
+    guard let endDate = Calendar.current.date(byAdding: .day, value: 30, to: startDateVal) else {
+        fatalError("Error calculating endDate")
+    }
+
+    let endDateString = dateFormatter.string(from: endDate)
+
+    let url = URL(string: "https://api.sunrisesunset.io/json?lat=\(latitude)&lng=\(longitude)&date_start=\(startDate)&date_end=\(endDateString)")!
     print(url)
 
     let (data, _) = try await URLSession.shared.data(from: url)
@@ -302,22 +316,16 @@ func fetchSunDataFromAPI(latitude: Double?, longitude: Double?, date: String) as
     return decoded.results
 }
 
-func fetchDate() -> String? {
-    
+func fetchDate() -> String {
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd"
     
     let currentDate = Date()
     let formattedDate = dateFormatter.string(from: currentDate)
     
-    if !formattedDate.isEmpty {
-        return formattedDate
-    }
-    else {
-        return nil
-    }
-    
+    return formattedDate
 }
+
 
 func calculateWakeTime(sunriseTime: String, alarmOffsetMinutes: Int, beforeSunrise: Bool) -> Date {
     
@@ -337,6 +345,26 @@ func calculateWakeTime(sunriseTime: String, alarmOffsetMinutes: Int, beforeSunri
         return alarmTime
     } else {
         fatalError("Error calculating alarm time")
+    }
+}
+
+func calculateBedTime(sunriseTime: String, hoursOfSleep: Int) -> Date? {
+    // Step 1: Convert sunriseTime string to Date datatype
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "h:mm:ss a"
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    
+    guard let sunriseDate = dateFormatter.date(from: sunriseTime) else {
+        // Handle invalid date format gracefully
+        return nil
+    }
+    
+    // Step 2: Subtract hours of sleep from converted Date
+    if let bedTime = Calendar.current.date(byAdding: .hour, value: -hoursOfSleep, to: sunriseDate) {
+        return bedTime
+    } else {
+        // Handle error if unable to calculate sleep time
+        return nil
     }
 }
 

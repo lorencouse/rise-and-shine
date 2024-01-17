@@ -14,6 +14,9 @@ struct Rise_and_ShineApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear() {
+                    
+                }
         }
     }
 }
