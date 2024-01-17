@@ -15,45 +15,81 @@ import Foundation
 import Combine
 
 
-var globalSunriseData: SunriseSunsetResponse?
 
 
-struct SunriseSunsetResponse: Decodable {
-    let results: SunriseSunsetResults
-    let status: String
+//struct SunriseSunsetResponse: Decodable {
+//    let results: SunriseSunsetResults
+//    let status: String
+//
+//    struct SunriseSunsetResults: Decodable {
+//        let date: String
+//        let sunrise: String
+//        let sunset: String
+//        let firstLight: String
+//        let lastLight: String
+//        let dawn: String
+//        let dusk: String
+//        let solarNoon: String
+//        let goldenHour: String
+//        let dayLength: String
+//        let timezone: String
+//        let utcOffset: Int
+//        
+//        enum CodingKeys: String, CodingKey {
+//            case date
+//            case sunrise
+//            case sunset
+//            case firstLight = "first_light"
+//            case lastLight = "last_light"
+//            case dawn
+//            case dusk
+//            case solarNoon = "solar_noon"
+//            case goldenHour = "golden_hour"
+//            case dayLength = "day_length"
+//            case timezone
+//            case utcOffset = "utc_offset"
+//        }
+//    }
+//}
 
-    struct SunriseSunsetResults: Decodable {
-        let date: String
-        let sunrise: String
-        let sunset: String
-        let firstLight: String
-        let lastLight: String
-        let dawn: String
-        let dusk: String
-        let solarNoon: String
-        let goldenHour: String
-        let dayLength: String
-        let timezone: String
-        let utcOffset: Int
-        
-        enum CodingKeys: String, CodingKey {
-            case date
-            case sunrise
-            case sunset
-            case firstLight = "first_light"
-            case lastLight = "last_light"
-            case dawn
-            case dusk
-            case solarNoon = "solar_noon"
-            case goldenHour = "golden_hour"
-            case dayLength = "day_length"
-            case timezone
-            case utcOffset = "utc_offset"
-        }
+struct SunriseData: Decodable {
+    let date: String
+    let sunrise: String
+    let sunset: String
+    let firstLight: String
+    let lastLight: String
+    let dawn: String
+    let dusk: String
+    let solarNoon: String
+    let goldenHour: String
+    let dayLength: String
+    let timezone: String
+    let utcOffset: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case date
+        case sunrise
+        case sunset
+        case firstLight = "first_light"
+        case lastLight = "last_light"
+        case dawn
+        case dusk
+        case solarNoon = "solar_noon"
+        case goldenHour = "golden_hour"
+        case dayLength = "day_length"
+        case timezone
+        case utcOffset = "utc_offset"
     }
 }
 
-
+struct SunriseResponse: Decodable {
+    let results: SunriseData
+    let status: String
+    enum CodingKeys: String, CodingKey {
+        case results
+        case status
+    }
+}
 
 
 
@@ -89,20 +125,22 @@ struct SettingsView: View {
     @State private var beforeSunrise = true // Default to "Before Sunrise"
     @State private var targetHoursOfSleep = 8
     @State private var windDownTime = 60
-    @State private var sunriseTimeText = "Fetch location to update"
+    @State private var sunriseData: SunriseData?
+    @State private var locationData: LocationManager?
+
     
     var body: some View {
         NavigationView {
             Form {
-                
                 Section(header: Text("Location:")) {
-                    HStack{
-                        
+                    HStack {
                         if let status = locationManager.locationStatus {
                             switch status {
                             case .authorizedAlways, .authorizedWhenInUse:
                                 if let location = locationManager.currentLocation {
                                     Text(" \(locationManager.cityName ?? "Unknown City")")
+
+                                    
                                 } else {
                                     Text("Location not available")
                                 }
@@ -114,21 +152,31 @@ struct SettingsView: View {
                                 Text("Unknown Location Access Status")
                             }
                         }
-                        
+
                         Button("Update Location") {
                             locationManager.locationManager.requestLocation()
+
+                            // Fetch sunrise data when location is available
+                            Task {
+                                do {
+                                    if let location = locationManager.currentLocation {
+                                        sunriseData = try await fetchSunriseFromAPI(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                                    }
+                                } catch {
+                                    print("Error fetching sunrise data: \(error)")
+                                }
+                            }
                         }
                         .padding()
                     }
                 }
                 
-                Button("Fetch Sunrise") {
-                   fetchSunriseJSON(completion: <#T##(Result<SunriseSunsetResponse, Error>) -> Void#>)
-                }
-                
                 Section(header: Text("Sunrise Sunset")) {
-                   
-                    Text("Sunrise: ")
+                    if sunriseData != nil {
+                        Text("Sunrise Time: \(sunriseData!.sunrise)")
+                    } else {
+                        Text("Sunrise Time not available")
+                    }
                 }
                 
                 Section(header: Text("Wake up time:")) {
@@ -182,29 +230,10 @@ struct SettingsView: View {
         }
     }
 }
+    
 
-func fetchSunriseJSON(completion: @escaping (Result<SunriseSunsetResponse, Error>) -> Void) {
-    let url = URL(string: "https://api.sunrisesunset.io/json?lat=38.907192&lng=-77.036873&timezone=UTC&date=1990-05-22")!
 
-    let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-        if let error = error {
-            completion(.failure(error))
-            return
-        }
 
-        if let data = data {
-            do {
-                let sunriseResponse: SunriseSunsetResponse = try JSONDecoder().decode(SunriseSunsetResponse.self, from: data)
-                globalSunriseData = sunriseResponse // Store the data globally
-                print(sunriseResponse)
-                completion(.success(sunriseResponse))
-            } catch {
-                completion(.failure(error))
-            }
-        }
-    }
-    task.resume()
-}
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     public var locationManager = CLLocationManager()
@@ -228,6 +257,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard let location = locations.last else { return }
         self.currentLocation = location
         
+        
 
         // Use reverse geocoding to get city name
         let geocoder = CLGeocoder()
@@ -248,35 +278,20 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 }
 
-class DataManager {
-    static let shared = DataManager()
-
-    var sunriseData: SunriseSunsetResponse?
-
-    private init() {} // Ensure only one instance
-
-    func fetchSunriseJSON(completion: @escaping (Result<SunriseSunsetResponse, Error>) -> Void) {
-        let url = URL(string: "https://api.sunrisesunset.io/json?lat=38.907192&lng=-77.036873&timezone=UTC&date=1990-05-22")!
-
-        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            if let data = data {
-                do {
-                    let sunriseResponse: SunriseSunsetResponse = try JSONDecoder().decode(SunriseSunsetResponse.self, from: data)
-                    self.sunriseData = sunriseResponse
-                    completion(.success(sunriseResponse))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
-        }
-        task.resume()
+func fetchSunriseFromAPI(latitude: Double?, longitude: Double?) async throws -> SunriseData? {
+    guard let latitude = latitude, let longitude = longitude else {
+        return nil
     }
+
+    let url = URL(string: "https://api.sunrisesunset.io/json?lat=\(latitude)&lng=\(longitude)&timezone=UTC")!
+
+    let (data, _) = try await URLSession.shared.data(from: url)
+
+    let decoded = try JSONDecoder().decode(SunriseResponse.self, from: data)
+
+    return decoded.results
 }
+
 
 class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     private let notificationCenter = UNUserNotificationCenter.current()
