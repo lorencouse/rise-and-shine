@@ -84,66 +84,40 @@ struct SettingsView: View {
     @ObservedObject private var locationManager = LocationManager()
     @State private var wakeUpOffsetHours = 0
     @State private var wakeUpOffsetMinutes = 0
-    @State private var beforeSunrise = true // Default to "Before Sunrise"
+    @State private var beforeSunrise = true
     @State private var targetHoursOfSleep = 8
-    @State private var windDownTime = 60
+    @State private var windDownTime = 59
     @State private var sunData: SunData?
     @State private var locationData: LocationManager?
-
+    @State private var currentDate = fetchDate()
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Location:")) {
-                    HStack {
-                        if let status = locationManager.locationStatus {
-                            switch status {
-                            case .authorizedAlways, .authorizedWhenInUse:
-                                if let location = locationManager.currentLocation {
-                                    Text(" \(locationManager.cityName ?? "Unknown City")")
+                    VStack {
+                        Text(fetchLocation(locationManager: locationManager))
 
-                                    
-                                } else {
-                                    Text("Location not available")
-                                }
-                            case .denied, .restricted:
-                                Text("Location Access Denied")
-                            case .notDetermined:
-                                Text("Location Access Not Determined")
-                            default:
-                                Text("Unknown Location Access Status")
-                            }
-                        }
-
-                        Button("Update Location") {
-                            locationManager.locationManager.requestLocation()
-
-                            // Fetch sunrise data when location is available
-                            Task {
-                                do {
-                                    if let location = locationManager.currentLocation {
-                                        sunData = try await fetchSunDataFromAPI(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
-                                    }
-                                } catch {
-                                    print("Error fetching sunrise data: \(error)")
-                                }
-                            }
-                        }
-                        .padding()
+                        // Use the new function for the button action
+                        updateButton
                     }
                 }
                 
                 Section(header: Text("Sunrise Sunset")) {
-                    if sunData != nil {
-                        Text("Sunrise Time: \(sunData!.sunrise)")
+                    Text("Date: " + (currentDate ?? "Failed to fetch."))
+                    if let sunrise = sunData?.sunrise, let sunset = sunData?.sunset {
+                        Text("Sunrise Time: \(sunrise)")
+                        Text("Sunset Time: \(sunset)")
                     } else {
-                        Text("Sunrise Time not available")
+                        Text("Please Update Location")
                     }
                 }
                 
+                
+                
                 Section(header: Text("Wake up time:")) {
                     HStack {
-
+                        
                         Picker("", selection: $wakeUpOffsetHours) {
                             ForEach(0..<4, id: \.self) { i in
                                 Text("\(i) hours").tag(i)
@@ -183,17 +157,46 @@ struct SettingsView: View {
                     
                     
                 }
-                
-                
-            
-
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Settings")            .onAppear {
+                // Initialize sunData when the view appears
+                if let location = locationManager.currentLocation {
+                    Task {
+                        do {
+                            sunData = try await fetchSunDataFromAPI(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude, date: currentDate ?? "2000-01-30")
+                        } catch {
+                            print("Error fetching sunrise data: \(error)")
+                        }
+                    }
+                }
+            }
         }
     }
-}
     
+    private func updateSunData(latitude: Double, longitude: Double) {
+        Task {
+            do {
+                sunData = try await fetchSunDataFromAPI(latitude: latitude, longitude: longitude, date: currentDate ?? "2000-01-30")
+            } catch {
+                print("Error fetching sunrise data: \(error)")
+            }
+        }
+    }
 
+    // Extracted button for better readability
+    private var updateButton: some View {
+        Button("Update") {
+            locationManager.locationManager.requestLocation()
+            
+            // Fetch sunrise data when location is available
+            if let location = locationManager.currentLocation {
+                updateSunData(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+            }
+        }
+        .padding()
+    }
+    
+}
 
 
 
@@ -240,12 +243,34 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 }
 
-func fetchSunDataFromAPI(latitude: Double?, longitude: Double?) async throws -> SunData? {
+func fetchLocation(locationManager: LocationManager) -> String {
+    guard let status = locationManager.locationStatus else {
+        return "Unknown Location Access Status"
+    }
+
+    switch status {
+    case .authorizedAlways, .authorizedWhenInUse:
+        if locationManager.currentLocation != nil {
+            return locationManager.cityName ?? "Unknown City"
+        } else {
+            return "Location not available"
+        }
+    case .denied, .restricted:
+        return "Location Access Denied"
+    case .notDetermined:
+        return "Location Access Not Determined"
+    @unknown default:
+        return "Error fetching location"
+    }
+}
+
+func fetchSunDataFromAPI(latitude: Double?, longitude: Double?, date: String) async throws -> SunData? {
     guard let latitude = latitude, let longitude = longitude else {
         return nil
     }
 
-    let url = URL(string: "https://api.sunrisesunset.io/json?lat=\(latitude)&lng=\(longitude)&timezone=UTC")!
+    let url = URL(string: "https://api.sunrisesunset.io/json?lat=\(latitude)&lng=\(longitude)&date=\(date)")!
+    print(url)
 
     let (data, _) = try await URLSession.shared.data(from: url)
 
@@ -253,6 +278,25 @@ func fetchSunDataFromAPI(latitude: Double?, longitude: Double?) async throws -> 
 
     return decoded.results
 }
+
+func fetchDate() -> String? {
+    
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    
+    let currentDate = Date()
+    let formattedDate = dateFormatter.string(from: currentDate)
+    
+    if !formattedDate.isEmpty {
+        return formattedDate
+    }
+    else {
+        return nil
+    }
+    
+}
+
+
 
 
 class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
