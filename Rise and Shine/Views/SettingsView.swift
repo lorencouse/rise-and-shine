@@ -10,16 +10,17 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var locationManager = LocationManager()
-    @State private var wakeUpOffsetHours = 0
-    @State private var wakeUpOffsetMinutes = 0
-    @State private var beforeSunrise = true
-    @State private var targetHoursOfSleep = 8
-    @State private var windDownTime = 59
+    @AppStorage("wakeUpOffsetHours") var wakeUpOffsetHours = 0
+    @AppStorage("wakeUpOffsetMinutes") var wakeUpOffsetMinutes = 0
+    @AppStorage("beforeSunrise") var beforeSunrise = true
+    @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = 8
+    @AppStorage("windDownTime") var windDownTime = 59
     @State private var sunData: [SunData]?
     @State private var locationData: LocationManager?
     @State private var currentDate: String = fetchDate()
     @State private var alarmTime: Date?
     @State private var bedTime: Date?
+    
     
     var body: some View {
         NavigationView {
@@ -30,13 +31,11 @@ struct SettingsView: View {
                 Section(header: Text("Location:")) {
                     VStack {
                         Text("City: " + fetchLocation(locationManager: locationManager))
-
-                        
                     }
                 }
                 
                 Section(header: Text("Sunrise Sunset")) {
-                    Text("Date: " + (currentDate ?? "Failed to fetch."))
+                    Text("Date: " + (currentDate ))
                     if let sunrise = sunData?.first?.sunrise, let sunset = sunData?.first?.sunset {
                         Text("Sunrise Time: \(sunrise)")
                         Text("Sunset Time: \(sunset)")
@@ -123,6 +122,7 @@ struct SettingsView: View {
     private func updateData(latitude: Double, longitude: Double) {
         Task {
             do {
+//                let wakeUpOffsetHours = UserDefaults.standard.wakeUpOffsetHours
                 sunData = try await APIManager.fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: currentDate ?? "2000-01-30")
                 
                 // Move the calculation of alarmTime here

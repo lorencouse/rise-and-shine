@@ -63,11 +63,13 @@ func fetchLocation(locationManager: LocationManager) -> String {
 func fetchDate() -> String {
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd"
-    
-    let currentDate = Date()
-    let formattedDate = dateFormatter.string(from: currentDate)
-    
-    return formattedDate
+    return dateFormatter.string(from: Date())
+}
+
+func formattedDateString(date: Date) -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "h:mm:ss a"
+    return dateFormatter.string(from: date)
 }
 
 
@@ -78,6 +80,8 @@ func calculateWakeTime(sunriseTime: String, alarmOffsetMinutes: Int, beforeSunri
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "h:mm:ss a"
     dateFormatter.locale = Locale(identifier: "en_US_POSIX") // Set the locale to ensure proper parsing
+    
+    
     
     guard let sunriseDate = dateFormatter.date(from: sunriseTime) else {
         fatalError("Invalid date format for sunriseTime")
@@ -110,14 +114,6 @@ func calculateBedTime(sunriseTime: String, hoursOfSleep: Int) -> Date? {
         // Handle error if unable to calculate sleep time
         return nil
     }
-}
-
-
-func formattedDateString(date: Date) -> String {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "h:mm:ss a"
-    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-    return dateFormatter.string(from: date)
 }
 
 #Preview {
