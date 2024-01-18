@@ -14,6 +14,14 @@
 		5C55495A2B51FEEC00758980 /* Rise_and_ShineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549592B51FEEC00758980 /* Rise_and_ShineTests.swift */; };
 		5C5549642B51FEEC00758980 /* Rise_and_ShineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */; };
 		5C5549662B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */; };
+		5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25392B58D36B00F3CC2B /* SunData.swift */; };
+		5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC253B2B58D39F00F3CC2B /* SunApiResponse.swift */; };
+		5CEC25402B58D54B00F3CC2B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC253F2B58D54B00F3CC2B /* SettingsView.swift */; };
+		5CEC25422B58D5D500F3CC2B /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25412B58D5D500F3CC2B /* LocationManager.swift */; };
+		5CEC25442B58D5F800F3CC2B /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25432B58D5F800F3CC2B /* NotificationManager.swift */; };
+		5CEC25462B58D6B600F3CC2B /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25452B58D6B600F3CC2B /* APIManager.swift */; };
+		5CEC25482B58D83000F3CC2B /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25472B58D83000F3CC2B /* Constants.swift */; };
+		5CEC254A2B58D92700F3CC2B /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25492B58D92700F3CC2B /* DateFormatter+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +53,14 @@
 		5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITests.swift; sourceTree = "<group>"; };
 		5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rise-and-Shine-Info.plist"; sourceTree = SOURCE_ROOT; };
+		5CEC25392B58D36B00F3CC2B /* SunData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunData.swift; sourceTree = "<group>"; };
+		5CEC253B2B58D39F00F3CC2B /* SunApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunApiResponse.swift; sourceTree = "<group>"; };
+		5CEC253F2B58D54B00F3CC2B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5CEC25412B58D5D500F3CC2B /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		5CEC25432B58D5F800F3CC2B /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		5CEC25452B58D6B600F3CC2B /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
+		5CEC25472B58D83000F3CC2B /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		5CEC25492B58D92700F3CC2B /* DateFormatter+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DateFormatter+Extension.swift"; path = "../../../../../Desktop/DateFormatter+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +111,11 @@
 		5C5549472B51FEEB00758980 /* Rise and Shine */ = {
 			isa = PBXGroup;
 			children = (
+				5CEC25382B58D34C00F3CC2B /* Helpers */,
+				5CEC25372B58D33D00F3CC2B /* Utilities */,
+				5CEC25362B58D32700F3CC2B /* ViewModels */,
+				5CEC25352B58D31600F3CC2B /* Views */,
+				5CEC25332B58D2F500F3CC2B /* Models */,
 				5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */,
 				5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */,
 				5C55494A2B51FEEB00758980 /* ContentView.swift */,
@@ -127,6 +148,49 @@
 				5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */,
 			);
 			path = "Rise and ShineUITests";
+			sourceTree = "<group>";
+		};
+		5CEC25332B58D2F500F3CC2B /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				5CEC25392B58D36B00F3CC2B /* SunData.swift */,
+				5CEC253B2B58D39F00F3CC2B /* SunApiResponse.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		5CEC25352B58D31600F3CC2B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5CEC253F2B58D54B00F3CC2B /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		5CEC25362B58D32700F3CC2B /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				5CEC25412B58D5D500F3CC2B /* LocationManager.swift */,
+				5CEC25432B58D5F800F3CC2B /* NotificationManager.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		5CEC25372B58D33D00F3CC2B /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				5CEC25452B58D6B600F3CC2B /* APIManager.swift */,
+				5CEC25492B58D92700F3CC2B /* DateFormatter+Extension.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		5CEC25382B58D34C00F3CC2B /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				5CEC25472B58D83000F3CC2B /* Constants.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -259,8 +323,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5CEC25462B58D6B600F3CC2B /* APIManager.swift in Sources */,
 				5C55494B2B51FEEB00758980 /* ContentView.swift in Sources */,
+				5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */,
+				5CEC25422B58D5D500F3CC2B /* LocationManager.swift in Sources */,
+				5CEC25402B58D54B00F3CC2B /* SettingsView.swift in Sources */,
+				5CEC25442B58D5F800F3CC2B /* NotificationManager.swift in Sources */,
+				5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */,
 				5C5549492B51FEEB00758980 /* Rise_and_ShineApp.swift in Sources */,
+				5CEC254A2B58D92700F3CC2B /* DateFormatter+Extension.swift in Sources */,
+				5CEC25482B58D83000F3CC2B /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
