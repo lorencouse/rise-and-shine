@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5C063D4E2B5A1AB500DC7C6B /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D4D2B5A1AB500DC7C6B /* DateFormatter+Extension.swift */; };
 		5C5549492B51FEEB00758980 /* Rise_and_ShineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */; };
 		5C55494B2B51FEEB00758980 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C55494A2B51FEEB00758980 /* ContentView.swift */; };
 		5C55494D2B51FEEC00758980 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5C55494C2B51FEEC00758980 /* Assets.xcassets */; };
@@ -21,7 +22,6 @@
 		5CEC25442B58D5F800F3CC2B /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25432B58D5F800F3CC2B /* NotificationManager.swift */; };
 		5CEC25462B58D6B600F3CC2B /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25452B58D6B600F3CC2B /* APIManager.swift */; };
 		5CEC25482B58D83000F3CC2B /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25472B58D83000F3CC2B /* Constants.swift */; };
-		5CEC254A2B58D92700F3CC2B /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25492B58D92700F3CC2B /* DateFormatter+Extension.swift */; };
 		5CEC254C2B58FE5900F3CC2B /* UserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC254B2B58FE5900F3CC2B /* UserDefaults.swift */; };
 		5CEC254E2B58FE7A00F3CC2B /* AppDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC254D2B58FE7A00F3CC2B /* AppDataManager.swift */; };
 /* End PBXBuildFile section */
@@ -44,6 +44,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5C063D4D2B5A1AB500DC7C6B /* DateFormatter+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extension.swift"; sourceTree = "<group>"; };
 		5C5549452B51FEEB00758980 /* Rise and Shine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rise and Shine.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineApp.swift; sourceTree = "<group>"; };
 		5C55494A2B51FEEB00758980 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -62,7 +63,6 @@
 		5CEC25432B58D5F800F3CC2B /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		5CEC25452B58D6B600F3CC2B /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
 		5CEC25472B58D83000F3CC2B /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		5CEC25492B58D92700F3CC2B /* DateFormatter+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DateFormatter+Extension.swift"; path = "../../../../../Desktop/DateFormatter+Extension.swift"; sourceTree = "<group>"; };
 		5CEC254B2B58FE5900F3CC2B /* UserDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaults.swift; sourceTree = "<group>"; };
 		5CEC254D2B58FE7A00F3CC2B /* AppDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -183,8 +183,8 @@
 		5CEC25372B58D33D00F3CC2B /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				5C063D4D2B5A1AB500DC7C6B /* DateFormatter+Extension.swift */,
 				5CEC25452B58D6B600F3CC2B /* APIManager.swift */,
-				5CEC25492B58D92700F3CC2B /* DateFormatter+Extension.swift */,
 				5CEC254B2B58FE5900F3CC2B /* UserDefaults.swift */,
 				5CEC254D2B58FE7A00F3CC2B /* AppDataManager.swift */,
 			);
@@ -339,8 +339,8 @@
 				5CEC25442B58D5F800F3CC2B /* NotificationManager.swift in Sources */,
 				5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */,
 				5C5549492B51FEEB00758980 /* Rise_and_ShineApp.swift in Sources */,
-				5CEC254A2B58D92700F3CC2B /* DateFormatter+Extension.swift in Sources */,
 				5CEC25482B58D83000F3CC2B /* Constants.swift in Sources */,
+				5C063D4E2B5A1AB500DC7C6B /* DateFormatter+Extension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

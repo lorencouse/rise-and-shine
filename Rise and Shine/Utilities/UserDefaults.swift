@@ -16,7 +16,11 @@ extension UserDefaults {
         static let beforeSunrise = "beforeSunrise"
         static let targetHoursOfSleep = "targetHoursOfSleep"
         static let windDownTime = "windDownTime"
-
+        static let currentLongitude = "currentLongitude"
+        static let currentLatitude = "currentLatitude"
+        static let currentCity = "currentCity"
+        static let bedTime = "bedTime"
+        static let alarmTime = "alarmTime"
         // Add other keys as needed
     }
 
@@ -45,6 +49,27 @@ extension UserDefaults {
         get { integer(forKey: Keys.windDownTime) }
         set { set(newValue, forKey: Keys.windDownTime) }
     }
+    
+    var currentLongitude: Double {
+        get { double(forKey: Keys.currentLongitude) }
+        set { set(newValue, forKey: Keys.currentLongitude) }
+    }
+    
+    var currentLatitude: Double {
+        get { double(forKey: Keys.currentLatitude) }
+        set { set(newValue, forKey: Keys.currentLatitude) }
+    }
+    
+    var currentCity: String {
+        get { string(forKey: Keys.currentCity) ?? "Default City" }
+        set { set(newValue, forKey: Keys.currentCity) }
+    }
+    
+    var bedTime: String {
+        get { string(forKey: Keys.bedTime) ?? "12:00" }
+        set { set(newValue, forKey: Keys.bedTime) }
+    }
+
     
     static func binding<T>(key: String, defaultValue: T) -> Binding<T> where T: Codable {
         Binding(

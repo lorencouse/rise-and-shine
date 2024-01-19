@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SunData: Decodable {
+struct SunData: Decodable, Hashable {
     let date: String
     let sunrise: String
     let sunset: String

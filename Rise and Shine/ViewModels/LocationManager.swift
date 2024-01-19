@@ -1,10 +1,3 @@
-//
-//  LocationManager.swift
-//  Rise and Shine
-//
-//  Created by loren on 1/18/24.
-//
-
 import Foundation
 import CoreLocation
 
@@ -41,6 +34,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
 
             if let placemark = placemarks?.first {
+
                 self.cityName = placemark.locality ?? "Unknown City"
             }
         }
