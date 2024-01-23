@@ -7,7 +7,10 @@
 
 import Foundation
 
-struct SunData: Decodable, Hashable {
+
+
+
+struct SunData: Decodable, Hashable, Encodable {
     let date: String
     let sunrise: String
     let sunset: String
@@ -15,11 +18,7 @@ struct SunData: Decodable, Hashable {
     let lastLight: String
     let dawn: String
     let dusk: String
-    let solarNoon: String
-    let goldenHour: String
     let dayLength: String
-    let timezone: String
-    let utcOffset: Int
     
     enum CodingKeys: String, CodingKey {
         case date
@@ -29,10 +28,6 @@ struct SunData: Decodable, Hashable {
         case lastLight = "last_light"
         case dawn
         case dusk
-        case solarNoon = "solar_noon"
-        case goldenHour = "golden_hour"
         case dayLength = "day_length"
-        case timezone
-        case utcOffset = "utc_offset"
     }
 }

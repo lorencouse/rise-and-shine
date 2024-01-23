@@ -11,16 +11,18 @@ import CoreLocation
 
 struct SettingsView: View {
     @ObservedObject private var locationManager = LocationManager()
+//    @State private var locationData: LocationManager?
     @AppStorage("wakeUpOffsetHours") var wakeUpOffsetHours = 0
     @AppStorage("wakeUpOffsetMinutes") var wakeUpOffsetMinutes = 0
     @AppStorage("beforeSunrise") var beforeSunrise = true
-    @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = 8
-    @AppStorage("windDownTime") var windDownTime = 59
-    @State private var sunData: [SunData] = []
-    @State private var locationData: LocationManager?
-    @State private var currentDate: String = fetchDate()
-    @State private var alarmTime: Date?
-    @State private var bedTime: Date?
+    @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
+    @AppStorage("windDownTime") var windDownTime = 0
+    @AppStorage("bedTime") var bedTime = ""
+    @AppStorage("alarmTime") var alarmTime = ""
+    @AppStorage("currentCity") var currentCity = "Location: Unknown"
+    @State private var sunData: [SunData] = APIManager.loadSunDataFromFile() ?? []
+
+
     
     
     var body: some View {
@@ -31,20 +33,22 @@ struct SettingsView: View {
             Form {
                 
                 Section(header: Text("Location:")) {
+                    
+                    Text(currentCity)
                     VStack {
 
                         Button("Update") {
                             Task {
-                                await fetchLocation(locationManager: locationManager)
+                                fetchLocation(locationManager: locationManager)
                                 await updateData()
+                                sunData = APIManager.loadSunDataFromFile() ?? []
                             }
                             print(UserDefaults.standard.currentCity)
                             
                         }
-
-
-                        Text("City: " + UserDefaults.standard.currentCity)
+                        
                     }
+
                 }
 
                 Section(header: Text("Sunrise Sunset")) {
@@ -58,7 +62,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    Text("Date: " + (currentDate ))
+                    Text("Date: " + (fetchDate()))
                     if let sunrise = sunData.first?.sunrise, let sunset = sunData.first?.sunset {
                         Text("Sunrise Time: \(sunrise)")
 
@@ -91,24 +95,18 @@ struct SettingsView: View {
                         Text("After Sunrise").tag(false)
                     }.pickerStyle(SegmentedPickerStyle())
 
-                    if let alarmTimeString = alarmTime {
 
-                        Text("Alarm Time: \(formattedDateString(date: alarmTimeString)) ")
 
-                    }
-                    else {
-                        Text("No Alarm Set")
-                    }
+                        Text("Alarm Time: \(alarmTime) ")
+
 
                 }
 
                 Section(header: Text("Target Hours of Sleep")) {
 
-                    if sunData.count > 1 {
-                        Text("Your bedtime is: \(formattedDateString(date: bedTime!))")
-                    } else {
-                        Text("Set Your Bed Time")
-                    }
+
+                        Text("Your bedtime is: \(bedTime)")
+
 
 
                     Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
@@ -129,6 +127,17 @@ struct SettingsView: View {
                     }
 
 
+                }
+                
+                Section() {
+                    Button("Clear User Data") {
+                        Task {
+                            clearUserDefaults()
+                            sunData = []
+                        }
+
+                        
+                    }
                 }
 
                 VStack {

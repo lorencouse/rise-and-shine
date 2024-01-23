@@ -22,7 +22,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         self.currentLocation = location
-        
+        UserDefaults.standard.currentLatitude = location.coordinate.latitude
+        UserDefaults.standard.currentLongitude = location.coordinate.latitude
         
 
         // Use reverse geocoding to get city name
@@ -36,6 +37,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             if let placemark = placemarks?.first {
 
                 self.cityName = placemark.locality ?? "Unknown City"
+                UserDefaults.standard.currentCity = self.cityName ?? "Unknown City"
+                print(UserDefaults.standard.currentCity)
             }
         }
     }

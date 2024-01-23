@@ -21,8 +21,12 @@ extension UserDefaults {
         static let currentCity = "currentCity"
         static let bedTime = "bedTime"
         static let alarmTime = "alarmTime"
+        static let sunriseData = "sunriseData"
+        static let lastDate = "lastDate"
         // Add other keys as needed
     }
+    
+    
 
     // Properties
     var wakeUpOffsetHours: Int {
@@ -69,6 +73,18 @@ extension UserDefaults {
         get { string(forKey: Keys.bedTime) ?? "12:00" }
         set { set(newValue, forKey: Keys.bedTime) }
     }
+    
+    var alarmTime: String {
+        get { string(forKey: Keys.alarmTime) ?? "12:00" }
+        set { set(newValue, forKey: Keys.alarmTime) }
+    }
+    
+    var lastDate: String {
+        get { string(forKey: Keys.lastDate) ?? "No Date"  }
+        set { set(newValue, forKey: Keys.lastDate) }
+    }
+    
+    
 
     
     static func binding<T>(key: String, defaultValue: T) -> Binding<T> where T: Codable {
@@ -87,6 +103,20 @@ extension UserDefaults {
             }
         )
     }
-
-    // Add other properties as needed
 }
+
+
+
+func clearUserDefaults() {
+     let appDomain = Bundle.main.bundleIdentifier
+     UserDefaults.standard.removePersistentDomain(forName: appDomain!)
+     UserDefaults.standard.wakeUpOffsetHours = Constants.wakeUpOffsetHoursDefault
+     UserDefaults.standard.wakeUpOffsetMinutes = Constants.wakeUpOffsetMinutesDefault
+     UserDefaults.standard.beforeSunrise = Constants.beforeSunriseDefault
+     UserDefaults.standard.targetHoursOfSleep = Constants.targetHoursOfSleepDefault
+     UserDefaults.standard.windDownTime = Constants.windDownTimeDefault
+     // Synchronize UserDefaults to persist the changes immediately (optional)
+     UserDefaults.standard.synchronize()
+    APIManager.clearAndDeleteSunData()
+
+ }
