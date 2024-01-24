@@ -16,13 +16,15 @@ extension UserDefaults {
         static let beforeSunrise = "beforeSunrise"
         static let targetHoursOfSleep = "targetHoursOfSleep"
         static let windDownTime = "windDownTime"
+        static let bedTime = "bedTime"
+        static let alarmTime = "alarmTime"
+        static let windDownTimer = "windDownTimer"
         static let currentLongitude = "currentLongitude"
         static let currentLatitude = "currentLatitude"
         static let currentCity = "currentCity"
-        static let bedTime = "bedTime"
-        static let alarmTime = "alarmTime"
         static let sunriseData = "sunriseData"
         static let lastDate = "lastDate"
+        static let sunriseTimeArray = "sunriseTimeArray"
         // Add other keys as needed
     }
     
@@ -78,12 +80,19 @@ extension UserDefaults {
         get { string(forKey: Keys.alarmTime) ?? "12:00" }
         set { set(newValue, forKey: Keys.alarmTime) }
     }
+
+    var windDownTimeReminder: String {
+        get { string(forKey: Keys.windDownTimer) ?? "12:00" }
+        set { set(newValue, forKey: Keys.windDownTimer) }
+    }
+    
     
     var lastDate: String {
         get { string(forKey: Keys.lastDate) ?? "No Date"  }
         set { set(newValue, forKey: Keys.lastDate) }
     }
     
+
     
 
     

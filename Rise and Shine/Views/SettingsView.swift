@@ -14,7 +14,7 @@ struct SettingsView: View {
 //    @State private var locationData: LocationManager?
     @AppStorage("wakeUpOffsetHours") var wakeUpOffsetHours = 0
     @AppStorage("wakeUpOffsetMinutes") var wakeUpOffsetMinutes = 0
-    @AppStorage("beforeSunrise") var beforeSunrise = true
+    @AppStorage("beforeSunrise") var beforeSunrise = true 
     @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("windDownTime") var windDownTime = 0
     @AppStorage("bedTime") var bedTime = ""
@@ -125,6 +125,7 @@ struct SettingsView: View {
                         }.pickerStyle(MenuPickerStyle())
                         Text(" before bedtime.")
                     }
+                    Text("Wind down at: \(UserDefaults.standard.windDownTimeReminder ?? "")")
 
 
                 }

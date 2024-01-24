@@ -20,20 +20,21 @@ func updateData() async {
     // Call SunAPI and update sunData
     do {
         try await APIManager.fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: date)
-        
+        let sunDataArray = UserDefaults.standard.array(forKey: "sunriseTimeArray") ?? []
         // Load sun data from file
-        let sunDataArray = APIManager.loadSunDataFromFile() ?? []
+
 
         // Find sunrise time for the given date
-        if let sunDataForDate = sunDataArray.first(where: { $0.date == date }) {
-            let sunriseTime = sunDataForDate.sunrise
-
+        if let sunDataForDate = sunDataArray.first {
             Task {
-
-                calculateBedTime(sunriseTimeNextDay: sunriseTime, hoursOfSleep: targetHoursOfSleep)
+                calculateAlarmTime()
+//                calculateBedTime()
+//                calculateWindDownReminder()
+//              Calculate Bedtime
+                calculateTime(for: "alarmTime", adjustment: .hour(UserDefaults.standard.targetHoursOfSleep), resultKey: "bedTime")
+//              Calculate winddown Timer
+                calculateTime(for: "bedTime", adjustment: .minute(UserDefaults.standard.windDownTime), resultKey: "windDownTimer")
                 print("targetHoursOfSleep \(targetHoursOfSleep)")
-
-                calculateAlarmTime(sunriseTime: sunriseTime)
                 
             }
 

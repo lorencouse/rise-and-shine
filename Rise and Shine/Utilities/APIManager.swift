@@ -34,8 +34,16 @@ struct APIManager {
 
         let (data, _) = try await URLSession.shared.data(from: url)
         let decoded = try JSONDecoder().decode(SunApiResponse.self, from: data)
+        
+        var sunriseTimeArray = UserDefaults.standard.stringArray(forKey: "sunriseTimeArray") ?? [String]()
 
+        for day in decoded.results {
+            sunriseTimeArray.append(day.sunrise)
+        }
+        
+        
         // Save the sun data to file
+        UserDefaults.standard.set(sunriseTimeArray, forKey: "sunriseTimeArray")
         saveSunDataToFile(sunData: decoded.results)
     }
     
