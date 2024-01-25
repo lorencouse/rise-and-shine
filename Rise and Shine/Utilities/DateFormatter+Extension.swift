@@ -32,4 +32,17 @@ extension DateFormatter {
         formatter.setLocalizedDateFormatFromTemplate("MMMMd")
         return formatter
     }()
+    
+}
+
+func fetchDate() -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    return dateFormatter.string(from: Date())
+}
+
+func formattedDateString(date: Date) -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "h:mm:ss a"
+    return dateFormatter.string(from: date)
 }

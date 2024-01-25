@@ -47,3 +47,27 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Location manager failed with error: \(error.localizedDescription)")
     }
 }
+
+func fetchLocation(locationManager: LocationManager) -> String {
+    guard let status = locationManager.locationStatus else {
+        return "Unknown Location Access Status"
+    }
+
+    switch status {
+    case .authorizedAlways, .authorizedWhenInUse:
+        if locationManager.currentLocation != nil {
+            UserDefaults.standard.setValue( locationManager.currentLocation?.coordinate.latitude, forKey: "currentLatitude")
+            UserDefaults.standard.setValue( locationManager.currentLocation?.coordinate.longitude, forKey: "currentLongitude")
+            UserDefaults.standard.setValue( locationManager.cityName, forKey: "currentCity")
+            return locationManager.cityName ?? "Unknown City"
+        } else {
+            return "Location not available"
+        }
+    case .denied, .restricted:
+        return "Location Access Denied"
+    case .notDetermined:
+        return "Location Access Not Determined"
+    @unknown default:
+        return "Error fetching location"
+    }
+}

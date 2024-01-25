@@ -15,6 +15,9 @@ import Combine
 struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
     @State private var locationData: LocationManager?
+    @State private var sunData: [SunData] = (APIManager.loadSunDataFromFile() ?? [])
+    @State private var selectedDateIndex = 0 // Index for the selected date
+
 
     var body: some View {
         NavigationView {
@@ -31,55 +34,62 @@ struct ContentView: View {
                 }
                 }
                 
+                Form {
+                    
+
+                        
+                    Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
+                            // Picker for selecting the date
+                            Picker("Select Date", selection: $selectedDateIndex) {
+                                ForEach(0 ..< sunData.count, id: \.self) { index in
+                                    Text(self.sunData[index].date).tag(index)
+                                }
+                            }.pickerStyle(MenuPickerStyle())
+                            
+                        Button("Update") {
+                            Task {
+                                fetchLocation(locationManager: locationManager)
+                                await updateData()
+                                sunData = APIManager.loadSunDataFromFile() ?? []
+                                print(sunData)
+                            }
+                        }
+                        }
+                        
+                        Section {
+                            // List to display sun data for the selected date
+                            List {
+                                if sunData.indices.contains(selectedDateIndex) {
+                                    let data = sunData[selectedDateIndex]
+                                    Section(header: Text("Date: \(data.date)")) {
+                                        Text("Sunrise: \(data.sunrise)")
+                                        Text("Sunset: \(data.sunset)")
+                                        Text("First Light: \(data.firstLight)")
+                                        Text("Last Light: \(data.lastLight)")
+                                        Text("Dawn: \(data.dawn)")
+                                        Text("Dusk: \(data.dusk)")
+                                        Text("Day Length: \(data.dayLength)")
+                                    }
+                                }
+                            }
+                        }
+                        
+
+
+
+
+                    
+                }
+                
+
+                }
+                
                 
                 .navigationTitle("Rise and Shine")
                 
             }
         }
     }
-}
-
-
-
-
-func fetchDate() -> String {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "yyyy-MM-dd"
-    return dateFormatter.string(from: Date())
-}
-
-func formattedDateString(date: Date) -> String {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "h:mm:ss a"
-    return dateFormatter.string(from: date)
-}
-
-func fetchLocation(locationManager: LocationManager) -> String {
-    guard let status = locationManager.locationStatus else {
-        return "Unknown Location Access Status"
-    }
-
-    switch status {
-    case .authorizedAlways, .authorizedWhenInUse:
-        if locationManager.currentLocation != nil {
-            UserDefaults.standard.setValue( locationManager.currentLocation?.coordinate.latitude, forKey: "currentLatitude")
-            UserDefaults.standard.setValue( locationManager.currentLocation?.coordinate.longitude, forKey: "currentLongitude")
-            UserDefaults.standard.setValue( locationManager.cityName, forKey: "currentCity")
-            return locationManager.cityName ?? "Unknown City"
-        } else {
-            return "Location not available"
-        }
-    case .denied, .restricted:
-        return "Location Access Denied"
-    case .notDetermined:
-        return "Location Access Not Determined"
-    @unknown default:
-        return "Error fetching location"
-    }
-}
-
-
-
 
 
 

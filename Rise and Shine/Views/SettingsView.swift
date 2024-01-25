@@ -11,15 +11,16 @@ import CoreLocation
 
 struct SettingsView: View {
     @ObservedObject private var locationManager = LocationManager()
-//    @State private var locationData: LocationManager?
     @AppStorage("wakeUpOffsetHours") var wakeUpOffsetHours = 0
     @AppStorage("wakeUpOffsetMinutes") var wakeUpOffsetMinutes = 0
     @AppStorage("beforeSunrise") var beforeSunrise = true 
     @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("windDownTime") var windDownTime = 0
+    @AppStorage("windDownTimer") var windDownTimer = "10:00 PM"
     @AppStorage("bedTime") var bedTime = ""
     @AppStorage("alarmTime") var alarmTime = ""
-    @AppStorage("currentCity") var currentCity = "Location: Unknown"
+    @AppStorage("currentCity") var currentCity = "Location: Please Update"
+//    @AppStorage("sunriseTimeArray") var sunriseTimeArray = UserDefaults.standard.sunriseTimeArray
     @State private var sunData: [SunData] = APIManager.loadSunDataFromFile() ?? []
 
 
@@ -42,9 +43,8 @@ struct SettingsView: View {
                                 fetchLocation(locationManager: locationManager)
                                 await updateData()
                                 sunData = APIManager.loadSunDataFromFile() ?? []
+                                print(sunData)
                             }
-                            print(UserDefaults.standard.currentCity)
-                            
                         }
                         
                     }
@@ -52,25 +52,22 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Sunrise Sunset")) {
-
-                    if sunData.isEmpty {
-                        Text("No sunrise data available")
-                    } else {
-                        ForEach(sunData, id: \.self) { day in
-
-                            Text("\(day.date): \(day.sunrise)")
-                        }
-                    }
-
+                    
+                    ////                  Show all sunrise times
+                    //                    if sunData.isEmpty {
+                    //                        Text("No sunrise data available")
+                    //                    } else {
+                    //                        ForEach(sunData, id: \.self) { day in
+                    //
+                    //                            Text("\(day.date): \(day.sunrise)")
+                    //                        }
+                    //                    }
+                    
                     Text("Date: " + (fetchDate()))
-                    if let sunrise = sunData.first?.sunrise, let sunset = sunData.first?.sunset {
-                        Text("Sunrise Time: \(sunrise)")
-
-
-                    } else {
-                        Text("Please Update Location")
-                    }
-
+                    
+                    
+                    Text("Sunrise Time: \(sunData.first?.sunrise ?? "")")
+                    
                 }
 
                 Section(header: Text("Alarm time:")) {
@@ -103,17 +100,14 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Target Hours of Sleep")) {
-
-
-                        Text("Your bedtime is: \(bedTime)")
-
-
-
+                    
                     Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
                         ForEach(4..<14, id: \.self) { i in
                             Text("\(i) hours").tag(i)
                         }
                     }.pickerStyle(MenuPickerStyle())
+                    
+                    Text("Your bedtime is: \(bedTime)")
                 }
 
                 Section(header: Text("Wind down reminder")) {
@@ -125,7 +119,7 @@ struct SettingsView: View {
                         }.pickerStyle(MenuPickerStyle())
                         Text(" before bedtime.")
                     }
-                    Text("Wind down at: \(UserDefaults.standard.windDownTimeReminder ?? "")")
+                    Text("Wind down at: \(windDownTimer)")
 
 
                 }
@@ -157,8 +151,10 @@ struct SettingsView: View {
         
     }
     
-    
-    
+}
+
+#Preview {
+    SettingsView()
 }
 
 

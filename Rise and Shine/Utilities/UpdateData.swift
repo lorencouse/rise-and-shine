@@ -8,43 +8,23 @@
 import Foundation
 
 func updateData() async {
-    // Retrieve user settings
-    let targetHoursOfSleep = UserDefaults.standard.targetHoursOfSleep
-    let latitude = UserDefaults.standard.currentLatitude
-    let longitude = UserDefaults.standard.currentLongitude
+    let targetHoursOfSleep = UserDefaults.standard.integer(forKey: "targetHoursOfSleep") // Ensure a default value
+    let latitude = UserDefaults.standard.double(forKey: "currentLatitude") // Ensure a default value
+    let longitude = UserDefaults.standard.double(forKey: "currentLongitude") // Ensure a default value
     
-    // Get current date
-    let date = fetchDate()
-
+    let date = fetchDate() // Make sure this function exists
     
-    // Call SunAPI and update sunData
     do {
         try await APIManager.fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: date)
-        let sunDataArray = UserDefaults.standard.array(forKey: "sunriseTimeArray") ?? []
-        // Load sun data from file
-
-
-        // Find sunrise time for the given date
-        if let sunDataForDate = sunDataArray.first {
-            Task {
-                calculateAlarmTime()
-//                calculateBedTime()
-//                calculateWindDownReminder()
-//              Calculate Bedtime
-                calculateTime(for: "alarmTime", adjustment: .hour(UserDefaults.standard.targetHoursOfSleep), resultKey: "bedTime")
-//              Calculate winddown Timer
-                calculateTime(for: "bedTime", adjustment: .minute(UserDefaults.standard.windDownTime), resultKey: "windDownTimer")
-                print("targetHoursOfSleep \(targetHoursOfSleep)")
-                
-            }
-
+        if APIManager.loadSunDataFromFile() != nil {
+            calculateAlarmTime() // Assuming these are synchronous
+            calculateTime(for: "alarmTime", adjustment: .hour(targetHoursOfSleep), resultKey: "bedTime")
+            calculateTime(for: "bedTime", adjustment: .minute(UserDefaults.standard.integer(forKey: "windDownTime")), resultKey: "windDownTimer")
+            
         } else {
             print("Sunrise time not found for date: \(date)")
         }
-
     } catch {
         print("Error fetching sun data: \(error)")
     }
-
-
 }
