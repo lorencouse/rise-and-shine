@@ -16,6 +16,7 @@ struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
     @State private var locationData: LocationManager?
     @State private var sunData: [SunData] = (APIManager.loadSunDataFromFile() ?? [])
+    @State private var alarmSchedule: [AlarmSchedule] = (loadSchedulesFromFile() ?? [])
     @State private var selectedDateIndex = 0 // Index for the selected date
 
 
@@ -31,8 +32,11 @@ struct ContentView: View {
                 NavigationLink(destination: SettingsView()) {
                     Text("Settings")
                         .foregroundColor(Color.blue)
+                    
                 }
                 }
+                
+
                 
                 Form {
                     
@@ -51,10 +55,36 @@ struct ContentView: View {
                                 fetchLocation(locationManager: locationManager)
                                 await updateData()
                                 sunData = APIManager.loadSunDataFromFile() ?? []
-                                print(sunData)
+                                alarmSchedule = (loadSchedulesFromFile() ?? [])
                             }
                         }
+                        
+                        Button("Clear All") {
+                            Task {
+                                alarmSchedule = []
+                                sunData = []
+                            }
+
+                            
                         }
+                        
+                        }
+                    
+                        Section {
+                            // List to display sun data for the selected date
+                            List {
+                                if alarmSchedule.indices.contains(selectedDateIndex) {
+                                    let data = alarmSchedule[selectedDateIndex]
+                                    Section(header: Text("Date: \(data.date)")) {
+                                        Text("Sunrise Time: \(data.sunriseTime)")
+                                        Text("Alarm Time: \(data.alarmTime)")
+                                        Text("Bed Time: \(data.bedTime)")
+                                        Text("Sleep Reminder: \(data.windDownTime)")
+                                    }
+                                }
+                            }
+                        }
+                    
                         
                         Section {
                             // List to display sun data for the selected date

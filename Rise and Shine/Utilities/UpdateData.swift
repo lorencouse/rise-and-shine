@@ -16,8 +16,9 @@ func updateData() async {
     
     do {
         try await APIManager.fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: date)
-        if APIManager.loadSunDataFromFile() != nil {
-            calculateAlarmTime() // Assuming these are synchronous
+        if let sunDataArray = APIManager.loadSunDataFromFile() {
+            calculateScheduleForSunData(sunDataArray)
+//            calculateAlarmTime()
 //            calculateTime(for: "alarmTime", adjustment: .hour(targetHoursOfSleep), resultKey: "bedTime")
 //            calculateTime(for: "bedTime", adjustment: .minute(UserDefaults.standard.integer(forKey: "windDownTime")), resultKey: "windDownTimer")
             

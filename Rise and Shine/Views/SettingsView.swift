@@ -22,6 +22,7 @@ struct SettingsView: View {
     @AppStorage("currentCity") var currentCity = "Location: Please Update"
 //    @AppStorage("sunriseTimeArray") var sunriseTimeArray = UserDefaults.standard.sunriseTimeArray
     @State private var sunData: [SunData] = APIManager.loadSunDataFromFile() ?? []
+    @State private var updateButtonText: String = "Update"
 
 
     
@@ -38,12 +39,12 @@ struct SettingsView: View {
                     Text(currentCity)
                     VStack {
 
-                        Button("Update") {
+                        Button(updateButtonText) {
                             Task {
                                 fetchLocation(locationManager: locationManager)
                                 await updateData()
                                 sunData = APIManager.loadSunDataFromFile() ?? []
-                                print(sunData)
+                                updateButtonText = "Updated ✅"
                             }
                         }
                         
@@ -51,24 +52,24 @@ struct SettingsView: View {
 
                 }
 
-                Section(header: Text("Sunrise Sunset")) {
-                    
-                    ////                  Show all sunrise times
-                    //                    if sunData.isEmpty {
-                    //                        Text("No sunrise data available")
-                    //                    } else {
-                    //                        ForEach(sunData, id: \.self) { day in
-                    //
-                    //                            Text("\(day.date): \(day.sunrise)")
-                    //                        }
-                    //                    }
-                    
-                    Text("Date: " + (fetchDate()))
-                    
-                    
-                    Text("Sunrise Time: \(sunData.first?.sunrise ?? "")")
-                    
-                }
+//                Section(header: Text("Sunrise Sunset")) {
+//                    
+//                    ////                  Show all sunrise times
+//                    //                    if sunData.isEmpty {
+//                    //                        Text("No sunrise data available")
+//                    //                    } else {
+//                    //                        ForEach(sunData, id: \.self) { day in
+//                    //
+//                    //                            Text("\(day.date): \(day.sunrise)")
+//                    //                        }
+//                    //                    }
+//                    
+//                    Text("Date: " + (fetchDate()))
+//                    
+//                    
+//                    Text("Sunrise Time: \(sunData.first?.sunrise ?? "")")
+//                    
+//                }
 
                 Section(header: Text("Alarm time:")) {
                     HStack {
@@ -94,7 +95,7 @@ struct SettingsView: View {
 
 
 
-                        Text("Alarm Time: \(alarmTime) ")
+//                        Text("Alarm Time: \(alarmTime) ")
 
 
                 }
@@ -107,7 +108,7 @@ struct SettingsView: View {
                         }
                     }.pickerStyle(MenuPickerStyle())
                     
-                    Text("Your bedtime is: \(bedTime)")
+//                    Text("Your bedtime is: \(bedTime)")
                 }
 
                 Section(header: Text("Wind down reminder")) {
@@ -119,7 +120,7 @@ struct SettingsView: View {
                         }.pickerStyle(MenuPickerStyle())
                         Text(" before bedtime.")
                     }
-                    Text("Wind down at: \(windDownTimer)")
+//                    Text("Wind down at: \(windDownTimer)")
 
 
                 }

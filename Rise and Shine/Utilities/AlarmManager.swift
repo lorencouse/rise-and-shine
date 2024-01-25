@@ -7,6 +7,56 @@
 
 import Foundation
 
+    func calculateScheduleForSunData(_ sunDataArray: [SunData]) {
+        var schedules = [AlarmSchedule]()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "h:mm:ss a"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        for sunData in sunDataArray {
+            guard let sunriseDate = dateFormatter.date(from: sunData.sunrise) else {
+                continue // Skip this entry if the date is invalid
+            }
+
+            let userDefaults = UserDefaults.standard
+            let alarmOffset = (userDefaults.wakeUpOffsetHours * 60) + userDefaults.wakeUpOffsetMinutes
+            let adjustedAlarmOffset = userDefaults.beforeSunrise ? -alarmOffset : alarmOffset
+
+            guard let alarmTime = Calendar.current.date(byAdding: .minute, value: adjustedAlarmOffset, to: sunriseDate),
+                  let bedTime = Calendar.current.date(byAdding: .hour, value: -userDefaults.targetHoursOfSleep, to: alarmTime),
+                  let windDownTime = Calendar.current.date(byAdding: .minute, value: -userDefaults.windDownTime, to: bedTime) else {
+                continue // Skip this entry if calculation fails
+            }
+
+            let schedule = AlarmSchedule(date: sunData.date,
+                                         sunriseTime: sunData.sunrise,
+                                           alarmTime: dateFormatter.string(from: alarmTime),
+                                           bedTime: dateFormatter.string(from: bedTime),
+                                           windDownTime: dateFormatter.string(from: windDownTime))
+            schedules.append(schedule)
+        }
+        
+        
+//      Write schedule to JSON file
+        
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("Documents directory not found.")
+            return
+        }
+
+        let fileURL = documentsDirectory.appendingPathComponent("SunDataSchedules.json")
+
+        do {
+            print(schedules)
+            let data = try JSONEncoder().encode(schedules)
+            try data.write(to: fileURL, options: .atomic)
+
+        } catch {
+            print("Error writing schedules to file: \(error)")
+        }
+
+    }
+
 
     
     func calculateAlarmTime() {

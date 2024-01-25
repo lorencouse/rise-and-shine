@@ -31,3 +31,31 @@ struct SunData: Decodable, Hashable, Encodable {
         case dayLength = "day_length"
     }
 }
+
+struct AlarmSchedule: Codable {
+    var date: String
+    var sunriseTime: String
+    var alarmTime: String
+    var bedTime: String
+    var windDownTime: String
+}
+
+
+func loadSchedulesFromFile() -> [AlarmSchedule]? {
+    guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+        print("Documents directory not found.")
+        return nil
+    }
+
+    let fileURL = documentsDirectory.appendingPathComponent("SunDataSchedules.json")
+
+    do {
+        let data = try Data(contentsOf: fileURL)
+        let schedules = try JSONDecoder().decode([AlarmSchedule].self, from: data)
+        return schedules
+    } catch {
+        print("Error reading schedules from file: \(error)")
+        return nil
+    }
+}
+
