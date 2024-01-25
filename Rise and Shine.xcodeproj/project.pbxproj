@@ -59,6 +59,7 @@
 		5C55495F2B51FEEC00758980 /* Rise and ShineUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Rise and ShineUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITests.swift; sourceTree = "<group>"; };
 		5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		5C8C65962B623FBB001D7F18 /* Location.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Location.gpx; sourceTree = "<group>"; };
 		5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rise-and-Shine-Info.plist"; sourceTree = SOURCE_ROOT; };
 		5CEC25392B58D36B00F3CC2B /* SunData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunData.swift; sourceTree = "<group>"; };
 		5CEC253B2B58D39F00F3CC2B /* SunApiResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunApiResponse.swift; sourceTree = "<group>"; };
@@ -128,6 +129,7 @@
 				5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */,
 				5C55494C2B51FEEC00758980 /* Assets.xcassets */,
 				5C55494E2B51FEEC00758980 /* Preview Content */,
+				5C8C65962B623FBB001D7F18 /* Location.gpx */,
 			);
 			path = "Rise and Shine";
 			sourceTree = "<group>";

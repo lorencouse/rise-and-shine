@@ -18,8 +18,8 @@ func updateData() async {
         try await APIManager.fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: date)
         if APIManager.loadSunDataFromFile() != nil {
             calculateAlarmTime() // Assuming these are synchronous
-            calculateTime(for: "alarmTime", adjustment: .hour(targetHoursOfSleep), resultKey: "bedTime")
-            calculateTime(for: "bedTime", adjustment: .minute(UserDefaults.standard.integer(forKey: "windDownTime")), resultKey: "windDownTimer")
+//            calculateTime(for: "alarmTime", adjustment: .hour(targetHoursOfSleep), resultKey: "bedTime")
+//            calculateTime(for: "bedTime", adjustment: .minute(UserDefaults.standard.integer(forKey: "windDownTime")), resultKey: "windDownTimer")
             
         } else {
             print("Sunrise time not found for date: \(date)")

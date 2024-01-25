@@ -11,38 +11,46 @@ import Foundation
     
     func calculateAlarmTime() {
         let userDefaults = UserDefaults.standard
-        let alarmOffsetMinutes = userDefaults.wakeUpOffsetMinutes
-        let alarmOffsetHours = userDefaults.wakeUpOffsetHours
-        var alarmOffset = alarmOffsetMinutes + (alarmOffsetHours * 60)
+        let alarmOffset = userDefaults.wakeUpOffsetMinutes + (userDefaults.wakeUpOffsetHours * 60)
         let beforeSunrise = userDefaults.beforeSunrise
-        let sunriseTimeArray = userDefaults.stringArray(forKey: "sunriseTimeArray") ?? []
-        let sunriseTime = sunriseTimeArray[0]
-        alarmOffset = beforeSunrise ? -alarmOffset : alarmOffset
         
-        // Step 1: Convert sunriseTime string to Date
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "h:mm:ss a"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX") // Set the locale to ensure proper parsing
         
-        guard let sunriseDate = dateFormatter.date(from: sunriseTime) else {
-            fatalError("Invalid date format for sunriseTime")
+        if let sunData: [SunData] = APIManager.loadSunDataFromFile() {
+            
+            // Step 1: Convert sunriseTime string to Date
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "h:mm:ss a"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX") // Set the locale to ensure proper parsing
+            
+            guard let sunriseDate = dateFormatter.date(from: sunData[0].sunrise) else {
+                fatalError("Invalid date format for sunriseTime")
+            }
+            
+            // Calculate and store the alarm time
+            let adjustedAlarmOffset = beforeSunrise ? -alarmOffset : alarmOffset
+            guard let alarmTime = Calendar.current.date(byAdding: .minute, value: adjustedAlarmOffset, to: sunriseDate) else {
+                fatalError("Error calculating alarm time")
+            }
+            
+            guard let bedTime = Calendar.current.date(byAdding: .hour, value: -userDefaults.targetHoursOfSleep, to: alarmTime) else {
+                fatalError("Error calculating bed time")
+            }
+            
+            guard let windDownTimer = Calendar.current.date(byAdding: .minute, value: -userDefaults.windDownTime, to: bedTime) else {
+                fatalError("Error calculating bed time")
+            }
+            
+            userDefaults.alarmTime = dateFormatter.string(from: alarmTime)
+            userDefaults.bedTime = dateFormatter.string(from: bedTime)
+            userDefaults.windDownTimeReminder = dateFormatter.string(from: windDownTimer)
+        }
+        else {
+            userDefaults.alarmTime = "No sunrise data."
         }
         
-        // Step 2: Add alarmOffsetMinutes to get alarm time
-        let calendar = Calendar.current
-        print("sunriseTime in String \(sunriseTime)")
-
-        // Format the sunriseDate to String before printing
-        let formattedSunriseTime = dateFormatter.string(from: sunriseDate)
-        print("\(formattedSunriseTime)")
-        if let alarmTime = calendar.date(byAdding: .minute, value: alarmOffset, to: sunriseDate) {
-            let formattedAlarmTime = dateFormatter.string(from: alarmTime)
-            UserDefaults.standard.alarmTime = "\(formattedAlarmTime)"
-            print("\(UserDefaults.standard.alarmTime)")
-        } else {
-            fatalError("Error calculating alarm time")
-        }
     }
+
+
 
     func calculateTime(for key: String, adjustment: TimeAdjustment, resultKey: String) {
         let dateFormatter = DateFormatter()

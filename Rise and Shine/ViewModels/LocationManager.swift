@@ -48,9 +48,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 }
 
-func fetchLocation(locationManager: LocationManager) -> String {
+func fetchLocation(locationManager: LocationManager) {
     guard let status = locationManager.locationStatus else {
-        return "Unknown Location Access Status"
+        print("Unknown Location Access Status")
+        return
     }
 
     switch status {
@@ -59,15 +60,22 @@ func fetchLocation(locationManager: LocationManager) -> String {
             UserDefaults.standard.setValue( locationManager.currentLocation?.coordinate.latitude, forKey: "currentLatitude")
             UserDefaults.standard.setValue( locationManager.currentLocation?.coordinate.longitude, forKey: "currentLongitude")
             UserDefaults.standard.setValue( locationManager.cityName, forKey: "currentCity")
-            return locationManager.cityName ?? "Unknown City"
+           
         } else {
-            return "Location not available"
+            UserDefaults.standard.setValue( "Could Not Fetch Location", forKey: "currentCity")
+            print("Location not available")
+            return
         }
     case .denied, .restricted:
-        return "Location Access Denied"
+        print("Location Access Denied")
+        return
     case .notDetermined:
-        return "Location Access Not Determined"
+        print("Location Access Not Determined")
+        return
     @unknown default:
-        return "Error fetching location"
+        print("Error fetching location")
+        return
     }
 }
+
+
