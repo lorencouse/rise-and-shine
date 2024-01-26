@@ -13,7 +13,7 @@ struct Constants {
     static let wakeUpOffsetMinutesDefault = 0
     static let beforeSunriseDefault = true
     static let targetHoursOfSleepDefault = 8
-    static let windDownTimeDefault = 0
+    static let windDownTimeDefault = 30
     static let bedTime = ""
     static let alarmTime = ""
     static let windDownTimer = ""

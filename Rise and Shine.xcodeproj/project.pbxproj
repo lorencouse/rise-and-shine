@@ -120,6 +120,7 @@
 		5C5549472B51FEEB00758980 /* Rise and Shine */ = {
 			isa = PBXGroup;
 			children = (
+				5C8C65972B6354AB001D7F18 /* AppData */,
 				5CEC25382B58D34C00F3CC2B /* Helpers */,
 				5CEC25372B58D33D00F3CC2B /* Utilities */,
 				5CEC25362B58D32700F3CC2B /* ViewModels */,
@@ -157,6 +158,13 @@
 				5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */,
 			);
 			path = "Rise and ShineUITests";
+			sourceTree = "<group>";
+		};
+		5C8C65972B6354AB001D7F18 /* AppData */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = AppData;
 			sourceTree = "<group>";
 		};
 		5CEC25332B58D2F500F3CC2B /* Models */ = {

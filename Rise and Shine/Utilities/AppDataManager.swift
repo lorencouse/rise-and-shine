@@ -8,30 +8,87 @@
 import Foundation
 import CoreLocation
 
-//class AppDataManager {
-//    static let shared = AppDataManager()
-//    
-//    // Fetch and update the data
-//    func updateDataOnLaunch() {
-//        fetchLocationData { [weak self] location in
-//            self?.fetchDateAndSunData(location: location) { sunData in
-//                self?.updateAlarms(sunData: sunData)
-//                // Store values in UserDefaults
-//                UserDefaults.standard.sunData = sunData
-//                // ... store other values ...
-//            }
-//        }
-//    }
-//
-//    private func fetchLocationData(completion: @escaping (CLLocation) -> Void) {
-//        // Fetch location and call completion with the result
-//    }
-//
-//    private func fetchDateAndSunData(location: CLLocation, completion: @escaping (SunData) -> Void) {
-//        // Fetch date and sun data, then call completion
-//    }
-//
-//    private func updateAlarms(sunData: SunData) {
-//        // Logic to update alarms based on sun data
-//    }
-//}
+class AppDataManager {
+    static let shared = AppDataManager()
+    
+//    Sun Data Json Manager
+    
+    static func saveSunDataToFile(sunData: [SunData], fileName: String) {
+        do {
+            let filePath = getDocumentsDirectory().appendingPathComponent("\(fileName)")
+            let data = try JSONEncoder().encode(sunData)
+            try data.write(to: filePath, options: .atomicWrite)
+        } catch {
+            print("Error saving sun data to file: \(error)")
+        }
+    }
+
+    static func loadSunDataFile() -> [SunData]? {
+        let filePath = getDocumentsDirectory().appendingPathComponent(UserDefaults.standard.sunriseJSONFileName)
+        do {
+            let data = try Data(contentsOf: filePath)
+            let sunData = try JSONDecoder().decode([SunData].self, from: data)
+            return sunData
+        } catch {
+            print("Error loading sun data from file: \(error)")
+            return nil
+        }
+    }
+    
+    static func clearAndDeleteSunData() {
+        let filePath = getDocumentsDirectory().appendingPathComponent(UserDefaults.standard.sunriseJSONFileName)
+        
+        do {
+            // Remove the file from the file system
+            try FileManager.default.removeItem(at: filePath)
+            
+            print("SunData file deleted successfully.")
+        } catch {
+            print("Error deleting SunData file: \(error)")
+        }
+    }
+    
+//    User Alarms JSON Manager
+    
+    static func deleteAlarmsFile() {
+        let fileManager = FileManager.default
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
+
+        guard let fileURL = documentsDirectory?.appendingPathComponent("userAlarms.json") else {
+            print("Failed to get the file URL")
+            return
+        }
+
+        do {
+            try fileManager.removeItem(at: fileURL)
+            print("File successfully deleted")
+        } catch {
+            print("Error deleting file: \(error)")
+        }
+    }
+    
+    static func loadAlarmsFile() -> [AlarmSchedule]? {
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("Documents directory not found.")
+            return nil
+        }
+
+        let fileURL = documentsDirectory.appendingPathComponent("userAlarms.json")
+
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let schedules = try JSONDecoder().decode([AlarmSchedule].self, from: data)
+            return schedules
+        } catch {
+            print("Error reading schedules from file: \(error)")
+            return nil
+        }
+    }
+
+    
+}
+
+func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
+}
