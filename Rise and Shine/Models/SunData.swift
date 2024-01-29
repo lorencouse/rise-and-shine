@@ -41,21 +41,4 @@ struct AlarmSchedule: Codable {
 }
 
 
-func loadSchedulesFromFile() -> [AlarmSchedule]? {
-    guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-        print("Documents directory not found.")
-        return nil
-    }
-
-    let fileURL = documentsDirectory.appendingPathComponent("SunDataSchedules.json")
-
-    do {
-        let data = try Data(contentsOf: fileURL)
-        let schedules = try JSONDecoder().decode([AlarmSchedule].self, from: data)
-        return schedules
-    } catch {
-        print("Error reading schedules from file: \(error)")
-        return nil
-    }
-}
 

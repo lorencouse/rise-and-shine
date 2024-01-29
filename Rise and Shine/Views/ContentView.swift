@@ -15,9 +15,11 @@ import Combine
 struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
     @State private var locationData: LocationManager?
-    @State private var sunData: [SunData] = (APIManager.loadSunDataFromFile() ?? [])
-    @State private var alarmSchedule: [AlarmSchedule] = (loadSchedulesFromFile() ?? [])
+    @State private var sunData: [SunData] = (AppDataManager.loadSunDataFile() ?? [])
+    @State private var alarmSchedule: [AlarmSchedule] = (AppDataManager.loadAlarmsFile() ?? [])
     @State private var selectedDateIndex = 0 // Index for the selected date
+    @State private var selectedDate = Date.now
+
 
 
     var body: some View {
@@ -35,27 +37,18 @@ struct ContentView: View {
                     
                 }
                 }
-                
-
-                
+            
                 Form {
                     
-
-                        
                     Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
-                            // Picker for selecting the date
-                            Picker("Select Date", selection: $selectedDateIndex) {
-                                ForEach(0 ..< sunData.count, id: \.self) { index in
-                                    Text(self.sunData[index].date).tag(index)
-                                }
-                            }.pickerStyle(MenuPickerStyle())
+
                             
                         Button("Update") {
                             Task {
                                 fetchLocation(locationManager: locationManager)
                                 await updateData()
-                                sunData = APIManager.loadSunDataFromFile() ?? []
-                                alarmSchedule = (loadSchedulesFromFile() ?? [])
+                                sunData = AppDataManager.loadSunDataFile() ?? []
+                                alarmSchedule = (AppDataManager.loadAlarmsFile() ?? [])
                             }
                         }
                         
@@ -71,28 +64,32 @@ struct ContentView: View {
                         }
                     
                         Section {
-                            // List to display sun data for the selected date
+                            
+                            DatePicker("Enter your birthday", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
+                                .datePickerStyle(GraphicalDatePickerStyle())
+                                .frame(maxHeight: 400)
+                            
+                            
                             List {
-                                if alarmSchedule.indices.contains(selectedDateIndex) {
-                                    let data = alarmSchedule[selectedDateIndex]
-                                    Section(header: Text("Date: \(data.date)")) {
-                                        Text("Sunrise Time: \(data.sunriseTime)")
-                                        Text("Alarm Time: \(data.alarmTime)")
-                                        Text("Bed Time: \(data.bedTime)")
-                                        Text("Sleep Reminder: \(data.windDownTime)")
+                                
+//                                Alarm Data
+                                if alarmSchedule.contains(where: { $0.date == formattedDateString(date: selectedDate) }) {
+                                    if let data = alarmSchedule.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
+                                        Section(header: Text("Date: \(data.date)")) {
+                                            Text("Sunrise Time: \(data.sunriseTime)")
+                                            Text("Alarm Time: \(data.alarmTime)")
+                                            Text("Bed Time: \(data.bedTime)")
+                                            Text("Sleep Reminder: \(data.windDownTime)")
+                                        }
                                     }
+                                } else {
+                                    Text("No data available for this date")
                                 }
-                            }
-                        }
-                    
-                        
-                        Section {
-                            // List to display sun data for the selected date
-                            List {
-                                if sunData.indices.contains(selectedDateIndex) {
-                                    let data = sunData[selectedDateIndex]
-                                    Section(header: Text("Date: \(data.date)")) {
-                                        Text("Sunrise: \(data.sunrise)")
+                                
+//                                Sun Data
+                                
+                                if let data = sunData.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
+                                    Section {
                                         Text("Sunset: \(data.sunset)")
                                         Text("First Light: \(data.firstLight)")
                                         Text("Last Light: \(data.lastLight)")
@@ -100,9 +97,14 @@ struct ContentView: View {
                                         Text("Dusk: \(data.dusk)")
                                         Text("Day Length: \(data.dayLength)")
                                     }
+                                } else {
+                                    Text("No data available for this date")
                                 }
+                                
                             }
+                            
                         }
+                        
     
                 }
                 
@@ -111,10 +113,20 @@ struct ContentView: View {
                 
                 
                 .navigationTitle("Rise and Shine")
+                .onAppear() {
+                    Task {
+                        fetchLocation(locationManager: locationManager)
+                        await updateData()
+                        sunData = AppDataManager.loadSunDataFile() ?? []
+                        alarmSchedule = AppDataManager.loadAlarmsFile() ?? []
+                    }
+
+                }
                 
             }
         }
     }
+
 
 
 
