@@ -15,8 +15,8 @@ import Combine
 struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
     @State private var locationData: LocationManager?
-    @State private var sunData: [SunData] = (AppDataManager.loadSunDataFile() ?? [])
-    @State private var alarmSchedule: [AlarmSchedule] = (AppDataManager.loadAlarmsFile() ?? [])
+    @State private var sunData: [SunData] = (APIManager.loadSunDataFromFile() ?? [])
+    @State private var alarmSchedule: [AlarmSchedule] = (loadSchedulesFromFile() ?? [])
     @State private var selectedDateIndex = 0 // Index for the selected date
 
 
@@ -54,8 +54,8 @@ struct ContentView: View {
                             Task {
                                 fetchLocation(locationManager: locationManager)
                                 await updateData()
-                                sunData = AppDataManager.loadSunDataFile() ?? []
-                                alarmSchedule = (AppDataManager.loadAlarmsFile() ?? [])
+                                sunData = APIManager.loadSunDataFromFile() ?? []
+                                alarmSchedule = (loadSchedulesFromFile() ?? [])
                             }
                         }
                         
@@ -91,7 +91,8 @@ struct ContentView: View {
                             List {
                                 if sunData.indices.contains(selectedDateIndex) {
                                     let data = sunData[selectedDateIndex]
-                                    Section {
+                                    Section(header: Text("Date: \(data.date)")) {
+                                        Text("Sunrise: \(data.sunrise)")
                                         Text("Sunset: \(data.sunset)")
                                         Text("First Light: \(data.firstLight)")
                                         Text("Last Light: \(data.lastLight)")
@@ -110,15 +111,6 @@ struct ContentView: View {
                 
                 
                 .navigationTitle("Rise and Shine")
-                .onAppear() {
-                    Task {
-                        fetchLocation(locationManager: locationManager)
-                        await updateData()
-                        sunData = AppDataManager.loadSunDataFile() ?? []
-                        alarmSchedule = AppDataManager.loadAlarmsFile() ?? []
-                    }
-
-                }
                 
             }
         }

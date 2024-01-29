@@ -38,7 +38,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
                 self.cityName = placemark.locality ?? "Unknown City"
                 UserDefaults.standard.currentCity = self.cityName ?? "Unknown City"
-
+                print(UserDefaults.standard.currentCity)
             }
         }
     }

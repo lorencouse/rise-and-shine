@@ -24,7 +24,7 @@ extension UserDefaults {
         static let currentCity = "currentCity"
         static let sunriseData = "sunriseData"
         static let lastDate = "lastDate"
-        static let sunriseJSONFileName = "sunriseJSONFileName"
+        static let sunriseTimeArray = "sunriseTimeArray"
         // Add other keys as needed
     }
     
@@ -92,47 +92,44 @@ extension UserDefaults {
         set { set(newValue, forKey: Keys.lastDate) }
     }
     
-    var sunriseJSONFileName: String {
-        get { string(forKey: Keys.sunriseJSONFileName) ?? "No Date"  }
-        set { set(newValue, forKey: Keys.sunriseJSONFileName) }
+
+    
+
+    
+    static func binding<T>(key: String, defaultValue: T) -> Binding<T> where T: Codable {
+        Binding(
+            get: {
+                if let data = UserDefaults.standard.data(forKey: key),
+                   let value = try? JSONDecoder().decode(T.self, from: data) {
+                    return value
+                }
+                return defaultValue
+            },
+            set: {
+                if let data = try? JSONEncoder().encode($0) {
+                    UserDefaults.standard.set(data, forKey: key)
+                }
+            }
+        )
     }
-    
-
-    
-
-    
-//    static func binding<T>(key: String, defaultValue: T) -> Binding<T> where T: Codable {
-//        Binding(
-//            get: {
-//                if let data = UserDefaults.standard.data(forKey: key),
-//                   let value = try? JSONDecoder().decode(T.self, from: data) {
-//                    return value
-//                }
-//                return defaultValue
-//            },
-//            set: {
-//                if let data = try? JSONEncoder().encode($0) {
-//                    UserDefaults.standard.set(data, forKey: key)
-//                }
-//            }
-//        )
-//    }
 }
 
 
 
 func clearUserDefaults() {
      let userDefaults = UserDefaults.standard
-//     let appDomain = Bundle.main.bundleIdentifier
-//     userDefaults.removePersistentDomain(forName: appDomain!)
+     let appDomain = Bundle.main.bundleIdentifier
+     userDefaults.removePersistentDomain(forName: appDomain!)
      userDefaults.wakeUpOffsetHours = Constants.wakeUpOffsetHoursDefault
      userDefaults.wakeUpOffsetMinutes = Constants.wakeUpOffsetMinutesDefault
      userDefaults.beforeSunrise = Constants.beforeSunriseDefault
      userDefaults.targetHoursOfSleep = Constants.targetHoursOfSleepDefault
      userDefaults.windDownTime = Constants.windDownTimeDefault
-     userDefaults.bedTime = Constants.bedTime
-     userDefaults.alarmTime = Constants.alarmTime
-     userDefaults.windDownTimeReminder = Constants.windDownTimer
+    userDefaults.bedTime = Constants.bedTime
+    userDefaults.alarmTime = Constants.alarmTime
+    userDefaults.windDownTimeReminder = Constants.windDownTimer
+     // Synchronize UserDefaults to persist the changes immediately (optional)
      UserDefaults.standard.synchronize()
+    APIManager.clearAndDeleteSunData()
 
  }

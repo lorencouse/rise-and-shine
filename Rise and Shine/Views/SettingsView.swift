@@ -11,16 +11,18 @@ import CoreLocation
 
 struct SettingsView: View {
     @ObservedObject private var locationManager = LocationManager()
-    @AppStorage("wakeUpOffsetHours") var wakeUpOffsetHours = Constants.wakeUpOffsetHoursDefault
-    @AppStorage("wakeUpOffsetMinutes") var wakeUpOffsetMinutes = Constants.wakeUpOffsetMinutesDefault
-    @AppStorage("beforeSunrise") var beforeSunrise = true
+    @AppStorage("wakeUpOffsetHours") var wakeUpOffsetHours = 0
+    @AppStorage("wakeUpOffsetMinutes") var wakeUpOffsetMinutes = 0
+    @AppStorage("beforeSunrise") var beforeSunrise = true 
     @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
-    @AppStorage("windDownTime") var windDownTime = Constants.windDownTimeDefault
+    @AppStorage("windDownTime") var windDownTime = 0
     @AppStorage("windDownTimer") var windDownTimer = "10:00 PM"
     @AppStorage("bedTime") var bedTime = ""
     @AppStorage("alarmTime") var alarmTime = ""
     @AppStorage("currentCity") var currentCity = "Location: Please Update"
-    @State private var updateButtonText: String = "Save Prefrences"
+//    @AppStorage("sunriseTimeArray") var sunriseTimeArray = UserDefaults.standard.sunriseTimeArray
+    @State private var sunData: [SunData] = APIManager.loadSunDataFromFile() ?? []
+    @State private var updateButtonText: String = "Update"
 
 
     
@@ -35,8 +37,39 @@ struct SettingsView: View {
                 Section(header: Text("Location:")) {
                     
                     Text(currentCity)
+                    VStack {
+
+                        Button(updateButtonText) {
+                            Task {
+                                fetchLocation(locationManager: locationManager)
+                                await updateData()
+                                sunData = APIManager.loadSunDataFromFile() ?? []
+                                updateButtonText = "Updated ✅"
+                            }
+                        }
+                        
+                    }
 
                 }
+
+//                Section(header: Text("Sunrise Sunset")) {
+//                    
+//                    ////                  Show all sunrise times
+//                    //                    if sunData.isEmpty {
+//                    //                        Text("No sunrise data available")
+//                    //                    } else {
+//                    //                        ForEach(sunData, id: \.self) { day in
+//                    //
+//                    //                            Text("\(day.date): \(day.sunrise)")
+//                    //                        }
+//                    //                    }
+//                    
+//                    Text("Date: " + (fetchDate()))
+//                    
+//                    
+//                    Text("Sunrise Time: \(sunData.first?.sunrise ?? "")")
+//                    
+//                }
 
                 Section(header: Text("Alarm time:")) {
                     HStack {
@@ -60,6 +93,11 @@ struct SettingsView: View {
                         Text("After Sunrise").tag(false)
                     }.pickerStyle(SegmentedPickerStyle())
 
+
+
+//                        Text("Alarm Time: \(alarmTime) ")
+
+
                 }
 
                 Section(header: Text("Target Hours of Sleep")) {
@@ -70,6 +108,7 @@ struct SettingsView: View {
                         }
                     }.pickerStyle(MenuPickerStyle())
                     
+//                    Text("Your bedtime is: \(bedTime)")
                 }
 
                 Section(header: Text("Wind down reminder")) {
@@ -81,23 +120,16 @@ struct SettingsView: View {
                         }.pickerStyle(MenuPickerStyle())
                         Text(" before bedtime.")
                     }
+//                    Text("Wind down at: \(windDownTimer)")
+
 
                 }
                 
                 Section() {
-                    Button("Reset Alarm Preferences") {
+                    Button("Clear User Data") {
                         Task {
                             clearUserDefaults()
-                        }
-
-                        
-                    }
-                    
-                    Button("Erase All App Data") {
-                        Task {
-                            clearUserDefaults()
-                            AppDataManager.clearAndDeleteSunData()
-                            AppDataManager.deleteAlarmsFile()
+                            sunData = []
                         }
 
                         
@@ -111,10 +143,13 @@ struct SettingsView: View {
                 
             }
             .navigationTitle("Settings")
-
+            
+            
             
         }
-    
+        
+        
+        
     }
     
 }
