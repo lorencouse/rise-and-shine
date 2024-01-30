@@ -47,6 +47,7 @@ class AppDataManager {
             
             let data = try JSONEncoder().encode(existingData)
             try data.write(to: filePath, options: .atomicWrite)
+            
             print("SunData appended to file.")
         } catch {
             print("Error appending sun data to file: \(error)")

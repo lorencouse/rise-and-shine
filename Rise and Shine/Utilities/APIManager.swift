@@ -51,34 +51,42 @@ struct APIManager {
     }
     
     
-    static func fetchMissingSunDataFromAPI(latitude: Double?, longitude: Double?, startDate: String) async throws{
-        
+    enum SunDataError: Error {
+        case invalidDateFormat
+        case invalidURL
+        case endDateCalculationError
+    }
+
+    static func fetchMissingSunDataFromAPI(latitude: Double?, longitude: Double?, startDate: String) async throws -> [SunData]? {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let urlBase = Constants.sunDataAPIBaseURL
 
         guard let startDateVal = dateFormatter.date(from: startDate) else {
-            fatalError("Invalid date format for startDate")
+            throw SunDataError.invalidDateFormat
         }
 
         guard let endDate = Calendar.current.date(byAdding: .day, value: 30, to: startDateVal) else {
-            fatalError("Error calculating endDate")
+            throw SunDataError.endDateCalculationError
         }
 
         let endDateString = dateFormatter.string(from: endDate)
-
-            
-            guard let url = URL(string: "\(urlBase)?lat=\(String(describing: latitude))&lng=\(String(describing: longitude))&date_start=\(startDate)&date_end=\(endDateString)") else { print("Not a valid url.")
-                return }
-
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let decoded = try JSONDecoder().decode(SunApiResponse.self, from: data)
-
-            AppDataManager.appendSunDataToFile(newSunData: decoded.results)
-            print("Missing SunData Added to JSON")
         
+        guard let lat = latitude, let lng = longitude,
+              let url = URL(string: "\(urlBase)?lat=\(lat)&lng=\(lng)&date_start=\(startDate)&date_end=\(endDateString)") else {
+            throw SunDataError.invalidURL
+        }
+
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let decoded = try JSONDecoder().decode(SunApiResponse.self, from: data)
+
+        AppDataManager.appendSunDataToFile(newSunData: decoded.results)
+        print("Missing SunData Added to JSON")
+
+        return AppDataManager.loadSunDataFile() // This should return SunData, not AlarmsFile
     }
-    
+
+
 
 }
 
