@@ -117,7 +117,6 @@ struct ContentView: View {
                 }
                 
                 
-//                .navigationTitle("Rise and Shine")
                 .onAppear() {
                     Task {
                         fetchLocation(locationManager: locationManager)
