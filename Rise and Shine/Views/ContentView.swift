@@ -25,43 +25,25 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                VStack {
+                HStack {
+                    NavigationLink(destination: SettingsView()) {
+                        Image(systemName: "line.horizontal.3")
+                            .foregroundColor(Color.blue)
+                            .imageScale(.large)
+                            .padding()
+                        Text("Settings")
+                    }
                     
-                    Text("Rise and Shine")
-                        .font(.largeTitle).padding()
+                    Spacer()
 
-                
-                NavigationLink(destination: SettingsView()) {
-                    Text("Settings")
-                        .foregroundColor(Color.blue)
-                    
-                }
+
                 }
             
                 Form {
                     
-                    Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
-
-                            
-                        Button("Update") {
-                            Task {
-                                fetchLocation(locationManager: locationManager)
-                                await updateData()
-                                sunData = AppDataManager.loadSunDataFile() ?? []
-                                alarmSchedule = (AppDataManager.loadAlarmsFile() ?? [])
-                            }
-                        }
-                        
-                        Button("Clear All") {
-                            Task {
-                                alarmSchedule = []
-                                sunData = []
-                            }
-
-                            
-                        }
-                        
-                        }
+                    Section {
+                        Text("Location: \(UserDefaults.standard.currentCity)")
+                    }
                     
                         Section {
                             
@@ -106,13 +88,36 @@ struct ContentView: View {
                         }
                         
     
+                    Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
+
+                            
+                        Button("Update") {
+                            Task {
+                                fetchLocation(locationManager: locationManager)
+                                await updateData()
+                                sunData = AppDataManager.loadSunDataFile() ?? []
+                                alarmSchedule = (AppDataManager.loadAlarmsFile() ?? [])
+                            }
+                        }
+                        
+                        Button("Clear All") {
+                            Task {
+                                alarmSchedule = []
+                                sunData = []
+                            }
+
+                            
+                        }
+                        
+                        }
+                    
                 }
                 
 
                 }
                 
                 
-                .navigationTitle("Rise and Shine")
+//                .navigationTitle("Rise and Shine")
                 .onAppear() {
                     Task {
                         fetchLocation(locationManager: locationManager)

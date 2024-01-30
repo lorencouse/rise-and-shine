@@ -73,7 +73,7 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Wind down reminder")) {
-                    VStack {
+                    HStack {
                         Picker("Notify me ", selection: $windDownTime) {
                             ForEach(0..<60, id: \.self) { i in
                                 Text("\(i) mins").tag(i)
