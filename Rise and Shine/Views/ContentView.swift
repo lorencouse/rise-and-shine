@@ -14,10 +14,8 @@ import Combine
 
 struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
-    @State private var locationData: LocationManager?
     @State private var sunData: [SunData] = (AppDataManager.loadSunDataFile() ?? [])
     @State private var alarmSchedule: [AlarmSchedule] = (AppDataManager.loadAlarmsFile() ?? [])
-    @State private var selectedDateIndex = 0 // Index for the selected date
     @State private var selectedDate = Date.now
 
 
@@ -47,7 +45,7 @@ struct ContentView: View {
                     
                         Section {
                             
-                            DatePicker("Enter your birthday", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
+                            DatePicker("Choose Date", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
                                 .datePickerStyle(GraphicalDatePickerStyle())
                                 .frame(maxHeight: 400)
                             
@@ -80,6 +78,8 @@ struct ContentView: View {
                                         Text("Day Length: \(data.dayLength)")
                                     }
                                 } else {
+                                    
+
                                     Text("No data available for this date")
                                 }
                                 

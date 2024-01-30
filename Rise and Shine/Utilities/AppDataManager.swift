@@ -13,9 +13,9 @@ class AppDataManager {
     
 //    Sun Data Json Manager
     
-    static func saveSunDataToFile(sunData: [SunData], fileName: String) {
+    static func saveSunDataToFile(sunData: [SunData]) {
         do {
-            let filePath = getDocumentsDirectory().appendingPathComponent("\(fileName)")
+            let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
             let data = try JSONEncoder().encode(sunData)
             try data.write(to: filePath, options: .atomicWrite)
         } catch {
@@ -24,7 +24,7 @@ class AppDataManager {
     }
 
     static func loadSunDataFile() -> [SunData]? {
-        let filePath = getDocumentsDirectory().appendingPathComponent(UserDefaults.standard.sunriseJSONFileName)
+        let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
         do {
             let data = try Data(contentsOf: filePath)
             let sunData = try JSONDecoder().decode([SunData].self, from: data)
@@ -35,8 +35,26 @@ class AppDataManager {
         }
     }
     
+    static func appendSunDataToFile(newSunData: [SunData]) {
+        do {
+            let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
+            var existingData = loadSunDataFile() ?? []
+            
+            // Avoid duplicates
+            for newData in newSunData where !existingData.contains(where: { $0.date == newData.date }) {
+                existingData.append(newData)
+            }
+            
+            let data = try JSONEncoder().encode(existingData)
+            try data.write(to: filePath, options: .atomicWrite)
+            print("SunData appended to file.")
+        } catch {
+            print("Error appending sun data to file: \(error)")
+        }
+    }
+    
     static func clearAndDeleteSunData() {
-        let filePath = getDocumentsDirectory().appendingPathComponent(UserDefaults.standard.sunriseJSONFileName)
+        let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
         
         do {
             // Remove the file from the file system

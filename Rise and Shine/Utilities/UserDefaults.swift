@@ -21,10 +21,11 @@ extension UserDefaults {
         static let windDownTimer = "windDownTimer"
         static let currentLongitude = "currentLongitude"
         static let currentLatitude = "currentLatitude"
+        static let lastCity = "lastCity"
         static let currentCity = "currentCity"
         static let sunriseData = "sunriseData"
         static let lastDate = "lastDate"
-        static let sunriseJSONFileName = "sunriseJSONFileName"
+
         // Add other keys as needed
     }
     
@@ -92,9 +93,9 @@ extension UserDefaults {
         set { set(newValue, forKey: Keys.lastDate) }
     }
     
-    var sunriseJSONFileName: String {
-        get { string(forKey: Keys.sunriseJSONFileName) ?? "No Date"  }
-        set { set(newValue, forKey: Keys.sunriseJSONFileName) }
+    var lastCity: String {
+        get { string(forKey: Keys.lastCity) ?? "No City"  }
+        set { set(newValue, forKey: Keys.lastCity) }
     }
     
 
