@@ -17,25 +17,25 @@ struct ContentView: View {
     @State private var sunData: [SunData] = []
     @State private var alarmSchedule: [AlarmSchedule] = []
     @State private var selectedDate = Date.now
-
-
-
+    
+    
+    
     var body: some View {
         NavigationView {
             VStack {
-
-            navigationBar
-               formView
-
-                }
                 
-                .onAppear() {
-                    loadData()
-
-                }
+                navigationBar
+                formView
                 
             }
+            
+            .onAppear() {
+                loadData()
+                
+            }
+            
         }
+    }
     
     
     private var navigationBar: some View {
@@ -49,7 +49,7 @@ struct ContentView: View {
             }
             
             Spacer()
-
+            
         }
         
         
@@ -62,20 +62,20 @@ struct ContentView: View {
                 Text("Location: \(UserDefaults.standard.currentCity)")
             }
             
-                Section {
-                    
-                    datePickerView
-                    timesAndAlarmsSection
-                    
- 
-                }
+            Section {
                 
-
+                datePickerView
+                timesAndAlarmsSection
+                
+                
+            }
+            
+        
             updateButtons
             
         }
         
-
+        
     }
     
     
@@ -85,7 +85,7 @@ struct ContentView: View {
             .datePickerStyle(GraphicalDatePickerStyle())
             .frame(maxHeight: 400)
             .onChange(of: selectedDate) { _ in
-                checkAndFetchSunData()
+                checkMissingSunData()
             }
     }
     
@@ -96,26 +96,22 @@ struct ContentView: View {
                 alarmSection(data)
             } else {
                 if sunData.isEmpty {
-                    Text("Fetching data for this date...")
-                        .onAppear {
-                            checkAndFetchSunData()
-                        }
+                    Text("Fetching sun data for this date...")
                 } else {
                     Text("No alarm data available for this date")
                 }
             }
-
+            
             // Sun Data
             if let data = sunData.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
                 sunDataSection(data)
             } else {
-                Text("No sun data available for this date")
-            }
+                Text("Fetching alarm data for this date...")            }
         }
     }
-
-
-
+    
+    
+    
     private func alarmSection(_ data: AlarmSchedule) -> some View {
         Section(header: Text("Date: \(data.date)")) {
             Text("Sunrise Time: \(data.sunriseTime)")
@@ -124,7 +120,7 @@ struct ContentView: View {
             Text("Sleep Reminder: \(data.windDownTime)")
         }
     }
-
+    
     private func sunDataSection(_ data: SunData) -> some View {
         Section {
             Text("Sunset: \(data.sunset)")
@@ -135,45 +131,44 @@ struct ContentView: View {
             Text("Day Length: \(data.dayLength)")
         }
     }
-
     
-    private func checkAndFetchSunData() {
+    
+    private func checkMissingSunData() {
         if !sunData.contains(where: { $0.date == formattedDateString(date: selectedDate) }) {
-            Task {
-                do {
-                    try await 
-                    
-                    APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: formattedDateString(date: selectedDate), missingDate: true)
-                        
-                    sunData
-                         = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? sunData
-                        
-                    calculateScheduleForSunData(sunData)
-                        
-                    alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
-                    
-                    
-                }
-                
-                catch {
-                    print("Error fetching sun data: \(error)")
-                }
-                
-            }
+            fetchMissingSunData()
         }
     }
     
-    private func appendMissingDate() {
-        
+    private func fetchMissingSunData() {
+        Task {
+            do {
+                try await
+                
+                APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: formattedDateString(date: selectedDate), missingDate: true)
+                
+                sunData
+                = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? sunData
+                
+                calculateScheduleForSunData(sunData)
+                
+                alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
+                
+                
+            }
+            
+            catch {
+                print("Error fetching sun data: \(error)")
+            }
+            
+        }
     }
     
     
-
     
     private var updateButtons: some View {
         Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
-
-                
+            
+            
             Button("Update") {
                 Task {
                     fetchLocation(locationManager: locationManager)
@@ -183,7 +178,7 @@ struct ContentView: View {
                 }
             }
             
-            }
+        }
     }
     
     private func loadData() {
@@ -194,14 +189,10 @@ struct ContentView: View {
             alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
         }
     }
-
+    
     //    ContentView Close
-
-    }
-
-
-
-
+    
+}
 
 
 

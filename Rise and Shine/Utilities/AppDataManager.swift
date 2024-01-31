@@ -16,9 +16,9 @@ class AppDataManager {
             print("Documents directory not found.")
             return
         }
-
+        
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
-
+        
         do {
             let encodedData = try JSONEncoder().encode(data)
             try encodedData.write(to: fileURL, options: .atomic)
@@ -32,9 +32,9 @@ class AppDataManager {
             print("Documents directory not found.")
             return nil
         }
-
+        
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
-
+        
         do {
             let data = try Data(contentsOf: fileURL)
             let decodedData = try JSONDecoder().decode(T.self, from: data)
@@ -64,17 +64,17 @@ class AppDataManager {
             print("Error appending sun data to file: \(error)")
         }
     }
-
+    
     
     static func deleteFile(fileName: String) {
         let fileManager = FileManager.default
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
-
+        
         guard let fileURL = documentsDirectory?.appendingPathComponent(fileName) else {
             print("Failed to get the file URL")
             return
         }
-
+        
         do {
             try fileManager.removeItem(at: fileURL)
             print("\(fileName) successfully deleted")
@@ -83,7 +83,7 @@ class AppDataManager {
         }
     }
     
-
+    
     
 }
 

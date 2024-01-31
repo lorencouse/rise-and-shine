@@ -19,8 +19,8 @@ struct SettingsView: View {
     @AppStorage("bedTime") var bedTime = ""
     @AppStorage("alarmTime") var alarmTime = ""
     @AppStorage("currentCity") var currentCity = "Location: Please Update"
-
-
+    
+    
     
     
     var body: some View {
@@ -33,20 +33,20 @@ struct SettingsView: View {
                 Section(header: Text("Location:")) {
                     
                     Text(currentCity)
-
+                    
                 }
-
+                
                 Section(header: Text("Alarm time:")) {
                     HStack {
-
+                        
                         Text("Wake up ")
-
+                        
                         Picker("", selection: $wakeUpOffsetHours) {
                             ForEach(0..<4, id: \.self) { i in
                                 Text("\(i) hours").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
-
+                        
                         Picker("", selection: $wakeUpOffsetMinutes) {
                             ForEach(0..<60, id: \.self) { i in
                                 Text("\(i) mins").tag(i)
@@ -57,9 +57,9 @@ struct SettingsView: View {
                         Text("Before Sunrise").tag(true)
                         Text("After Sunrise").tag(false)
                     }.pickerStyle(SegmentedPickerStyle())
-
+                    
                 }
-
+                
                 Section(header: Text("Target Hours of Sleep")) {
                     
                     Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
@@ -69,7 +69,7 @@ struct SettingsView: View {
                     }.pickerStyle(MenuPickerStyle())
                     
                 }
-
+                
                 Section(header: Text("Wind down reminder")) {
                     HStack {
                         Picker("Notify me ", selection: $windDownTime) {
@@ -79,7 +79,7 @@ struct SettingsView: View {
                         }.pickerStyle(MenuPickerStyle())
                         Text(" before bedtime.")
                     }
-
+                    
                 }
                 
                 Section() {
@@ -87,7 +87,7 @@ struct SettingsView: View {
                         Task {
                             clearUserDefaults()
                         }
-
+                        
                         
                     }
                     
@@ -97,11 +97,11 @@ struct SettingsView: View {
                             AppDataManager.deleteFile(fileName: Constants.alarmDataFileName )
                             AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
                         }
-
+                        
                         
                     }
                 }
-
+                
                 VStack {
                     Link("Data from SunriseSunset.io", destination: URL(string: "https://sunrisesunset.io/api/")!)
                         .padding()
@@ -109,10 +109,10 @@ struct SettingsView: View {
                 
             }
             .navigationTitle("Settings")
-
+            
             
         }
-    
+        
     }
     
 }
