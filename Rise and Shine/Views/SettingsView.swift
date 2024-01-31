@@ -16,11 +16,9 @@ struct SettingsView: View {
     @AppStorage("beforeSunrise") var beforeSunrise = true
     @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("windDownTime") var windDownTime = Constants.windDownTimeDefault
-    @AppStorage("windDownTimer") var windDownTimer = "10:00 PM"
     @AppStorage("bedTime") var bedTime = ""
     @AppStorage("alarmTime") var alarmTime = ""
     @AppStorage("currentCity") var currentCity = "Location: Please Update"
-    @State private var updateButtonText: String = "Save Prefrences"
 
 
     
@@ -96,8 +94,8 @@ struct SettingsView: View {
                     Button("Erase All App Data") {
                         Task {
                             clearUserDefaults()
-                            AppDataManager.clearAndDeleteSunData()
-                            AppDataManager.deleteAlarmsFile()
+                            AppDataManager.deleteFile(fileName: Constants.alarmDataFileName )
+                            AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
                         }
 
                         

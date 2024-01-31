@@ -7,16 +7,14 @@
 
 import Foundation
 
-func updateData() async {
-    let targetHoursOfSleep = UserDefaults.standard.integer(forKey: "targetHoursOfSleep") // Ensure a default value
-    let latitude = UserDefaults.standard.double(forKey: "currentLatitude") // Ensure a default value
-    let longitude = UserDefaults.standard.double(forKey: "currentLongitude") // Ensure a default value
-    
-    let date = fetchDate() // Make sure this function exists
+func updateData(date: Date) async {
+
+    let dateString = formattedDateString(date: date)
+//    let date = fetchDate() // Make sure this function exists
     
     do {
-        try await APIManager.fetchSunDataFromAPI(latitude: latitude, longitude: longitude, startDate: date)
-        if let sunDataArray = AppDataManager.loadSunDataFile() {
+        try await APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: dateString, missingDate: false)
+        if let sunDataArray = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) {
             calculateScheduleForSunData(sunDataArray)
             
         } else {

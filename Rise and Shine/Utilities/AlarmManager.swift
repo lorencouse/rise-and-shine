@@ -39,20 +39,7 @@ import Foundation
         
 //      Write schedule to JSON file
         
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            print("Documents directory not found.")
-            return
-        }
-
-        let fileURL = documentsDirectory.appendingPathComponent("userAlarms.json")
-
-        do {
-            let data = try JSONEncoder().encode(schedules)
-            try data.write(to: fileURL, options: .atomic)
-
-        } catch {
-            print("Error writing schedules to file: \(error)")
-        }
+        AppDataManager.saveDataToFile(data: schedules, fileName: Constants.alarmDataFileName)
 
     }
 

@@ -11,34 +11,45 @@ import CoreLocation
 class AppDataManager {
     static let shared = AppDataManager()
     
-//    Sun Data Json Manager
-    
-    static func saveSunDataToFile(sunData: [SunData]) {
+    static func saveDataToFile<T: Encodable>(data: T, fileName: String) {
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("Documents directory not found.")
+            return
+        }
+
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+
         do {
-            let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
-            let data = try JSONEncoder().encode(sunData)
-            try data.write(to: filePath, options: .atomicWrite)
+            let encodedData = try JSONEncoder().encode(data)
+            try encodedData.write(to: fileURL, options: .atomic)
         } catch {
-            print("Error saving sun data to file: \(error)")
+            print("Error saving data to file: \(error)")
         }
     }
+    
+    static func loadFile<T: Decodable>(fileName: String, type: T.Type) -> T? {
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("Documents directory not found.")
+            return nil
+        }
 
-    static func loadSunDataFile() -> [SunData]? {
-        let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+
         do {
-            let data = try Data(contentsOf: filePath)
-            let sunData = try JSONDecoder().decode([SunData].self, from: data)
-            return sunData
+            let data = try Data(contentsOf: fileURL)
+            let decodedData = try JSONDecoder().decode(T.self, from: data)
+            return decodedData
         } catch {
-            print("Error loading sun data from file: \(error)")
+            print("Error reading data from file: \(error)")
             return nil
         }
     }
     
     static func appendSunDataToFile(newSunData: [SunData]) {
+        let fileName = Constants.sunDataFileName
         do {
-            let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
-            var existingData = loadSunDataFile() ?? []
+            let filePath = getDocumentsDirectory().appendingPathComponent(fileName)
+            var existingData = loadFile(fileName: fileName, type: [SunData].self) ?? []
             
             // Avoid duplicates
             for newData in newSunData where !existingData.contains(where: { $0.date == newData.date }) {
@@ -53,56 +64,25 @@ class AppDataManager {
             print("Error appending sun data to file: \(error)")
         }
     }
+
     
-    static func clearAndDeleteSunData() {
-        let filePath = getDocumentsDirectory().appendingPathComponent("sunData.json")
-        
-        do {
-            // Remove the file from the file system
-            try FileManager.default.removeItem(at: filePath)
-            
-            print("SunData file deleted successfully.")
-        } catch {
-            print("Error deleting SunData file: \(error)")
-        }
-    }
-    
-//    User Alarms JSON Manager
-    
-    static func deleteAlarmsFile() {
+    static func deleteFile(fileName: String) {
         let fileManager = FileManager.default
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
 
-        guard let fileURL = documentsDirectory?.appendingPathComponent("userAlarms.json") else {
+        guard let fileURL = documentsDirectory?.appendingPathComponent(fileName) else {
             print("Failed to get the file URL")
             return
         }
 
         do {
             try fileManager.removeItem(at: fileURL)
-            print("File successfully deleted")
+            print("\(fileName) successfully deleted")
         } catch {
             print("Error deleting file: \(error)")
         }
     }
     
-    static func loadAlarmsFile() -> [AlarmSchedule]? {
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            print("Documents directory not found.")
-            return nil
-        }
-
-        let fileURL = documentsDirectory.appendingPathComponent("userAlarms.json")
-
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let schedules = try JSONDecoder().decode([AlarmSchedule].self, from: data)
-            return schedules
-        } catch {
-            print("Error reading schedules from file: \(error)")
-            return nil
-        }
-    }
 
     
 }

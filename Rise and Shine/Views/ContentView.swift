@@ -14,8 +14,8 @@ import Combine
 
 struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
-    @State private var sunData: [SunData] = (AppDataManager.loadSunDataFile() ?? [])
-    @State private var alarmSchedule: [AlarmSchedule] = (AppDataManager.loadAlarmsFile() ?? [])
+    @State private var sunData: [SunData] = []
+    @State private var alarmSchedule: [AlarmSchedule] = []
     @State private var selectedDate = Date.now
 
 
@@ -28,7 +28,6 @@ struct ContentView: View {
                formView
 
                 }
-                
                 
                 .onAppear() {
                     loadData()
@@ -99,7 +98,7 @@ struct ContentView: View {
                 if sunData.isEmpty {
                     Text("Fetching data for this date...")
                         .onAppear {
-                            fetchSunDataForSelectedDate()
+                            checkAndFetchSunData()
                         }
                 } else {
                     Text("No alarm data available for this date")
@@ -140,25 +139,36 @@ struct ContentView: View {
     
     private func checkAndFetchSunData() {
         if !sunData.contains(where: { $0.date == formattedDateString(date: selectedDate) }) {
-            fetchSunDataForSelectedDate()
-            
-        }
-    }
-    
-    
-    private func fetchSunDataForSelectedDate() {
-        Task {
-            do {
-                if let newData = try await APIManager.fetchMissingSunDataFromAPI(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: formattedDateString(date: selectedDate)) {
-                    sunData = newData
-                    calculateScheduleForSunData(newData)
-                    alarmSchedule = AppDataManager.loadAlarmsFile() ?? alarmSchedule
+            Task {
+                do {
+                    try await 
+                    
+                    APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: formattedDateString(date: selectedDate), missingDate: true)
+                        
+                    sunData
+                         = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? sunData
+                        
+                    calculateScheduleForSunData(sunData)
+                        
+                    alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
+                    
+                    
                 }
-            } catch {
-                print("Error fetching sun data: \(error)")
+                
+                catch {
+                    print("Error fetching sun data: \(error)")
+                }
+                
             }
         }
     }
+    
+    private func appendMissingDate() {
+        
+    }
+    
+    
+
     
     private var updateButtons: some View {
         Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
@@ -167,18 +177,11 @@ struct ContentView: View {
             Button("Update") {
                 Task {
                     fetchLocation(locationManager: locationManager)
-                    await updateData()
-                    sunData = AppDataManager.loadSunDataFile() ?? []
-                    alarmSchedule = (AppDataManager.loadAlarmsFile() ?? [])
+                    await updateData(date: selectedDate)
+                    sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+                    alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
                 }
             }
-            
-//            Button("Clear All") {
-//                Task {
-//                    alarmSchedule = []
-//                    sunData = []
-//                }
-//            }
             
             }
     }
@@ -186,9 +189,9 @@ struct ContentView: View {
     private func loadData() {
         Task {
             fetchLocation(locationManager: locationManager)
-            await updateData()
-            sunData = AppDataManager.loadSunDataFile() ?? []
-            alarmSchedule = AppDataManager.loadAlarmsFile() ?? []
+            await updateData(date: selectedDate)
+            sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+            alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
         }
     }
 

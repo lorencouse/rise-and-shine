@@ -17,5 +17,7 @@ struct Constants {
     static let bedTime = ""
     static let alarmTime = ""
     static let windDownTimer = ""
+    static let sunDataFileName = "sunData.json"
+    static let alarmDataFileName = "userAlarms.json"
     // ... other constants ...
 }
