@@ -9,18 +9,17 @@ import Foundation
 
     func calculateScheduleForSunData(_ sunDataArray: [SunData]) {
         var schedules = [AlarmSchedule]()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd h:mm:ss a"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        let dateFormatter = DateFormatter.dateAndTime
+ 
 
         for sunData in sunDataArray {
-            guard let sunriseDate = dateFormatter.date(from: "\(sunData.date) \(sunData.sunrise)") else {
-                continue // Skip this entry if the date is invalid
-            }
-            guard let previousDate = Calendar.current.date(byAdding: .day, value: -1, to: sunriseDate) else {
-                continue
-            }
-            let previousDateString = formattedDateString(date: previousDate)
+            guard let sunriseDate = dateFormatter.date(from: "\(sunData.date) \(sunData.sunrise)"),
+                  let previousDate = Calendar.current.date(byAdding: .day, value: -1, to: sunriseDate) else {
+                continue }
+            
+            
+            
+            let previousDateString = DateFormatter.formattedDateString(date: previousDate)
 
             let userDefaults = UserDefaults.standard
             let alarmOffset = (userDefaults.wakeUpOffsetHours * 60) + userDefaults.wakeUpOffsetMinutes
@@ -39,7 +38,13 @@ import Foundation
                                            windDownTime: dateFormatter.string(from: windDownTime))
             schedules.append(schedule)
         }
-
+        
+        
+        
+        
+//      Schedule Alarm Notifications
+        NotificationManager.requestNotificationPermission()
+        scheduleAlarmNotifications(schedules: schedules)
         
 //      Write schedule to JSON file
         
@@ -47,6 +52,31 @@ import Foundation
 
     }
 
+
+func scheduleAlarmNotifications(schedules: [AlarmSchedule]) {
+    
+    let dateFormatter = DateFormatter.dateAndTime
+    let sleepGoalHoursString = "\(UserDefaults.standard.wakeUpOffsetHours) \(UserDefaults.standard.wakeUpOffsetHours > 1 ? "hours" : "hour")"
+
+    
+    for schedule in schedules {
+        guard let windDownDate = dateFormatter.date(from: schedule.windDownTime),
+              let bedTime = dateFormatter.date(from: schedule.bedTime),
+              let alarmTime = dateFormatter.date(from: schedule.alarmTime) else {
+            continue
+        }
+        
+        print("Winddown: \(windDownDate)")
+        print("Bed Time: \(bedTime)")
+        print("Alarm Time: \(alarmTime)")
+        
+        NotificationManager.scheduleNotification(at: windDownDate, title: "Time to start winding down.", body: "Go to bed in \(UserDefaults.standard.windDownTime) minutes to reach your goal of \(sleepGoalHoursString) of sleep.")
+        NotificationManager.scheduleNotification(at: bedTime, title: "Time for bed.", body: "Go to bed now to reach your \(sleepGoalHoursString) of sleep goal.")
+        NotificationManager.scheduleNotification(at: alarmTime, title: "Rise and Shine!", body: "Waking you up \(UserDefaults.standard.wakeUpOffsetHours) \(UserDefaults.standard.wakeUpOffsetHours > 1 ? "hours" : "hour") \(UserDefaults.standard.beforeSunrise ? "before" : "after") sunrise.")
+                
+    }
+    
+}
 
     
 

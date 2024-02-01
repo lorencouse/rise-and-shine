@@ -73,7 +73,7 @@ struct SettingsView: View {
                 Section(header: Text("Wind down reminder")) {
                     HStack {
                         Picker("Notify me ", selection: $windDownTime) {
-                            ForEach(0..<60, id: \.self) { i in
+                            ForEach(5..<60, id: \.self) { i in
                                 Text("\(i) mins").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
@@ -82,7 +82,28 @@ struct SettingsView: View {
                     
                 }
                 
+                Section {
+                    NavigationLink(destination: NotificationsView()) {
+                        Image(systemName: "line.horizontal.3")
+                            .foregroundColor(Color.blue)
+                            .imageScale(.large)
+                            .padding()
+                        Text("Notification Settings")
+                    }
+                    Button("Update Notifications Permissions") {
+                        Task {
+                            NotificationManager.requestNotificationPermission()
+                        }
+                        
+                        
+                    }
+                    
+                }
+                
                 Section() {
+
+                    
+                    
                     Button("Reset Alarm Preferences") {
                         Task {
                             clearUserDefaults()

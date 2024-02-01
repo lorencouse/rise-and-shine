@@ -93,7 +93,7 @@ struct ContentView: View {
     private var alarmsSection: some View {
         List {
             // Alarm Data
-            if let data = alarmSchedule.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
+            if let data = alarmSchedule.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
                 alarmSection(data)
             } else {
                 if sunData.isEmpty {
@@ -110,7 +110,7 @@ struct ContentView: View {
     private var sunTimesSection: some View {
         List {
             // Sun Data
-            if let data = sunData.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
+            if let data = sunData.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
                 sunDataSection(data)
             } else {
                 Text("Fetching alarm data for this date...")            }
@@ -129,10 +129,11 @@ struct ContentView: View {
             } else {
                 Text("Sunrise Time Tomorrow: Not available")
             }
-            
-            Text("Alarm Time Tomorrow: \(data.alarmTime)")
-            Text("Bed Time Tonight: \(data.bedTime)")
             Text("Sleep Reminder Tonight: \(data.windDownTime)")
+            Text("Bed Time Tonight: \(data.bedTime)")
+            Text("Alarm Time Tomorrow: \(data.alarmTime)")
+            
+            
         }
     }
     
@@ -150,7 +151,7 @@ struct ContentView: View {
     }
     
     private func checkMissingData() {
-        let dateString = formattedDateString(date: selectedDate)
+        let dateString = DateFormatter.formattedDateString(date: selectedDate)
 
         let isSunDataMissing = !sunData.contains { $0.date == dateString }
         let isAlarmDataMissing = !alarmSchedule.contains { $0.date == dateString }
@@ -165,7 +166,7 @@ struct ContentView: View {
             do {
                 try await
                 
-                APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: formattedDateString(date: selectedDate), missingDate: true)
+                APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: DateFormatter.formattedDateString(date: selectedDate), missingDate: true)
                 
                 sunData
                 = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? sunData

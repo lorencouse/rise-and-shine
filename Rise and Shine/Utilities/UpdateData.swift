@@ -9,7 +9,7 @@ import Foundation
 
 func updateData(date: Date) async {
 
-    let dateString = formattedDateString(date: date)
+    let dateString = DateFormatter.formattedDateString(date: date)
 //    let date = fetchDate() // Make sure this function exists
     
     do {
