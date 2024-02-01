@@ -10,13 +10,17 @@ import Foundation
     func calculateScheduleForSunData(_ sunDataArray: [SunData]) {
         var schedules = [AlarmSchedule]()
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "h:mm:ss a"
+        dateFormatter.dateFormat = "yyyy-MM-dd h:mm:ss a"
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
 
         for sunData in sunDataArray {
-            guard let sunriseDate = dateFormatter.date(from: sunData.sunrise) else {
+            guard let sunriseDate = dateFormatter.date(from: "\(sunData.date) \(sunData.sunrise)") else {
                 continue // Skip this entry if the date is invalid
             }
+            guard let previousDate = Calendar.current.date(byAdding: .day, value: -1, to: sunriseDate) else {
+                continue
+            }
+            let previousDateString = formattedDateString(date: previousDate)
 
             let userDefaults = UserDefaults.standard
             let alarmOffset = (userDefaults.wakeUpOffsetHours * 60) + userDefaults.wakeUpOffsetMinutes
@@ -28,7 +32,7 @@ import Foundation
                 continue // Skip this entry if calculation fails
             }
 
-            let schedule = AlarmSchedule(date: sunData.date,
+            let schedule = AlarmSchedule(date: previousDateString,
                                          sunriseTime: sunData.sunrise,
                                            alarmTime: dateFormatter.string(from: alarmTime),
                                            bedTime: dateFormatter.string(from: bedTime),

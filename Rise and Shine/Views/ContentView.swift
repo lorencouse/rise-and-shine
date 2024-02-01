@@ -18,8 +18,6 @@ struct ContentView: View {
     @State private var alarmSchedule: [AlarmSchedule] = []
     @State private var selectedDate = Date.now
     
-    
-    
     var body: some View {
         NavigationView {
             VStack {
@@ -65,9 +63,12 @@ struct ContentView: View {
             Section {
                 
                 datePickerView
-                timesAndAlarmsSection
+                alarmsSection
                 
-                
+            }
+            
+            Section {
+                sunTimesSection
             }
             
         
@@ -85,11 +86,11 @@ struct ContentView: View {
             .datePickerStyle(GraphicalDatePickerStyle())
             .frame(maxHeight: 400)
             .onChange(of: selectedDate) { _ in
-                checkMissingSunData()
+                checkMissingData()
             }
     }
     
-    private var timesAndAlarmsSection: some View {
+    private var alarmsSection: some View {
         List {
             // Alarm Data
             if let data = alarmSchedule.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
@@ -102,6 +103,12 @@ struct ContentView: View {
                 }
             }
             
+
+        }
+    }
+    
+    private var sunTimesSection: some View {
+        List {
             // Sun Data
             if let data = sunData.first(where: { $0.date == formattedDateString(date: selectedDate) }) {
                 sunDataSection(data)
@@ -113,16 +120,26 @@ struct ContentView: View {
     
     
     private func alarmSection(_ data: AlarmSchedule) -> some View {
-        Section(header: Text("Date: \(data.date)")) {
-            Text("Sunrise Time: \(data.sunriseTime)")
-            Text("Alarm Time: \(data.alarmTime)")
-            Text("Bed Time: \(data.bedTime)")
-            Text("Sleep Reminder: \(data.windDownTime)")
+        Section(header: Text("Today's Date: \(data.date)")) {
+            
+            if let currentIndex = alarmSchedule.firstIndex(where: { $0.date == data.date }),
+               alarmSchedule.indices.contains(currentIndex + 1) {
+                let nextDayData = alarmSchedule[currentIndex + 1]
+                Text("Sunrise Time Tomorrow: \(nextDayData.sunriseTime)")
+            } else {
+                Text("Sunrise Time Tomorrow: Not available")
+            }
+            
+            Text("Alarm Time Tomorrow: \(data.alarmTime)")
+            Text("Bed Time Tonight: \(data.bedTime)")
+            Text("Sleep Reminder Tonight: \(data.windDownTime)")
         }
     }
     
     private func sunDataSection(_ data: SunData) -> some View {
         Section {
+            Text("All Sun Times for \(data.date)")
+            Text("Sunrise: \(data.sunrise)")
             Text("Sunset: \(data.sunset)")
             Text("First Light: \(data.firstLight)")
             Text("Last Light: \(data.lastLight)")
@@ -132,14 +149,18 @@ struct ContentView: View {
         }
     }
     
-    
-    private func checkMissingSunData() {
-        if !sunData.contains(where: { $0.date == formattedDateString(date: selectedDate) }) {
-            fetchMissingSunData()
+    private func checkMissingData() {
+        let dateString = formattedDateString(date: selectedDate)
+
+        let isSunDataMissing = !sunData.contains { $0.date == dateString }
+        let isAlarmDataMissing = !alarmSchedule.contains { $0.date == dateString }
+
+        if isSunDataMissing || isAlarmDataMissing {
+            fetchMissingData()
         }
     }
     
-    private func fetchMissingSunData() {
+    private func fetchMissingData() {
         Task {
             do {
                 try await
