@@ -17,6 +17,7 @@
 		5C55495A2B51FEEC00758980 /* Rise_and_ShineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549592B51FEEC00758980 /* Rise_and_ShineTests.swift */; };
 		5C5549642B51FEEC00758980 /* Rise_and_ShineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */; };
 		5C5549662B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */; };
+		5C940D732B6F5C620002A862 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5C940D722B6F5C620002A862 /* Launch Screen.storyboard */; };
 		5CAE6E4F2B6B7FBA00F9B26A /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE6E4E2B6B7FBA00F9B26A /* NotificationsView.swift */; };
 		5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25392B58D36B00F3CC2B /* SunData.swift */; };
 		5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC253B2B58D39F00F3CC2B /* SunApiResponse.swift */; };
@@ -61,6 +62,7 @@
 		5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITests.swift; sourceTree = "<group>"; };
 		5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		5C8C65962B623FBB001D7F18 /* Location.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Location.gpx; sourceTree = "<group>"; };
+		5C940D722B6F5C620002A862 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "Rise and Shine/Launch Screen.storyboard"; sourceTree = SOURCE_ROOT; };
 		5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rise-and-Shine-Info.plist"; sourceTree = SOURCE_ROOT; };
 		5CAE6E4E2B6B7FBA00F9B26A /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		5CEC25392B58D36B00F3CC2B /* SunData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunData.swift; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 				5CEC254D2B58FE7A00F3CC2B /* AppDataManager.swift */,
 				5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */,
 				5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */,
+				5C940D722B6F5C620002A862 /* Launch Screen.storyboard */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -314,6 +317,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C940D732B6F5C620002A862 /* Launch Screen.storyboard in Resources */,
 				5C5549502B51FEEC00758980 /* Preview Assets.xcassets in Resources */,
 				5C55494D2B51FEEC00758980 /* Assets.xcassets in Resources */,
 			);
@@ -522,11 +526,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rise-and-Shine-Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -552,11 +560,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rise-and-Shine-Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
