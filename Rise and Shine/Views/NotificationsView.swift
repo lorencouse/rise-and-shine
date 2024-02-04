@@ -24,7 +24,7 @@ struct NotificationsView: View {
             }
             
             Section {
-                NotificationsViewControllerRepresentable()
+                NotificationsViewMain()
             }
             
         }
@@ -87,7 +87,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource {
     }
     
     
-struct NotificationsViewControllerRepresentable: UIViewControllerRepresentable {
+struct NotificationsViewMain: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> NotificationsViewController {
         return NotificationsViewController()

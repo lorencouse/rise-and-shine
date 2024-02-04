@@ -40,11 +40,17 @@ import Foundation
         }
         
         
+        let today = DateFormatter.fetchDate()
+        let firstDateInArray = sunDataArray.first?.date ?? ""
         
+        print("Today: \(today) First Day: \(firstDateInArray)")
         
-//      Schedule Alarm Notifications
-        NotificationManager.requestNotificationPermission()
-        scheduleAlarmNotifications(schedules: schedules)
+        if today == firstDateInArray {
+    //      Schedule Alarm Notifications
+            NotificationManager.requestNotificationPermission()
+            scheduleAlarmNotifications(schedules: schedules)
+        }
+    
         
 //      Write schedule to JSON file
         
@@ -54,15 +60,21 @@ import Foundation
 
 
 func scheduleAlarmNotifications(schedules: [AlarmSchedule]) {
+    NotificationManager.cancelAllScheduledNotifications()
     
     let dateFormatter = DateFormatter.dateAndTime
     let sleepGoalHoursString = "\(UserDefaults.standard.wakeUpOffsetHours) \(UserDefaults.standard.wakeUpOffsetHours > 1 ? "hours" : "hour")"
 
     
+    var counter = 0
     for schedule in schedules {
+        
+        guard counter < 20 else {break}
+        
         guard let windDownDate = dateFormatter.date(from: schedule.windDownTime),
               let bedTime = dateFormatter.date(from: schedule.bedTime),
-              let alarmTime = dateFormatter.date(from: schedule.alarmTime) else {
+              let alarmTime = dateFormatter.date(from: schedule.alarmTime) 
+        else {
             continue
         }
         
@@ -73,6 +85,8 @@ func scheduleAlarmNotifications(schedules: [AlarmSchedule]) {
         NotificationManager.scheduleNotification(at: windDownDate, title: "Time to start winding down.", body: "Go to bed in \(UserDefaults.standard.windDownTime) minutes to reach your goal of \(sleepGoalHoursString) of sleep.")
         NotificationManager.scheduleNotification(at: bedTime, title: "Time for bed.", body: "Go to bed now to reach your \(sleepGoalHoursString) of sleep goal.")
         NotificationManager.scheduleNotification(at: alarmTime, title: "Rise and Shine!", body: "Waking you up \(UserDefaults.standard.wakeUpOffsetHours) \(UserDefaults.standard.wakeUpOffsetHours > 1 ? "hours" : "hour") \(UserDefaults.standard.beforeSunrise ? "before" : "after") sunrise.")
+        
+        counter += 1
                 
     }
     

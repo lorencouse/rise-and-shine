@@ -15,11 +15,12 @@ struct APIManager {
         
         let currentCity = UserDefaults.standard.currentCity
 
-        // Check if a new file is needed or if it's a new location, and missingDate is false
+        // Check if a new file is needed or if it's a new location, and missingDate is false.
         let needsNewFile = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) == nil || (currentCity != UserDefaults.standard.lastCity)
+
+
         
         if needsNewFile || missingDate {
-            NotificationManager.cancelAllScheduledNotifications()
             
             
             let dateFormatter = DateFormatter()
