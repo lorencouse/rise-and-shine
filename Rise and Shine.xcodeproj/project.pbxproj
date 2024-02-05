@@ -18,6 +18,14 @@
 		5C5549642B51FEEC00758980 /* Rise_and_ShineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */; };
 		5C5549662B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */; };
 		5C940D732B6F5C620002A862 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5C940D722B6F5C620002A862 /* Launch Screen.storyboard */; };
+		5C9852142B709FA9000B259B /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9852132B709FA9000B259B /* OnboardingView.swift */; };
+		5C9852192B70AD3E000B259B /* WelcomePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9852182B70AD3E000B259B /* WelcomePageView.swift */; };
+		5C98521B2B70AD52000B259B /* LocationSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C98521A2B70AD52000B259B /* LocationSelectionView.swift */; };
+		5C98521D2B70AD77000B259B /* AlarmSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C98521C2B70AD77000B259B /* AlarmSetupView.swift */; };
+		5C98521F2B70AD86000B259B /* SleepGoalSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C98521E2B70AD86000B259B /* SleepGoalSetupView.swift */; };
+		5C9852212B70ADA3000B259B /* WindDownSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9852202B70ADA3000B259B /* WindDownSetupView.swift */; };
+		5C9852232B70ADC7000B259B /* AlarmSetupView.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5C9852222B70ADC7000B259B /* AlarmSetupView.storyboard */; };
+		5C9852252B70CB89000B259B /* SetupSettingsConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9852242B70CB89000B259B /* SetupSettingsConfirmationView.swift */; };
 		5CAE6E4F2B6B7FBA00F9B26A /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE6E4E2B6B7FBA00F9B26A /* NotificationsView.swift */; };
 		5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC25392B58D36B00F3CC2B /* SunData.swift */; };
 		5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC253B2B58D39F00F3CC2B /* SunApiResponse.swift */; };
@@ -63,6 +71,14 @@
 		5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		5C8C65962B623FBB001D7F18 /* Location.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Location.gpx; sourceTree = "<group>"; };
 		5C940D722B6F5C620002A862 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "Rise and Shine/Launch Screen.storyboard"; sourceTree = SOURCE_ROOT; };
+		5C9852132B709FA9000B259B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		5C9852182B70AD3E000B259B /* WelcomePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomePageView.swift; sourceTree = "<group>"; };
+		5C98521A2B70AD52000B259B /* LocationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSelectionView.swift; sourceTree = "<group>"; };
+		5C98521C2B70AD77000B259B /* AlarmSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSetupView.swift; sourceTree = "<group>"; };
+		5C98521E2B70AD86000B259B /* SleepGoalSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGoalSetupView.swift; sourceTree = "<group>"; };
+		5C9852202B70ADA3000B259B /* WindDownSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindDownSetupView.swift; sourceTree = "<group>"; };
+		5C9852222B70ADC7000B259B /* AlarmSetupView.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = AlarmSetupView.storyboard; sourceTree = "<group>"; };
+		5C9852242B70CB89000B259B /* SetupSettingsConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupSettingsConfirmationView.swift; sourceTree = "<group>"; };
 		5C9A85B52B56655F009DF7F8 /* Rise-and-Shine-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rise-and-Shine-Info.plist"; sourceTree = SOURCE_ROOT; };
 		5CAE6E4E2B6B7FBA00F9B26A /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		5CEC25392B58D36B00F3CC2B /* SunData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunData.swift; sourceTree = "<group>"; };
@@ -163,6 +179,21 @@
 			path = "Rise and ShineUITests";
 			sourceTree = "<group>";
 		};
+		5C9852172B70AD0A000B259B /* OnboardingViews */ = {
+			isa = PBXGroup;
+			children = (
+				5C9852182B70AD3E000B259B /* WelcomePageView.swift */,
+				5C98521A2B70AD52000B259B /* LocationSelectionView.swift */,
+				5C98521E2B70AD86000B259B /* SleepGoalSetupView.swift */,
+				5C9852202B70ADA3000B259B /* WindDownSetupView.swift */,
+				5C9852132B709FA9000B259B /* OnboardingView.swift */,
+				5C98521C2B70AD77000B259B /* AlarmSetupView.swift */,
+				5C9852222B70ADC7000B259B /* AlarmSetupView.storyboard */,
+				5C9852242B70CB89000B259B /* SetupSettingsConfirmationView.swift */,
+			);
+			path = OnboardingViews;
+			sourceTree = "<group>";
+		};
 		5CEC25332B58D2F500F3CC2B /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -175,6 +206,7 @@
 		5CEC25352B58D31600F3CC2B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				5C9852172B70AD0A000B259B /* OnboardingViews */,
 				5C55494A2B51FEEB00758980 /* ContentView.swift */,
 				5CEC253F2B58D54B00F3CC2B /* SettingsView.swift */,
 				5CAE6E4E2B6B7FBA00F9B26A /* NotificationsView.swift */,
@@ -196,10 +228,10 @@
 			children = (
 				5C063D4D2B5A1AB500DC7C6B /* DateFormatter+Extension.swift */,
 				5CEC25452B58D6B600F3CC2B /* APIManager.swift */,
-				5CEC254B2B58FE5900F3CC2B /* UserDefaults.swift */,
 				5CEC254D2B58FE7A00F3CC2B /* AppDataManager.swift */,
-				5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */,
 				5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */,
+				5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */,
+				5CEC254B2B58FE5900F3CC2B /* UserDefaults.swift */,
 				5C940D722B6F5C620002A862 /* Launch Screen.storyboard */,
 			);
 			path = Utilities;
@@ -318,6 +350,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5C940D732B6F5C620002A862 /* Launch Screen.storyboard in Resources */,
+				5C9852232B70ADC7000B259B /* AlarmSetupView.storyboard in Resources */,
 				5C5549502B51FEEC00758980 /* Preview Assets.xcassets in Resources */,
 				5C55494D2B51FEEC00758980 /* Assets.xcassets in Resources */,
 			);
@@ -346,17 +379,24 @@
 			files = (
 				5CEC25462B58D6B600F3CC2B /* APIManager.swift in Sources */,
 				5C55494B2B51FEEB00758980 /* ContentView.swift in Sources */,
+				5C98521B2B70AD52000B259B /* LocationSelectionView.swift in Sources */,
+				5C98521F2B70AD86000B259B /* SleepGoalSetupView.swift in Sources */,
+				5C9852212B70ADA3000B259B /* WindDownSetupView.swift in Sources */,
 				5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */,
 				5CEC254C2B58FE5900F3CC2B /* UserDefaults.swift in Sources */,
 				5CEC25422B58D5D500F3CC2B /* LocationManager.swift in Sources */,
 				5CEC254E2B58FE7A00F3CC2B /* AppDataManager.swift in Sources */,
+				5C9852192B70AD3E000B259B /* WelcomePageView.swift in Sources */,
+				5C9852252B70CB89000B259B /* SetupSettingsConfirmationView.swift in Sources */,
 				5CEC25402B58D54B00F3CC2B /* SettingsView.swift in Sources */,
+				5C98521D2B70AD77000B259B /* AlarmSetupView.swift in Sources */,
 				5C063D542B5CD74D00DC7C6B /* AlarmManager.swift in Sources */,
 				5CEC25442B58D5F800F3CC2B /* NotificationManager.swift in Sources */,
 				5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */,
 				5C5549492B51FEEB00758980 /* Rise_and_ShineApp.swift in Sources */,
 				5CAE6E4F2B6B7FBA00F9B26A /* NotificationsView.swift in Sources */,
 				5C063D502B5CC02100DC7C6B /* UpdateData.swift in Sources */,
+				5C9852142B709FA9000B259B /* OnboardingView.swift in Sources */,
 				5CEC25482B58D83000F3CC2B /* Constants.swift in Sources */,
 				5C063D4E2B5A1AB500DC7C6B /* DateFormatter+Extension.swift in Sources */,
 			);

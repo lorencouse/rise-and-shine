@@ -9,14 +9,20 @@ import SwiftUI
 
 @main
 struct Rise_and_ShineApp: App {
+    @AppStorage("isOnboardingCompleted") var isOnboardingCompleted: Bool = false
 
-    
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .onAppear() {
-                    
-                }
+            
+            if isOnboardingCompleted {
+                
+                ContentView()
+                
+            } else {
+                AlarmSetupView()
+            }
+
         }
     }
+    
 }

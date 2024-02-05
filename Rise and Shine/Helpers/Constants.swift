@@ -13,11 +13,12 @@ struct Constants {
     static let wakeUpOffsetMinutesDefault = 0
     static let beforeSunriseDefault = true
     static let targetHoursOfSleepDefault = 8
+    static let targetMinutesOfSleep = 0
     static let windDownTimeDefault = 30
-    static let bedTime = ""
-    static let alarmTime = ""
-    static let windDownTimer = ""
+//    static let bedTime = ""
+//    static let alarmTime = ""
+//    static let windDownTimer = ""
     static let sunDataFileName = "sunData.json"
     static let alarmDataFileName = "userAlarms.json"
-    // ... other constants ...
+
 }

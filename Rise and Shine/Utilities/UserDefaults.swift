@@ -11,6 +11,7 @@ import SwiftUI
 extension UserDefaults {
     // Keys
     private enum Keys {
+        static let onboardingCompleted = "onboardingCompleted"
         static let wakeUpOffsetHours = "wakeUpOffsetHours"
         static let wakeUpOffsetMinutes = "wakeUpOffsetMinutes"
         static let beforeSunrise = "beforeSunrise"
@@ -32,6 +33,11 @@ extension UserDefaults {
     
 
     // Properties
+    var onboardingCompleted: Bool {
+        get { bool(forKey: Keys.onboardingCompleted) }
+        set { set(newValue, forKey: Keys.onboardingCompleted) }
+    }
+    
     var wakeUpOffsetHours: Int {
         get { integer(forKey: Keys.wakeUpOffsetHours) }
         set { set(newValue, forKey: Keys.wakeUpOffsetHours) }
@@ -124,16 +130,15 @@ extension UserDefaults {
 
 func clearUserDefaults() {
      let userDefaults = UserDefaults.standard
-//     let appDomain = Bundle.main.bundleIdentifier
-//     userDefaults.removePersistentDomain(forName: appDomain!)
+     userDefaults.onboardingCompleted = false
      userDefaults.wakeUpOffsetHours = Constants.wakeUpOffsetHoursDefault
      userDefaults.wakeUpOffsetMinutes = Constants.wakeUpOffsetMinutesDefault
      userDefaults.beforeSunrise = Constants.beforeSunriseDefault
      userDefaults.targetHoursOfSleep = Constants.targetHoursOfSleepDefault
      userDefaults.windDownTime = Constants.windDownTimeDefault
-     userDefaults.bedTime = Constants.bedTime
-     userDefaults.alarmTime = Constants.alarmTime
-     userDefaults.windDownTimeReminder = Constants.windDownTimer
+//     userDefaults.bedTime = Constants.bedTime
+//     userDefaults.alarmTime = Constants.alarmTime
+//     userDefaults.windDownTimeReminder = Constants.windDownTimer
      UserDefaults.standard.synchronize()
 
  }
