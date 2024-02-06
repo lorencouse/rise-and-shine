@@ -20,19 +20,32 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            Form {
-                locationSelector
-//                alarmTimeSelector
-//                targetHoursOfSleepSelector
-//                windDownTimeSelector
-                settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
-                settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
-                settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
-                notificationSettingsSection
-                dataManagementSection
-                attributionsSection
+            ZStack {
+                Color.appPrimary.edgesIgnoringSafeArea(.all)
+                
+                VStack {
+                    Form {
+                        locationSelector
+                        settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
+                        settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
+                        settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
+//                        notificationSettingsSection
+//                        dataManagementSection
+//                        attributionsSection
+//                        eraseAlarmsButton
+//                        earaseAllAppDataButton
+                    }
+                    .scrollContentBackground(.hidden)
+                    eraseAlarmsButton
+                    
+                    earaseAllAppDataButton
+
+                }
+                .navigationTitle("Settings")
+                .navigationBarTitleDisplayMode(.inline) 
+            
+  
             }
-            .navigationTitle("Settings")
         }
     }
     
@@ -130,6 +143,33 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+    
+    private var eraseAlarmsButton: some View {
+        Button("Reset Alarm Preferences") {
+            Task {
+                clearUserDefaults()
+            }
+        }
+        .foregroundColor(.black)
+        .padding()
+        .background(Color.accentColor)
+        .cornerRadius(10)
+    }
+    
+    private var earaseAllAppDataButton: some View {
+        
+        Button("Erase All App Data") {
+            Task {
+                clearUserDefaults()
+                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
+                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
+            }
+        }
+        .foregroundColor(.black)
+        .padding()
+        .background(Color.accentColor)
+        .cornerRadius(10)
     }
     
     private var attributionsSection: some View {

@@ -9,12 +9,19 @@ import SwiftUI
 
 @main
 struct Rise_and_ShineApp: App {
-    @AppStorage("isOnboardingCompleted") var isOnboardingCompleted: Bool = false
+    init() {
+     // Large Navigation Title
+     UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+     // Inline Navigation Title
+     UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor.white]
+   }
+    
+    @AppStorage("onboardingCompleted") private var onboardingCompleted: Bool = false
 
     var body: some Scene {
         WindowGroup {
             
-            if isOnboardingCompleted {
+            if onboardingCompleted {
                 
                 ContentView()
                 

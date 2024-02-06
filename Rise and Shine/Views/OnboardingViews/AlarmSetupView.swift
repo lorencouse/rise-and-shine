@@ -16,14 +16,21 @@ struct AlarmSetupView: View {
     
     var body: some View {
         NavigationView {
+            
+            ZStack {
+                Color.appPrimary.edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
+          
             VStack {
 
                 VStack {
-                    Text("Sunset Alarm Time").font(.title).padding(.vertical)
+                    Text("Sunrise Alarm Time").font(.title).padding(.vertical)
                     Text("Choose when you would like to be woken up each day in relation to the sunrise.")
                 }
                 .padding(.horizontal)
                 
+                Spacer()
+                
+                Image("sunrise")
                 Spacer()
                 
                 // Picker and settings
@@ -36,14 +43,24 @@ struct AlarmSetupView: View {
                                 Text("\(i) hours").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
+                            .background(Color.white)
+                            .cornerRadius(10)
+                        
                         Spacer()
+                        
+                        
                         Text("and")
+                        
                         Spacer()
+                        
                         Picker("", selection: $wakeUpOffsetMinutes) {
                             ForEach(0..<12, id: \.self) { index in
                                 Text("\(index * 5) mins").tag(index * 5)
                             }
                         }.pickerStyle(MenuPickerStyle())
+                            .background(Color.white)
+                            .cornerRadius(10)
+                        
                         Spacer()
                     }
                     
@@ -53,20 +70,28 @@ struct AlarmSetupView: View {
                     }.padding(.vertical).pickerStyle(SegmentedPickerStyle())
                 }
                 
+                
                 // Next button at the bottom
                 NavigationLink(destination: SleepGoalSetupView()) {
                     Text("Next")
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.white)
                         .cornerRadius(10)
                 }
-                .padding(.bottom) // Adds padding at the bottom if needed
+                .padding(.bottom)
+                
                 
                 
                 
             }
+            .foregroundColor(.white)
+                
+                
+            }
+            
         }
+        
     }
 }
 

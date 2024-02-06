@@ -15,11 +15,12 @@ struct SleepGoalSetupView: View {
     
     var body: some View {
         
-//        NavigationView {
+
+        ZStack {
+            Color.appPrimary.edgesIgnoringSafeArea(.all)
+            
             
             VStack {
-                
-                
                 
                 VStack {
                     
@@ -31,6 +32,8 @@ struct SleepGoalSetupView: View {
                 }
                 .padding(.horizontal)
                 Spacer()
+                Image("moon")
+                Spacer()
                 
                 VStack {
                     Text("I want to get")
@@ -41,13 +44,20 @@ struct SleepGoalSetupView: View {
                                 Text("\(i) hours").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
+                            .background(Color.white)
+                            .cornerRadius(10)
+                        
                         Text("and ")
                         
                         Picker("", selection: $targetMinutesOfSleep) {
                             ForEach(0..<12, id: \.self) { index in
                                 Text("\(index * 5) mins").tag(index * 5)
+
                             }
                         }.pickerStyle(MenuPickerStyle())
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            
                         Spacer()
                     }
                     Text("of sleep each night.")
@@ -59,15 +69,17 @@ struct SleepGoalSetupView: View {
                 
                 NavigationLink(destination: WindDownSetupView()) {
                     Text("Next")
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.white)
                         .cornerRadius(10)
                 }
                 .padding(.bottom)
             }
+            .foregroundColor(.white)
             
-//        }
+        }
+
     }
     
     }

@@ -20,11 +20,23 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
+            ZStack {
+                Color.appPrimary.edgesIgnoringSafeArea(.all)
+
                 
-                navigationBar
-                formView
-                
+                VStack {
+
+                    navigationBar
+                    
+                    Text("Home").font(.title)
+                        .foregroundColor(.white)
+                    
+                    
+                    formView
+                        .scrollContentBackground(.hidden)
+                    updateButtons
+                    
+                }
             }
             
             .onAppear() {
@@ -33,22 +45,27 @@ struct ContentView: View {
             }
             
         }
+        
     }
+    
     
     
     private var navigationBar: some View {
         HStack {
             NavigationLink(destination: SettingsView()) {
                 Image(systemName: "line.horizontal.3")
-                    .foregroundColor(Color.blue)
+                    .foregroundColor(Color.white)
                     .imageScale(.large)
                     .padding()
                 Text("Settings")
+                    .foregroundColor(Color.white)
+                
             }
             
             Spacer()
             
         }
+
         
         
     }
@@ -58,6 +75,7 @@ struct ContentView: View {
             
             Section {
                 Text("Location: \(UserDefaults.standard.currentCity)")
+                    
             }
             
             Section {
@@ -70,9 +88,6 @@ struct ContentView: View {
             Section {
                 sunTimesSection
             }
-            
-        
-            updateButtons
             
         }
         
@@ -128,6 +143,7 @@ struct ContentView: View {
                 Text("Sunrise Time Tomorrow: \(nextDayData.sunriseTime)")
             } else {
                 Text("Sunrise Time Tomorrow: Not available")
+                
             }
             Text("Sleep Reminder Tonight: \(data.windDownTime)")
             Text("Bed Time Tonight: \(data.bedTime)")
@@ -148,6 +164,7 @@ struct ContentView: View {
             Text("Dusk: \(data.dusk)")
             Text("Day Length: \(data.dayLength)")
         }
+        
     }
     
     private func checkMissingData() {
@@ -188,7 +205,7 @@ struct ContentView: View {
     
     
     private var updateButtons: some View {
-        Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
+//        Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
             
             
             Button("Update") {
@@ -199,8 +216,12 @@ struct ContentView: View {
                     alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
                 }
             }
+            .foregroundColor(.black)
+            .padding()
+            .background(Color.accentColor)
+            .cornerRadius(10)
             
-        }
+//        }
     }
     
     private func loadData() {

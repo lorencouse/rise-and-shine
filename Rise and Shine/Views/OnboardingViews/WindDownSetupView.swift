@@ -15,16 +15,20 @@ struct WindDownSetupView: View {
 
     
     var body: some View {
-//        NavigationView {
+
+        ZStack {
+            Color.appPrimary.edgesIgnoringSafeArea(.all)
             VStack {
-                // Your content here
+
                 VStack {
                     Text("Set Wind Down Reminder").font(.title).padding(.vertical)
                     Text("Choose how long before bedtime you want to be reminded to starting winding down for the night.")
                 }
                 .padding(.horizontal)
                 
-                Spacer() // Pushes everything above to the top and everything below to the bottom
+                Spacer()
+                Image("alarm-clock")
+                Spacer()
                 
                 // Picker and settings
                 HStack {
@@ -40,14 +44,15 @@ struct WindDownSetupView: View {
                 // Next button at the bottom
                 NavigationLink(destination: SetupSettingsConfirmationView()) {
                     Text("Next")
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.white)
                         .cornerRadius(10)
                 }
                 .padding(.bottom) // Adds padding at the bottom if needed
             }
-//        }
+            .foregroundColor(.white)
+        }
     }
     
     private var timePicker: some View {
@@ -56,6 +61,8 @@ struct WindDownSetupView: View {
                 Text("\(index * 5) mins").tag(index * 5)
             }
         }.pickerStyle(MenuPickerStyle())
+            .background(Color.white)
+            .cornerRadius(10)
     }
     
     
