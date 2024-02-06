@@ -97,6 +97,16 @@ struct SettingsView: View {
         
     }
     
+    private var updateLocationButton: some View {
+        
+        CustomButton(title: "Update Location") {
+            Task {
+                locationManager.startLocationUpdates()
+            }
+        }
+        
+    }
+    
     private var resetAppButton: some View {
         
         CustomButton(title: "Reset App") {

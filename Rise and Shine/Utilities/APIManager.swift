@@ -31,7 +31,7 @@ struct APIManager {
                 throw SunDataError.invalidDateFormat
             }
 
-            guard let endDate = Calendar.current.date(byAdding: .day, value: 30, to: startDateVal) else {
+            guard let endDate = Calendar.current.date(byAdding: .day, value: 15, to: startDateVal) else {
                 throw SunDataError.endDateCalculationError
             }
 

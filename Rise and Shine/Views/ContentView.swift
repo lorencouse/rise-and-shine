@@ -222,7 +222,7 @@ struct ContentView: View {
             
         CustomButton(title: "Update") {
                 Task {
-                    fetchLocation(locationManager: locationManager)
+                    locationManager.startLocationUpdates()
                     await updateData(date: selectedDate)
                     sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
                     alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
@@ -235,7 +235,7 @@ struct ContentView: View {
     
     private func loadData() {
         Task {
-            fetchLocation(locationManager: locationManager)
+            locationManager.startLocationUpdates()
             await updateData(date: selectedDate)
             sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
             alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
