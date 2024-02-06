@@ -43,8 +43,7 @@ struct AlarmSetupView: View {
                                 Text("\(i) hours").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
-                            .background(Color.white)
-                            .cornerRadius(10)
+
                         
                         Spacer()
                         
@@ -58,8 +57,6 @@ struct AlarmSetupView: View {
                                 Text("\(index * 5) mins").tag(index * 5)
                             }
                         }.pickerStyle(MenuPickerStyle())
-                            .background(Color.white)
-                            .cornerRadius(10)
                         
                         Spacer()
                     }
@@ -67,19 +64,26 @@ struct AlarmSetupView: View {
                     Picker("", selection: $beforeSunrise) {
                         Text("Before Sunrise").tag(true)
                         Text("After Sunrise").tag(false)
-                    }.padding(.vertical).pickerStyle(SegmentedPickerStyle())
+                    }.padding().pickerStyle(SegmentedPickerStyle())
                 }
                 
                 
                 // Next button at the bottom
                 NavigationLink(destination: SleepGoalSetupView()) {
-                    Text("Next")
-                        .foregroundColor(.black)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
+                    
+                    HStack {
+                        Spacer()
+                        Text("Next")
+                        Spacer()
+                    }
+                    .foregroundColor(.black)
+                    .padding(.all)
+                    .background(Color.accentColor)
+                    .cornerRadius(10)
+
+
                 }
-                .padding(.bottom)
+                .padding(.all)
                 
                 
                 

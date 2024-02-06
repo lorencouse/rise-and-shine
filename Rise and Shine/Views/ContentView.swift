@@ -27,14 +27,9 @@ struct ContentView: View {
                 VStack {
 
                     navigationBar
-                    
-                    Text("Home").font(.title)
-                        .foregroundColor(.white)
-                    
+                    datePickerView
                     
                     formView
-                        .scrollContentBackground(.hidden)
-                    updateButtons
                     
                 }
             }
@@ -59,6 +54,11 @@ struct ContentView: View {
                     .padding()
                 Text("Settings")
                     .foregroundColor(Color.white)
+                Spacer()
+                
+                Text("Home").font(.title)
+                    .padding(.trailing)
+
                 
             }
             
@@ -72,15 +72,18 @@ struct ContentView: View {
     
     private var formView: some View {
         Form {
+
+    
             
             Section {
                 Text("Location: \(UserDefaults.standard.currentCity)")
+                    .listRowBackground(Color.appThird)
                     
             }
             
             Section {
                 
-                datePickerView
+//                datePickerView
                 alarmsSection
                 
             }
@@ -89,12 +92,14 @@ struct ContentView: View {
                 sunTimesSection
             }
             
+            updateButtons
+
+            
         }
-        
+        .scrollContentBackground(.hidden)
+        .foregroundColor(.white)
         
     }
-    
-    
     
     private var datePickerView: some View {
         DatePicker("Choose Date", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
@@ -103,6 +108,10 @@ struct ContentView: View {
             .onChange(of: selectedDate) { _ in
                 checkMissingData()
             }
+            .background()
+            .cornerRadius(5)
+            .padding(.all)
+            .shadow(radius: 10)
     }
     
     private var alarmsSection: some View {
@@ -117,19 +126,24 @@ struct ContentView: View {
                     Text("No alarm data available for this date")
                 }
             }
-            
 
         }
+        .listRowBackground(Color.appThird)
+
+        
     }
     
     private var sunTimesSection: some View {
-        List {
-            // Sun Data
-            if let data = sunData.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
-                sunDataSection(data)
-            } else {
-                Text("Fetching alarm data for this date...")            }
+        Section {
+            List {
+                // Sun Data
+                if let data = sunData.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
+                    sunDataSection(data)
+                } else {
+                    Text("Fetching alarm data for this date...")            }
+            }
         }
+        .listRowBackground(Color.appThird)
     }
     
     
@@ -205,10 +219,8 @@ struct ContentView: View {
     
     
     private var updateButtons: some View {
-//        Section(header: Text("Sunrise Data: \(UserDefaults.standard.currentCity)")){
             
-            
-            Button("Update") {
+        CustomButton(title: "Update") {
                 Task {
                     fetchLocation(locationManager: locationManager)
                     await updateData(date: selectedDate)
@@ -216,12 +228,9 @@ struct ContentView: View {
                     alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
                 }
             }
-            .foregroundColor(.black)
-            .padding()
-            .background(Color.accentColor)
-            .cornerRadius(10)
+        .listRowBackground(Color.appPrimary)
+
             
-//        }
     }
     
     private func loadData() {

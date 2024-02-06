@@ -44,8 +44,8 @@ struct SleepGoalSetupView: View {
                                 Text("\(i) hours").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
-                            .background(Color.white)
-                            .cornerRadius(10)
+//                            .background(Color.white)
+//                            .cornerRadius(10)
                         
                         Text("and ")
                         
@@ -55,8 +55,6 @@ struct SleepGoalSetupView: View {
 
                             }
                         }.pickerStyle(MenuPickerStyle())
-                            .background(Color.white)
-                            .cornerRadius(10)
                             
                         Spacer()
                     }
@@ -68,13 +66,17 @@ struct SleepGoalSetupView: View {
                 }
                 
                 NavigationLink(destination: WindDownSetupView()) {
-                    Text("Next")
-                        .foregroundColor(.black)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
+                    HStack {
+                        Spacer()
+                        Text("Next")
+                        Spacer()
+                    }
+                    .foregroundColor(.black)
+                    .padding(.all)
+                    .background(Color.accentColor)
+                    .cornerRadius(10)
                 }
-                .padding(.bottom)
+                .padding(.all)
             }
             .foregroundColor(.white)
             

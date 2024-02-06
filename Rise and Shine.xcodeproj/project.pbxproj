@@ -11,6 +11,8 @@
 		5C063D502B5CC02100DC7C6B /* UpdateData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */; };
 		5C063D542B5CD74D00DC7C6B /* AlarmManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */; };
 		5C2823662B71FDD400E88D6F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2823652B71FDD400E88D6F /* AppDelegate.swift */; };
+		5C2823692B72120400E88D6F /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2823682B72120400E88D6F /* SettingsComponents.swift */; };
+		5C28236B2B72148A00E88D6F /* ButtonComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C28236A2B72148A00E88D6F /* ButtonComponent.swift */; };
 		5C5549492B51FEEB00758980 /* Rise_and_ShineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */; };
 		5C55494B2B51FEEB00758980 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C55494A2B51FEEB00758980 /* ContentView.swift */; };
 		5C55494D2B51FEEC00758980 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5C55494C2B51FEEC00758980 /* Assets.xcassets */; };
@@ -59,6 +61,8 @@
 		5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateData.swift; sourceTree = "<group>"; };
 		5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmManager.swift; sourceTree = "<group>"; };
 		5C2823652B71FDD400E88D6F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		5C2823682B72120400E88D6F /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
+		5C28236A2B72148A00E88D6F /* ButtonComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonComponent.swift; sourceTree = "<group>"; };
 		5C5549452B51FEEB00758980 /* Rise and Shine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rise and Shine.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C5549482B51FEEB00758980 /* Rise_and_ShineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineApp.swift; sourceTree = "<group>"; };
 		5C55494A2B51FEEB00758980 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -115,6 +119,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5C2823672B7211DF00E88D6F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				5C2823682B72120400E88D6F /* SettingsComponents.swift */,
+				5C28236A2B72148A00E88D6F /* ButtonComponent.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		5C55493C2B51FEEB00758980 = {
 			isa = PBXGroup;
 			children = (
@@ -138,6 +151,7 @@
 		5C5549472B51FEEB00758980 /* Rise and Shine */ = {
 			isa = PBXGroup;
 			children = (
+				5C2823672B7211DF00E88D6F /* Components */,
 				5CEC25382B58D34C00F3CC2B /* Helpers */,
 				5CEC25372B58D33D00F3CC2B /* Utilities */,
 				5CEC25362B58D32700F3CC2B /* ViewModels */,
@@ -380,6 +394,7 @@
 				5C98521F2B70AD86000B259B /* SleepGoalSetupView.swift in Sources */,
 				5C9852212B70ADA3000B259B /* WindDownSetupView.swift in Sources */,
 				5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */,
+				5C28236B2B72148A00E88D6F /* ButtonComponent.swift in Sources */,
 				5CEC254C2B58FE5900F3CC2B /* UserDefaults.swift in Sources */,
 				5CEC25422B58D5D500F3CC2B /* LocationManager.swift in Sources */,
 				5CEC254E2B58FE7A00F3CC2B /* AppDataManager.swift in Sources */,
@@ -389,6 +404,7 @@
 				5C98521D2B70AD77000B259B /* AlarmSetupView.swift in Sources */,
 				5C063D542B5CD74D00DC7C6B /* AlarmManager.swift in Sources */,
 				5CEC25442B58D5F800F3CC2B /* NotificationManager.swift in Sources */,
+				5C2823692B72120400E88D6F /* SettingsComponents.swift in Sources */,
 				5CEC253C2B58D39F00F3CC2B /* SunApiResponse.swift in Sources */,
 				5C5549492B51FEEB00758980 /* Rise_and_ShineApp.swift in Sources */,
 				5CAE6E4F2B6B7FBA00F9B26A /* NotificationsView.swift in Sources */,

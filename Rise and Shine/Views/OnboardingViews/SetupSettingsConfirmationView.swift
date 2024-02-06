@@ -21,43 +21,45 @@ struct SetupSettingsConfirmationView: View {
 
     
     var body: some View {
-
+        ZStack {
+            Color.appPrimary.edgesIgnoringSafeArea(.all)
             VStack {
                 VStack {
                     Text("Confirm Your Settings").font(.title).padding(.vertical)
+                        .foregroundColor(.white)
                     
                     
                     Spacer()
-
-                        Form {
-                            
-                            
-                            settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
-                            settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
-                            settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
-                        
-                        
-                        
-                    }
                     
-                    Button(action: finishOnboarding) {
-                        Text("Finish")
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(10)
+                    Form {
+                        
+                        
+                        settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
+                        settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
+                        settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
+                        
+                        
+                        
                     }
-                    .padding(.bottom)
+                    .scrollContentBackground(.hidden)
+                    .foregroundColor(.white)
+                    
+                    finishButton
                     
                 }
             }
+
+        }
         
         }
     
     private func finishOnboarding() {
         UserDefaults.standard.onboardingCompleted = true
     }
-        
+    
+    private var finishButton: some View {
+        CustomButton(title: "Finish", action: finishOnboarding)
+    }
 
     
     

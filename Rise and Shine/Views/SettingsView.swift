@@ -24,25 +24,36 @@ struct SettingsView: View {
                 Color.appPrimary.edgesIgnoringSafeArea(.all)
                 
                 VStack {
+                    
                     Form {
                         locationSelector
                         settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
                         settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
                         settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
-//                        notificationSettingsSection
-//                        dataManagementSection
-//                        attributionsSection
-//                        eraseAlarmsButton
-//                        earaseAllAppDataButton
+                        
+                        
+                        VStack {
+     
+                            eraseAllDataButton
+                            resetAppButton
+                         
+                        }
+                        .listRowBackground(Color.appPrimary)
+                        attributionsSection
+                        
                     }
                     .scrollContentBackground(.hidden)
-                    eraseAlarmsButton
+                    .foregroundColor(.white)
+
+
                     
-                    earaseAllAppDataButton
+                    
+
 
                 }
                 .navigationTitle("Settings")
-                .navigationBarTitleDisplayMode(.inline) 
+                .navigationBarTitleDisplayMode(.inline)
+                
             
   
             }
@@ -54,59 +65,7 @@ struct SettingsView: View {
     private var locationSelector: some View {
         Section(header: Text("Location:")) {
             Text(currentCity)
-        }
-    }
-    
-    private var alarmTimeSelector: some View {
-        Section(header: Text("Alarm time:")) {
-            HStack {
-                Text("Wake up ")
-                
-                Picker("", selection: $wakeUpOffsetHours) {
-                    ForEach(0..<4, id: \.self) { hours in
-                        Text("\(hours) hours").tag(hours)
-                    }
-                }
-                .pickerStyle(MenuPickerStyle())
-                
-                Picker("", selection: $wakeUpOffsetMinutes) {
-                    ForEach(0..<60, id: \.self) { minutes in
-                        Text("\(minutes) mins").tag(minutes)
-                    }
-                }
-                .pickerStyle(MenuPickerStyle())
-            }
-            
-            Picker("", selection: $beforeSunrise) {
-                Text("Before Sunrise").tag(true)
-                Text("After Sunrise").tag(false)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-        }
-    }
-    
-    private var targetHoursOfSleepSelector: some View {
-        Section(header: Text("Target Hours of Sleep")) {
-            Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
-                ForEach(4..<14, id: \.self) { hours in
-                    Text("\(hours) hours").tag(hours)
-                }
-            }
-            .pickerStyle(MenuPickerStyle())
-        }
-    }
-    
-    private var windDownTimeSelector: some View {
-        Section(header: Text("Wind down reminder")) {
-            HStack {
-                Picker("Notify me ", selection: $windDownTime) {
-                    ForEach(5..<60, id: \.self) { minutes in
-                        Text("\(minutes) mins").tag(minutes)
-                    }
-                }
-                .pickerStyle(MenuPickerStyle())
-                Text(" before bedtime.")
-            }
+                .listRowBackground(Color.appThird)
         }
     }
     
@@ -126,125 +85,44 @@ struct SettingsView: View {
             }
         }
     }
-    
-    private var dataManagementSection: some View {
-        Section(header: Text("Data Management")) {
-            Button("Reset Alarm Preferences") {
-                Task {
-                    clearUserDefaults()
-                }
-            }
-            
-            Button("Erase All App Data") {
-                Task {
-                    clearUserDefaults()
-                    AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
-                    AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
-                }
-            }
-        }
-    }
-    
-    private var eraseAlarmsButton: some View {
-        Button("Reset Alarm Preferences") {
-            Task {
-                clearUserDefaults()
-            }
-        }
-        .foregroundColor(.black)
-        .padding()
-        .background(Color.accentColor)
-        .cornerRadius(10)
-    }
-    
-    private var earaseAllAppDataButton: some View {
+ 
+    private var eraseAllDataButton: some View {
         
-        Button("Erase All App Data") {
+        CustomButton(title: "Erase All Data") {
+            Task {
+                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
+                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
+            }
+        }
+        
+    }
+    
+    private var resetAppButton: some View {
+        
+        CustomButton(title: "Reset App") {
             Task {
                 clearUserDefaults()
                 AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
                 AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
             }
         }
-        .foregroundColor(.black)
-        .padding()
-        .background(Color.accentColor)
-        .cornerRadius(10)
+        
+        
     }
     
     private var attributionsSection: some View {
-        Section(header: Text("Attributions")) {
-            Link("Data from SunriseSunset.io", destination: URL(string: "https://sunrisesunset.io/api/")!)
-                .padding()
+        HStack {
+            Spacer()
+            Link("API Data from SunriseSunset.io", destination: URL(string: "https://sunrisesunset.io/api/")!)
+            Spacer()
         }
+        .listRowBackground(Color.appPrimary)
+
     }
 
 }
 
-class settingsComponents {
-    struct AlarmTimeSelector: View {
-        @Binding var wakeUpOffsetHours: Int
-        @Binding var wakeUpOffsetMinutes: Int
-        @Binding var beforeSunrise: Bool
 
-        var body: some View {
-            Section(header: Text("Alarm time:")) {
-                HStack {
-                    Text("Wake up ")
-
-                    Picker("", selection: $wakeUpOffsetHours) {
-                        ForEach(0..<4, id: \.self) { i in
-                            Text("\(i) hours").tag(i)
-                        }
-                    }.pickerStyle(MenuPickerStyle())
-
-                    Picker("", selection: $wakeUpOffsetMinutes) {
-                        ForEach(0..<60, id: \.self) { i in
-                            Text("\(i) mins").tag(i)
-                        }
-                    }.pickerStyle(MenuPickerStyle())
-                }
-                Picker("", selection: $beforeSunrise) {
-                    Text("Before Sunrise").tag(true)
-                    Text("After Sunrise").tag(false)
-                }.pickerStyle(SegmentedPickerStyle())
-            }
-        }
-    }
-    
-    struct TargetHoursOfSleepSelector: View {
-        @Binding var targetHoursOfSleep: Int
-
-        var body: some View {
-            Section(header: Text("Target Hours of Sleep")) {
-                Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
-                    ForEach(4..<14, id: \.self) { i in
-                        Text("\(i) hours").tag(i)
-                    }
-                }.pickerStyle(MenuPickerStyle())
-            }
-        }
-    }
-
-    struct WindDownTimeSelector: View {
-        @Binding var windDownTime: Int
-
-        var body: some View {
-            Section(header: Text("Wind down reminder")) {
-                HStack {
-                    Picker("Notify me ", selection: $windDownTime) {
-                        ForEach(5..<60, id: \.self) { i in
-                            Text("\(i) mins").tag(i)
-                        }
-                    }.pickerStyle(MenuPickerStyle())
-                    Text(" before bedtime.")
-                }
-            }
-        }
-    }
-
-
-}
 
 
 

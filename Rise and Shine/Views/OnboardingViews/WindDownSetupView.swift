@@ -43,13 +43,19 @@ struct WindDownSetupView: View {
                 
                 // Next button at the bottom
                 NavigationLink(destination: SetupSettingsConfirmationView()) {
-                    Text("Next")
-                        .foregroundColor(.black)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
+                    HStack {
+                        Spacer()
+                        Text("Next")
+                        Spacer()
+                    }
+                    .foregroundColor(.black)
+                    .padding(.all)
+                    .background(Color.accentColor)
+                    .cornerRadius(10)
+
+
                 }
-                .padding(.bottom) // Adds padding at the bottom if needed
+                .padding(.all)
             }
             .foregroundColor(.white)
         }
@@ -61,8 +67,7 @@ struct WindDownSetupView: View {
                 Text("\(index * 5) mins").tag(index * 5)
             }
         }.pickerStyle(MenuPickerStyle())
-            .background(Color.white)
-            .cornerRadius(10)
+
     }
     
     
