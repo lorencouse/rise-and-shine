@@ -10,9 +10,7 @@ import SwiftUI
 @main
 struct Rise_and_ShineApp: App {
     init() {
-     // Large Navigation Title
      UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-     // Inline Navigation Title
      UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor.white]
    }
     

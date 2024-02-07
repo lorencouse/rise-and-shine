@@ -17,6 +17,11 @@ struct SettingsView: View {
     @AppStorage("targetHoursOfSleep") private var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("windDownTime") private var windDownTime = Constants.windDownTimeDefault
     @AppStorage("currentCity") private var currentCity = "Location: Please Update"
+    @State private var sunData: [SunData] =  AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+    
+    
+    @State private var showingResetAlert = false
+
     
     var body: some View {
         NavigationView {
@@ -27,6 +32,9 @@ struct SettingsView: View {
                     
                     Form {
                         locationSelector
+                        
+
+                        
                         settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
                         settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
                         settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
@@ -34,16 +42,20 @@ struct SettingsView: View {
                         
                         VStack {
      
-                            eraseAllDataButton
+//                            eraseAllDataButton
                             resetAppButton
                          
                         }
                         .listRowBackground(Color.appPrimary)
-                        attributionsSection
+                        
+                        
                         
                     }
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white)
+                    
+                    Spacer()
+                    attributionsSection
 
 
                     
@@ -64,9 +76,15 @@ struct SettingsView: View {
     
     private var locationSelector: some View {
         Section(header: Text("Location:")) {
+
+            
             Text(currentCity)
-                .listRowBackground(Color.appThird)
+            Text("Sunrise Time: \(sunData.first?.sunrise ?? "")")
+
+
+            
         }
+        .listRowBackground(Color.appThird)
     }
     
     private var notificationSettingsSection: some View {
@@ -86,22 +104,22 @@ struct SettingsView: View {
         }
     }
  
-    private var eraseAllDataButton: some View {
-        
-        CustomButton(title: "Erase All Data") {
-            Task {
-                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
-                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
-            }
-        }
-        
-    }
+//    private var eraseAllDataButton: some View {
+//        
+//        CustomButton(title: "Erase All Data") {
+//            Task {
+//                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
+//                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
+//            }
+//        }
+//        
+//    }
     
     private var updateLocationButton: some View {
         
         CustomButton(title: "Update Location") {
             Task {
-                locationManager.startLocationUpdates()
+                locationManager.requestSingleLocationUpdate()
             }
         }
         
@@ -110,12 +128,22 @@ struct SettingsView: View {
     private var resetAppButton: some View {
         
         CustomButton(title: "Reset App") {
-            Task {
-                clearUserDefaults()
-                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
-                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
-            }
-        }
+                    showingResetAlert = true
+                }
+                .alert(isPresented: $showingResetAlert) {
+                    Alert(
+                        title: Text("Reset App Data"),
+                        message: Text("Are you sure you want to reset all app data? This action cannot be undone."),
+                        primaryButton: .destructive(Text("Reset All App Data")) {
+                            Task {
+                                clearUserDefaults()
+                                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
+                                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
+                            }
+                        },
+                        secondaryButton: .cancel()
+                    )
+                }
         
         
     }

@@ -10,7 +10,7 @@ import UserNotifications
 import CoreLocation
 import UIKit
 import Foundation
-import Combine
+//import Combine
 
 struct ContentView: View {
     @ObservedObject private var locationManager = LocationManager()
@@ -22,19 +22,18 @@ struct ContentView: View {
         NavigationView {
             ZStack {
                 Color.appPrimary.edgesIgnoringSafeArea(.all)
-
+                
                 
                 VStack {
-
+                    
                     navigationBar
-                    datePickerView
-                    
                     formView
-                    
+
                 }
             }
             
             .onAppear() {
+                
                 loadData()
                 
             }
@@ -44,79 +43,53 @@ struct ContentView: View {
     }
     
     
-    
     private var navigationBar: some View {
         HStack {
             NavigationLink(destination: SettingsView()) {
                 Image(systemName: "line.horizontal.3")
-                    .foregroundColor(Color.white)
+                    .foregroundColor(Color.yellow)
                     .imageScale(.large)
                     .padding()
                 Text("Settings")
-                    .foregroundColor(Color.white)
+                    .foregroundColor(Color.yellow)
                 Spacer()
-                
-                Text("Home").font(.title)
-                    .padding(.trailing)
-
                 
             }
             
             Spacer()
             
         }
-
+        
         
         
     }
     
     private var formView: some View {
         Form {
-
-    
+            datePickerView
             
-            Section {
-                Text("Location: \(UserDefaults.standard.currentCity)")
+            Section(header: Text("Location")) {
+                Text("\(UserDefaults.standard.currentCity)")
                     .listRowBackground(Color.appThird)
-                    
-            }
-            
-            Section {
-                
-//                datePickerView
-                alarmsSection
                 
             }
             
-            Section {
-                sunTimesSection
-            }
-            
+            alarmsSection
+            sunTimesSection
             updateButtons
-
             
         }
         .scrollContentBackground(.hidden)
         .foregroundColor(.white)
         
+        
     }
     
-    private var datePickerView: some View {
-        DatePicker("Choose Date", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
-            .datePickerStyle(GraphicalDatePickerStyle())
-            .frame(maxHeight: 400)
-            .onChange(of: selectedDate) { _ in
-                checkMissingData()
-            }
-            .background()
-            .cornerRadius(5)
-            .padding(.all)
-            .shadow(radius: 10)
-    }
+
+    
     
     private var alarmsSection: some View {
         List {
-            // Alarm Data
             if let data = alarmSchedule.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
                 alarmSection(data)
             } else {
@@ -126,78 +99,86 @@ struct ContentView: View {
                     Text("No alarm data available for this date")
                 }
             }
-
+            
         }
         .listRowBackground(Color.appThird)
-
         
-    }
-    
-    private var sunTimesSection: some View {
-        Section {
-            List {
-                // Sun Data
-                if let data = sunData.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
-                    sunDataSection(data)
-                } else {
-                    Text("Fetching alarm data for this date...")            }
-            }
-        }
-        .listRowBackground(Color.appThird)
     }
     
     
     
     private func alarmSection(_ data: AlarmSchedule) -> some View {
-        Section(header: Text("Today's Date: \(data.date)")) {
-            
+        Section(header: Text("Tomorrow's Sunrise & Alarms")) {
             if let currentIndex = alarmSchedule.firstIndex(where: { $0.date == data.date }),
                alarmSchedule.indices.contains(currentIndex + 1) {
                 let nextDayData = alarmSchedule[currentIndex + 1]
-                Text("Sunrise Time Tomorrow: \(nextDayData.sunriseTime)")
+                Text("Sunrise Tomorrow: \(nextDayData.sunriseTime)")
             } else {
                 Text("Sunrise Time Tomorrow: Not available")
-                
             }
-            Text("Sleep Reminder Tonight: \(data.windDownTime)")
-            Text("Bed Time Tonight: \(data.bedTime)")
-            Text("Alarm Time Tomorrow: \(data.alarmTime)")
+            // Show times with out date string
+            Text("Alarm Tomorrow: \(String(data.alarmTime.dropFirst(10)))")
+            Text("Sleep Reminder Tonight: \(String(data.windDownTime.dropFirst(10)))")
+            Text("Bed Time Tonight: \(String(data.bedTime.dropFirst(10)))")
+            
             
             
         }
     }
     
+    private var sunTimesSection: some View {
+        List {
+            if let data = sunData.first(where: { $0.date == DateFormatter.formattedDateString(date: selectedDate) }) {
+                sunDataSection(data)
+            } else {
+                Text("Fetching alarm data for this date...")            }
+        }
+        .listRowBackground(Color.appThird)
+    }
+    
     private func sunDataSection(_ data: SunData) -> some View {
-        Section {
-            Text("All Sun Times for \(data.date)")
-            Text("Sunrise: \(data.sunrise)")
+        Section(header: Text("For Today: \(data.date)")) {
+            Text("Day Length: \(data.dayLength)")
+            Text("Last Light: \(data.lastLight)")
             Text("Sunset: \(data.sunset)")
             Text("First Light: \(data.firstLight)")
-            Text("Last Light: \(data.lastLight)")
             Text("Dawn: \(data.dawn)")
-            Text("Dusk: \(data.dusk)")
-            Text("Day Length: \(data.dayLength)")
+            
         }
         
     }
     
+
+    
+    
+    private var datePickerView: some View {
+        DatePicker("Choose Date", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
+            .datePickerStyle(GraphicalDatePickerStyle())
+            .frame(maxHeight: 400)
+            .onChange(of: selectedDate) { _ in
+                checkMissingData()
+            }
+            .shadow(radius: 10)
+    }
+    
     private func checkMissingData() {
         let dateString = DateFormatter.formattedDateString(date: selectedDate)
-
+        
         let isSunDataMissing = !sunData.contains { $0.date == dateString }
         let isAlarmDataMissing = !alarmSchedule.contains { $0.date == dateString }
-
+        
         if isSunDataMissing || isAlarmDataMissing {
             fetchMissingData()
         }
     }
+    
     
     private func fetchMissingData() {
         Task {
             do {
                 try await
                 
-                APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: DateFormatter.formattedDateString(date: selectedDate), missingDate: true)
+                APIManager.fetchSunData(latitude: locationManager.currentLocation?.coordinate.latitude, longitude: locationManager.currentLocation?.coordinate.longitude, startDate: DateFormatter.formattedDateString(date: selectedDate), missingDate: true)
                 
                 sunData
                 = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? sunData
@@ -205,7 +186,6 @@ struct ContentView: View {
                 calculateScheduleForSunData(sunData)
                 
                 alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
-                
                 
             }
             
@@ -219,24 +199,24 @@ struct ContentView: View {
     
     
     private var updateButtons: some View {
-            
+        
         CustomButton(title: "Update") {
-                Task {
-                    locationManager.startLocationUpdates()
-                    await updateData(date: selectedDate)
-                    sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
-                    alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
-                }
+            Task {
+                locationManager.requestSingleLocationUpdate()
+                await updateData(date: selectedDate, locationManager: locationManager)
+                sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+                alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
             }
+        }
         .listRowBackground(Color.appPrimary)
-
-            
+        
+        
     }
     
     private func loadData() {
         Task {
-            locationManager.startLocationUpdates()
-            await updateData(date: selectedDate)
+            locationManager.requestSingleLocationUpdate()
+            await updateData(date: selectedDate, locationManager: locationManager)
             sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
             alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
         }

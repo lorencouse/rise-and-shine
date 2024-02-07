@@ -69,7 +69,7 @@ func scheduleAlarmNotifications(schedules: [AlarmSchedule]) {
     var counter = 0
     for schedule in schedules {
         
-        guard counter < 20 else {break}
+        guard counter < 15 else {break}
         
         guard let windDownDate = dateFormatter.date(from: schedule.windDownTime),
               let bedTime = dateFormatter.date(from: schedule.bedTime),

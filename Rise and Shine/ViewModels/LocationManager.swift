@@ -3,7 +3,9 @@ import CoreLocation
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private var locationManager = CLLocationManager()
-    
+    private var geocodeCache: [String: String] = [:] // Cache for storing city names
+    private var lastGeocodeRequestTime: Date?
+
     @Published var locationStatus: CLAuthorizationStatus?
     @Published var currentLocation: CLLocation?
     @Published var cityName: String?
@@ -11,21 +13,25 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
+        // Removed automatic start of location updates.
     }
     
-    // Call this method when you want to start location updates,
-    // for example, after getting user's permission or based on some user action
-    func startLocationUpdates() {
-        locationManager.startUpdatingLocation()
+    // This method is now responsible for triggering location updates.
+    func requestSingleLocationUpdate() {
+        if CLLocationManager.authorizationStatus() == .authorizedWhenInUse || CLLocationManager.authorizationStatus() == .authorizedAlways {
+            if CLLocationManager.locationServicesEnabled() {
+                locationManager.requestLocation() // Request a single location update
+            }
+        } else {
+            locationManager.requestWhenInUseAuthorization() // Request permission if not already authorized
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         self.locationStatus = status
-        // Start location updates only when authorized
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
-            startLocationUpdates()
-        }
+        // Now, only updates the locationStatus without starting location updates.
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -39,7 +45,27 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Location manager failed with error: \(error.localizedDescription)")
     }
     
+    private func canPerformGeocodeRequest() -> Bool {
+        guard let lastRequestTime = lastGeocodeRequestTime else {
+            return true
+        }
+        let timeIntervalSinceLastRequest = Date().timeIntervalSince(lastRequestTime)
+        return timeIntervalSinceLastRequest > 60
+    }
+    
     private func reverseGeocodeLocation(_ location: CLLocation) {
+        let coordinateKey = "\(location.coordinate.latitude),\(location.coordinate.longitude)"
+        
+        if let cachedCityName = geocodeCache[coordinateKey] {
+            self.cityName = cachedCityName
+            return
+        }
+        
+        guard canPerformGeocodeRequest() else {
+            print("Geocode request skipped due to rate limiting.")
+            return
+        }
+        
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { [weak self] (placemarks, error) in
             guard let self = self else { return }
@@ -48,7 +74,12 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 return
             }
             
-            self.cityName = placemarks?.first?.locality ?? "Unknown City"
+            if let placemark = placemarks?.first {
+                let cityName = placemark.locality ?? "Unknown City"
+                self.cityName = cityName
+                self.geocodeCache[coordinateKey] = cityName
+                self.lastGeocodeRequestTime = Date()
+            }
         }
     }
 }

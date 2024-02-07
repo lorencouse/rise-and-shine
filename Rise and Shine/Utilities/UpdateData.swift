@@ -7,13 +7,13 @@
 
 import Foundation
 
-func updateData(date: Date) async {
+func updateData(date: Date, locationManager: LocationManager) async {
 
     let dateString = DateFormatter.formattedDateString(date: date)
 //    let date = fetchDate() // Make sure this function exists
     
     do {
-        try await APIManager.fetchSunData(latitude: UserDefaults.standard.currentLatitude, longitude: UserDefaults.standard.currentLongitude, startDate: dateString, missingDate: false)
+        try await APIManager.fetchSunData(latitude: locationManager.currentLocation?.coordinate.latitude, longitude: locationManager.currentLocation?.coordinate.longitude, startDate: dateString, missingDate: false)
         if let sunDataArray = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) {
             calculateScheduleForSunData(sunDataArray)
             

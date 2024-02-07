@@ -17,11 +17,8 @@ struct APIManager {
 
         // Check if a new file is needed or if it's a new location, and missingDate is false.
         let needsNewFile = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) == nil || (currentCity != UserDefaults.standard.lastCity)
-
-
         
         if needsNewFile || missingDate {
-            
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -31,7 +28,7 @@ struct APIManager {
                 throw SunDataError.invalidDateFormat
             }
 
-            guard let endDate = Calendar.current.date(byAdding: .day, value: 15, to: startDateVal) else {
+            guard let endDate = Calendar.current.date(byAdding: .day, value: 31, to: startDateVal) else {
                 throw SunDataError.endDateCalculationError
             }
 
@@ -40,7 +37,8 @@ struct APIManager {
                   let url = URL(string: "\(urlBase)?lat=\(lat)&lng=\(lng)&date_start=\(startDate)&date_end=\(endDateString)") else {
                 throw SunDataError.invalidURL
             }
-
+            
+            print(url)
             let (data, _) = try await URLSession.shared.data(from: url)
             let decoded = try JSONDecoder().decode(SunApiResponse.self, from: data)
 
