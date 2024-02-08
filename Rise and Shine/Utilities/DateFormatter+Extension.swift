@@ -40,7 +40,7 @@ extension DateFormatter {
         return formatter
     }()
     
-    static func fetchDate() -> String {
+    static func fetchDateString() -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         return dateFormatter.string(from: Date())

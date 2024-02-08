@@ -41,6 +41,68 @@ class settingsComponents {
         }
     }
     
+    
+    struct LocationSelector: View {
+        
+        @Binding var sunData: [SunData]
+        @ObservedObject var locationManager: LocationManager
+        @State private var showingAlert = false
+        @State private var sunriseTime: String = "Tap to Update Sunrise Time"
+        @State private var cityName: String = "Tap to Update Location"
+        let dateString = DateFormatter.fetchDateString()
+        
+        var body: some View {
+            
+            Section(header: Text("Location:")) {
+                
+                
+                Button("\(cityName)") {
+                    
+                    updateLocationAndSunrise()
+                    
+                }
+
+                .alert("Location Error", isPresented: $showingAlert) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Please ensure the app has permission to access your location and try again.")
+                }
+                .padding()
+                
+                Button("\(sunriseTime)") {
+                    updateLocationAndSunrise()
+                }
+                
+            }
+            .onChange(of: locationManager.locationStatus) { newValue in
+                if newValue == .denied || newValue == .restricted {
+                    showingAlert = true
+                }
+            }
+            .onAppear {
+                updateLocationAndSunrise()
+                
+            }
+            .listRowBackground(Color.appThird)
+            
+        }
+        
+        private func updateLocationAndSunrise() {
+            Task {
+                locationManager.requestSingleLocationUpdate()
+                await updateSunData(date: dateString, locationManager: locationManager)
+                sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+                if let sunrise = sunData.first?.sunrise {
+                    sunriseTime = "Sunrise Time: \(sunrise)"
+                } else {
+                }
+                cityName = locationManager.cityName ?? cityName
+            }
+        }
+
+    }
+    
+    
     struct TargetHoursOfSleepSelector: View {
         @Binding var targetHoursOfSleep: Int
 

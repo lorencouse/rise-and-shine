@@ -31,3 +31,16 @@ struct CustomButton: View {
         .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
     }
 }
+
+struct updateLocationButton: View {
+    
+    @ObservedObject var locationManager: LocationManager
+    
+    var body: some View {
+        CustomButton(title: "Update Location") {
+            Task {
+            locationManager.requestSingleLocationUpdate()
+            }
+        }
+    }
+}

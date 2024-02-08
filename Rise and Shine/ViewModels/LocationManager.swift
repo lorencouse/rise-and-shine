@@ -15,24 +15,29 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
-        // Removed automatic start of location updates.
     }
     
     // This method is now responsible for triggering location updates.
     func requestSingleLocationUpdate() {
-        if CLLocationManager.authorizationStatus() == .authorizedWhenInUse || CLLocationManager.authorizationStatus() == .authorizedAlways {
+        locationManager.requestWhenInUseAuthorization()
+    }
+    
+    // Updated to handle changes in authorization and request location updates accordingly.
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
             if CLLocationManager.locationServicesEnabled() {
-                locationManager.requestLocation() // Request a single location update
+                locationManager.requestLocation() // Safe to request location updates
             }
-        } else {
-            locationManager.requestWhenInUseAuthorization() // Request permission if not already authorized
+        default:
+            print("Location access not authorized or not available.")
         }
+        
+        self.locationStatus = status // Update the published locationStatus property
     }
 
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        self.locationStatus = status
-        // Now, only updates the locationStatus without starting location updates.
-    }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }

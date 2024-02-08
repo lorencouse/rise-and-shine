@@ -40,7 +40,7 @@ import Foundation
         }
         
         
-        let today = DateFormatter.fetchDate()
+        let today = DateFormatter.fetchDateString()
         let firstDateInArray = sunDataArray.first?.date ?? ""
         
         print("Today: \(today) First Day: \(firstDateInArray)")

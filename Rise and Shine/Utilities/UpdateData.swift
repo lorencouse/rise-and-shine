@@ -24,3 +24,26 @@ func updateData(date: Date, locationManager: LocationManager) async {
         print("Error fetching sun data: \(error)")
     }
 }
+
+func updateSunData(date: String, locationManager: LocationManager) async {
+    
+    
+    let dateString = DateFormatter.fetchDateString()
+    
+    do {
+        try await APIManager.fetchSunData(latitude: locationManager.currentLocation?.coordinate.latitude, longitude: locationManager.currentLocation?.coordinate.longitude, startDate: dateString, missingDate: false)
+    } catch {
+        print("Error fetching sun data: \(error)")
+    }
+}
+
+
+func updateAlarms() {
+    if let sunDataArray = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) {
+        calculateScheduleForSunData(sunDataArray)
+        
+    } else {
+        print("Sunrise time not found.")
+    }
+
+}

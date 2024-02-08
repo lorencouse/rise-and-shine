@@ -76,7 +76,7 @@
 		5C5549632B51FEEC00758980 /* Rise_and_ShineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITests.swift; sourceTree = "<group>"; };
 		5C5549652B51FEEC00758980 /* Rise_and_ShineUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rise_and_ShineUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		5C8C65962B623FBB001D7F18 /* Location.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Location.gpx; sourceTree = "<group>"; };
-		5C940D722B6F5C620002A862 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "Rise and Shine/Launch Screen.storyboard"; sourceTree = SOURCE_ROOT; };
+		5C940D722B6F5C620002A862 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "Rise and Shine/Views/Launch Screen.storyboard"; sourceTree = SOURCE_ROOT; };
 		5C9852182B70AD3E000B259B /* WelcomePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomePageView.swift; sourceTree = "<group>"; };
 		5C98521A2B70AD52000B259B /* LocationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSelectionView.swift; sourceTree = "<group>"; };
 		5C98521C2B70AD77000B259B /* AlarmSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSetupView.swift; sourceTree = "<group>"; };
@@ -222,6 +222,7 @@
 				5C55494A2B51FEEB00758980 /* ContentView.swift */,
 				5CEC253F2B58D54B00F3CC2B /* SettingsView.swift */,
 				5CAE6E4E2B6B7FBA00F9B26A /* NotificationsView.swift */,
+				5C940D722B6F5C620002A862 /* Launch Screen.storyboard */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -244,7 +245,6 @@
 				5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */,
 				5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */,
 				5CEC254B2B58FE5900F3CC2B /* UserDefaults.swift */,
-				5C940D722B6F5C620002A862 /* Launch Screen.storyboard */,
 				5C2823652B71FDD400E88D6F /* AppDelegate.swift */,
 			);
 			path = Utilities;
@@ -587,7 +587,6 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -621,7 +620,6 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";

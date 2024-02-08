@@ -16,6 +16,7 @@ struct Rise_and_ShineApp: App {
     
     @AppStorage("onboardingCompleted") private var onboardingCompleted: Bool = false
 
+
     var body: some Scene {
         WindowGroup {
             
@@ -24,7 +25,7 @@ struct Rise_and_ShineApp: App {
                 ContentView()
                 
             } else {
-                AlarmSetupView()
+                WelcomeView()
             }
 
         }

@@ -16,7 +16,6 @@ struct SettingsView: View {
     @AppStorage("beforeSunrise") private var beforeSunrise = true
     @AppStorage("targetHoursOfSleep") private var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("windDownTime") private var windDownTime = Constants.windDownTimeDefault
-    @AppStorage("currentCity") private var currentCity = "Location: Please Update"
     @State private var sunData: [SunData] =  AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
     
     
@@ -31,19 +30,20 @@ struct SettingsView: View {
                 VStack {
                     
                     Form {
-                        locationSelector
-                        
-
+                        settingsComponents.LocationSelector(sunData: $sunData, locationManager: locationManager)
                         
                         settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
                         settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
                         settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
                         
                         
+                        
+                        
                         VStack {
-     
-//                            eraseAllDataButton
+                            Spacer()
+                            updateLocationButton(locationManager: locationManager)
                             resetAppButton
+                            attributionsSection
                          
                         }
                         .listRowBackground(Color.appPrimary)
@@ -53,13 +53,7 @@ struct SettingsView: View {
                     }
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white)
-                    
-                    Spacer()
-                    attributionsSection
 
-
-                    
-                    
 
 
                 }
@@ -74,18 +68,7 @@ struct SettingsView: View {
     
 
     
-    private var locationSelector: some View {
-        Section(header: Text("Location:")) {
 
-            
-            Text(currentCity)
-            Text("Sunrise Time: \(sunData.first?.sunrise ?? "")")
-
-
-            
-        }
-        .listRowBackground(Color.appThird)
-    }
     
     private var notificationSettingsSection: some View {
         Section(header: Text("Notification Settings")) {
@@ -104,26 +87,9 @@ struct SettingsView: View {
         }
     }
  
-//    private var eraseAllDataButton: some View {
-//        
-//        CustomButton(title: "Erase All Data") {
-//            Task {
-//                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
-//                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
-//            }
-//        }
-//        
-//    }
+
     
-    private var updateLocationButton: some View {
-        
-        CustomButton(title: "Update Location") {
-            Task {
-                locationManager.requestSingleLocationUpdate()
-            }
-        }
-        
-    }
+
     
     private var resetAppButton: some View {
         

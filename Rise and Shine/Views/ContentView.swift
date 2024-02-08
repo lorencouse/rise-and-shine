@@ -202,10 +202,7 @@ struct ContentView: View {
         
         CustomButton(title: "Update") {
             Task {
-                locationManager.requestSingleLocationUpdate()
-                await updateData(date: selectedDate, locationManager: locationManager)
-                sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
-                alarmSchedule = (AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? [])
+                loadData()
             }
         }
         .listRowBackground(Color.appPrimary)
@@ -213,12 +210,18 @@ struct ContentView: View {
         
     }
     
+    private func updateLists() {
+        sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+        alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
+    }
+    
     private func loadData() {
         Task {
             locationManager.requestSingleLocationUpdate()
-            await updateData(date: selectedDate, locationManager: locationManager)
-            sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
-            alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
+            await updateSunData(date: DateFormatter.formattedDateString(date: selectedDate), locationManager: locationManager)
+            updateAlarms()
+            updateLists()
+            
         }
     }
     
