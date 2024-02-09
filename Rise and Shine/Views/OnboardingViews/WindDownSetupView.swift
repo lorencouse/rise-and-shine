@@ -19,18 +19,8 @@ struct WindDownSetupView: View {
         ZStack {
             Color.appPrimary.edgesIgnoringSafeArea(.all)
             VStack {
-
-                VStack {
-                    Text("Bedtime Reminder").font(.title).padding(.vertical)
-                    Text("Choose how long before bedtime you want to be reminded to starting winding down for the night.")
-                }
-                .padding(.horizontal)
                 
-                Spacer()
-                Image(systemName: "moonset.fill")
-                    .font(.system(size: 240))
-                    .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
-
+                HeaderView(title: "Bedtime Reminder", subtitle: "Choose how long before bedtime you want to be reminded to starting winding down for the night.", imageName: "moonset.fill")
 
                 Spacer()
                 
@@ -44,21 +34,9 @@ struct WindDownSetupView: View {
                     
                 }.padding()
                 
-                // Next button at the bottom
-                NavigationLink(destination: SetupSettingsConfirmationView()) {
-                    HStack {
-                        Spacer()
-                        Text("Next")
-                        Spacer()
-                    }
-                    .foregroundColor(.black)
-                    .padding(.all)
-                    .background(Color.accentColor)
-                    .cornerRadius(10)
+                NavigationButton(destination: SetupSettingsConfirmationView(), label: "Next")
 
 
-                }
-                .padding(.all)
             }
             .foregroundColor(.white)
         }

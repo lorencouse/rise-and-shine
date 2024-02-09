@@ -24,19 +24,8 @@ struct LocationSelectionView: View {
                 Color.appPrimary.edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
           
             VStack {
-
-                VStack {
-                    Text("Current Location").font(.title).padding(.vertical)
-                    Text("Choose when you would like to be woken up each day in relation to the sunrise.")
-                }
-                .padding(.horizontal)
                 
-                Spacer()
-                
-                Image(systemName: "location.fill")
-                    .symbolEffect(.pulse)
-                    .font(.system(size: 240))
-                    .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
+                HeaderView(title: "Current Location", subtitle: "Below is the sunrise time for your current location.", imageName: "location.fill")
                 
                 Spacer()
                 
@@ -49,26 +38,9 @@ struct LocationSelectionView: View {
                     }
                     .scrollContentBackground(.hidden)
 
-
-
                 
-                
-                // Next button at the bottom
-                NavigationLink(destination: AlarmSetupView()) {
-                    
-                    HStack {
-                        Spacer()
-                        Text("Next")
-                        Spacer()
-                    }
-                    .foregroundColor(.black)
-                    .padding(.all)
-                    .background(Color.accentColor)
-                    .cornerRadius(10)
+                NavigationButton(destination: AlarmSetupView(), label: "Next")
 
-
-                }
-                .padding(.all)
                 
             }
             .foregroundColor(.white)

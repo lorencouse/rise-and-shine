@@ -18,47 +18,10 @@ struct WelcomeView: View {
                 
                 VStack {
                     
-                    VStack {
-                        Text("Rise and Shine").font(.largeTitle).padding(.top, 25.0)
-                       
+                    HeaderView(title: "Rise and Shine", subtitle: "Sync your sleep with the sunrise, \nand align your body's natural clock.", imageName: "sun.dust.circle")
+                    
+                    NavigationButton(destination: LocationSelectionView(), label: "Get Started")
 
-                    }
-                    .padding(.horizontal)
-                    
-                    Spacer()
-                    
-                    Image("AppLogoTransparent")
-                    Spacer()
-                    
-                    // Picker and settings
-                    VStack {
-
-                        
-                        Text("Sync your sleep with the sunrise, \nand align your body's natural clock.")
-                            .multilineTextAlignment(.center)
-                        
-                    }
-                    
-                    
-                    // Next button at the bottom
-                    NavigationLink(destination: LocationSelectionView()) {
-                        
-                        HStack {
-                            Spacer()
-                            Text("Get Started")
-                            Spacer()
-                        }
-                        .foregroundColor(.black)
-                        .padding(.all)
-                        .background(Color.accentColor)
-                        .cornerRadius(10)
-                        
-                        
-                    }
-                    .padding(.all)
-                    
-                    
-                    
                     
                 }
                 .foregroundColor(.white)

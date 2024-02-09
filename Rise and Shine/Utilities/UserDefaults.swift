@@ -16,6 +16,7 @@ extension UserDefaults {
         static let wakeUpOffsetMinutes = "wakeUpOffsetMinutes"
         static let beforeSunrise = "beforeSunrise"
         static let targetHoursOfSleep = "targetHoursOfSleep"
+        static let targetMinutesOfSleep = "targetMinutesOfSleep"
         static let windDownTime = "windDownTime"
         static let bedTime = "bedTime"
         static let alarmTime = "alarmTime"
@@ -56,6 +57,11 @@ extension UserDefaults {
     var targetHoursOfSleep: Int {
         get { integer(forKey: Keys.targetHoursOfSleep) }
         set { set(newValue, forKey: Keys.targetHoursOfSleep) }
+    }
+    
+    var targetMinutesOfSleep: Int {
+        get { integer(forKey: Keys.targetMinutesOfSleep) }
+        set { set(newValue, forKey: Keys.targetMinutesOfSleep) }
     }
 
     var windDownTime: Int {

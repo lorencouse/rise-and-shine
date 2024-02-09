@@ -18,86 +18,47 @@ struct AlarmSetupView: View {
     @State private var alarmTime = ""
     
     var body: some View {
+        
+        ZStack {
+            Color.appPrimary.edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
             
-            ZStack {
-                Color.appPrimary.edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
-          
             VStack {
-
+                
                 VStack {
-                    Text("Sunrise Alarm Time").font(.title).padding(.vertical)
+                    HeaderView(title: "Sunrise Alarm Time", subtitle: "Choose when you want to wake up each day.", imageName: "sun.haze.circle")
+                    Spacer()
                     
-                        Text("Choose when you want to wake up each day.")
-                            
-
-                
-                
-                Spacer()
-                
-                Image(systemName: "sun.haze.circle")
-                        .font(.system(size: 240))
-                        .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
-                Spacer()
-                
-
-
-                    HStack {
-                        Spacer()
-                        Text("\(Image(systemName: "sun.haze.circle")) Sunrise\n\(sunData.first?.sunrise ?? "")")
-                            .multilineTextAlignment(.center)
-                            .padding()
-                        
-                        
-                        Spacer()
-                        
-                        
-                        Text("\(                Image(systemName: "alarm")) Alarm\n \(alarmTime)")
-                            .multilineTextAlignment(.center)
-                        
-                        Spacer()
-                        
-                    }
-                    .background(Color(.appThird))
-                    .cornerRadius(20)
-
-
+                    TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Sunrise\n\(sunData.first?.sunrise ?? "")", rightSymbolName: "alarm", rightText: "Alarm\n \(alarmTime)")
                     
-
-
-                        
-
-
-                   Spacer()
+                    
+                    Spacer()
                     Text("I want to wake up")
                     HStack {
                         Spacer()
-                        Picker("", selection: $wakeUpOffsetHours) {
-                            ForEach(0..<4, id: \.self) { i in
-                                Text("\(i) hours").tag(i)
-                            }
-                        }.pickerStyle(MenuPickerStyle())
-                            .onChange(of: wakeUpOffsetHours) { _ in
-                                updateAlarmTime()
-                            }
-
+                        
+                        CustomPicker(
+                            label: "",
+                            range: 0...3, // For wake-up offset hours from 0 to 3
+                            step: 1, // Increment by 1 hour
+                            unit: "hours",
+                            selection: $wakeUpOffsetHours,
+                            onChange: updateAlarmTime
+                        )
                         
                         Spacer()
-                        
                         
                         Text("and")
                         
                         Spacer()
                         
-                        Picker("", selection: $wakeUpOffsetMinutes) {
-                            ForEach(0..<12, id: \.self) { index in
-                                Text("\(index * 5) mins").tag(index * 5)
-                            }
-                        }.pickerStyle(MenuPickerStyle())
-                            .pickerStyle(MenuPickerStyle())
-                                .onChange(of: wakeUpOffsetMinutes) { _ in
-                                    updateAlarmTime()
-                                }
-
+                        CustomPicker(
+                            label: "",
+                            range: 0...11, // For wake-up offset minutes in 5-minute increments
+                            step: 5, // Increment by 5 minutes
+                            unit: "mins",
+                            selection: $wakeUpOffsetMinutes,
+                            onChange: updateAlarmTime
+                        )
                         
                         Spacer()
                     }
@@ -111,25 +72,8 @@ struct AlarmSetupView: View {
                     updateAlarmTime()
                 }
                 
-
                 
-                
-                // Next button at the bottom
-                NavigationLink(destination: SleepGoalSetupView()) {
-                    
-                    HStack {
-                        Spacer()
-                        Text("Next")
-                        Spacer()
-                    }
-                    .foregroundColor(.black)
-                    .padding(.all)
-                    .background(Color.accentColor)
-                    .cornerRadius(10)
-
-
-                }
-                .padding(.all)
+                NavigationButton(destination: SleepGoalSetupView(), label: "Next")
                 
             }
             .foregroundColor(.white)
@@ -137,9 +81,9 @@ struct AlarmSetupView: View {
                 updateAlarmTime()
                 
             }
-                
-                
-            }
+            
+            
+        }
         
     }
     
@@ -157,5 +101,5 @@ struct AlarmSetupView: View {
 #Preview {
     AlarmSetupView()
 }
-    
+
 

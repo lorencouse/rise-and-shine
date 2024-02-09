@@ -10,6 +10,8 @@
 		5C063D4E2B5A1AB500DC7C6B /* DateFormatter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D4D2B5A1AB500DC7C6B /* DateFormatter+Extension.swift */; };
 		5C063D502B5CC02100DC7C6B /* UpdateData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */; };
 		5C063D542B5CD74D00DC7C6B /* AlarmManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */; };
+		5C0928AB2B75F83D003AA0BC /* OnboardingPageComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0928AA2B75F83D003AA0BC /* OnboardingPageComponents.swift */; };
+		5C0928AD2B75F944003AA0BC /* SleepGoalRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0928AC2B75F944003AA0BC /* SleepGoalRefactored.swift */; };
 		5C2823662B71FDD400E88D6F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2823652B71FDD400E88D6F /* AppDelegate.swift */; };
 		5C2823692B72120400E88D6F /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2823682B72120400E88D6F /* SettingsComponents.swift */; };
 		5C28236B2B72148A00E88D6F /* ButtonComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C28236A2B72148A00E88D6F /* ButtonComponent.swift */; };
@@ -61,6 +63,8 @@
 		5C063D4D2B5A1AB500DC7C6B /* DateFormatter+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extension.swift"; sourceTree = "<group>"; };
 		5C063D4F2B5CC02100DC7C6B /* UpdateData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateData.swift; sourceTree = "<group>"; };
 		5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmManager.swift; sourceTree = "<group>"; };
+		5C0928AA2B75F83D003AA0BC /* OnboardingPageComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageComponents.swift; sourceTree = "<group>"; };
+		5C0928AC2B75F944003AA0BC /* SleepGoalRefactored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGoalRefactored.swift; sourceTree = "<group>"; };
 		5C2823652B71FDD400E88D6F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5C2823682B72120400E88D6F /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		5C28236A2B72148A00E88D6F /* ButtonComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonComponent.swift; sourceTree = "<group>"; };
@@ -126,6 +130,7 @@
 			children = (
 				5C2823682B72120400E88D6F /* SettingsComponents.swift */,
 				5C28236A2B72148A00E88D6F /* ButtonComponent.swift */,
+				5C0928AA2B75F83D003AA0BC /* OnboardingPageComponents.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -202,6 +207,7 @@
 				5C98521E2B70AD86000B259B /* SleepGoalSetupView.swift */,
 				5C9852202B70ADA3000B259B /* WindDownSetupView.swift */,
 				5C9852242B70CB89000B259B /* SetupSettingsConfirmationView.swift */,
+				5C0928AC2B75F944003AA0BC /* SleepGoalRefactored.swift */,
 			);
 			path = OnboardingViews;
 			sourceTree = "<group>";
@@ -394,7 +400,9 @@
 				5C28236D2B722B2700E88D6F /* ColorExtensions.swift in Sources */,
 				5CEC25462B58D6B600F3CC2B /* APIManager.swift in Sources */,
 				5C55494B2B51FEEB00758980 /* ContentView.swift in Sources */,
+				5C0928AD2B75F944003AA0BC /* SleepGoalRefactored.swift in Sources */,
 				5C98521B2B70AD52000B259B /* LocationSelectionView.swift in Sources */,
+				5C0928AB2B75F83D003AA0BC /* OnboardingPageComponents.swift in Sources */,
 				5C98521F2B70AD86000B259B /* SleepGoalSetupView.swift in Sources */,
 				5C9852212B70ADA3000B259B /* WindDownSetupView.swift in Sources */,
 				5CEC253A2B58D36B00F3CC2B /* SunData.swift in Sources */,
@@ -582,7 +590,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rise-and-Shine-Info.plist";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_CFBundleDisplayName = "Rise and Shine";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -615,7 +624,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rise-and-Shine-Info.plist";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_CFBundleDisplayName = "Rise and Shine";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to provide the best features based on location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
