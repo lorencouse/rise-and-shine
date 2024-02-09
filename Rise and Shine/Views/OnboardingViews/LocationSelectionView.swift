@@ -15,6 +15,7 @@ struct LocationSelectionView: View {
     @State private var sunData: [SunData] =  AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
     @ObservedObject private var locationManager = LocationManager()
     @State private var sunriseTime: String = ""
+    @State private var currentCity = UserDefaults.standard.currentCity
     
     var body: some View {
 
@@ -35,6 +36,7 @@ struct LocationSelectionView: View {
                 Image(systemName: "location.fill")
                     .symbolEffect(.pulse)
                     .font(.system(size: 240))
+                    .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
                 
                 Spacer()
                 

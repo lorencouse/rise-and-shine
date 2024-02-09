@@ -43,10 +43,13 @@ struct SettingsView: View {
                             Spacer()
                             updateLocationButton(locationManager: locationManager)
                             resetAppButton
-                            attributionsSection
+                            
+
                          
                         }
                         .listRowBackground(Color.appPrimary)
+                        
+                        attributionsSection
                         
                         
                         
@@ -115,10 +118,10 @@ struct SettingsView: View {
     }
     
     private var attributionsSection: some View {
-        HStack {
-            Spacer()
+        Section {
+            
             Link("API Data from SunriseSunset.io", destination: URL(string: "https://sunrisesunset.io/api/")!)
-            Spacer()
+
         }
         .listRowBackground(Color.appPrimary)
 

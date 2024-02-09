@@ -48,15 +48,14 @@ class settingsComponents {
         @ObservedObject var locationManager: LocationManager
         @State private var showingAlert = false
         @State private var sunriseTime: String = "Tap to Update Sunrise Time"
-        @State private var cityName: String = "Tap to Update Location"
+        @State private var cityName: String = UserDefaults.standard.currentCity
         let dateString = DateFormatter.fetchDateString()
         
         var body: some View {
             
-            Section(header: Text("Location:")) {
+            Section(header: Text("\(Image(systemName: "location.fill")) Location:")) {
                 
-                
-                Button("\(cityName)") {
+                Button("\(Image(systemName: "location.circle")) \(cityName)") {
                     
                     updateLocationAndSunrise()
                     
@@ -67,9 +66,8 @@ class settingsComponents {
                 } message: {
                     Text("Please ensure the app has permission to access your location and try again.")
                 }
-                .padding()
                 
-                Button("\(sunriseTime)") {
+                Button("\(Image(systemName: "sun.haze.circle")) Sunrise Time: \(sunriseTime)") {
                     updateLocationAndSunrise()
                 }
                 
@@ -93,10 +91,9 @@ class settingsComponents {
                 await updateSunData(date: dateString, locationManager: locationManager)
                 sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
                 if let sunrise = sunData.first?.sunrise {
-                    sunriseTime = "Sunrise Time: \(sunrise)"
+                    sunriseTime = "\(sunrise)"
                 } else {
                 }
-                cityName = locationManager.cityName ?? cityName
             }
         }
 
@@ -107,7 +104,7 @@ class settingsComponents {
         @Binding var targetHoursOfSleep: Int
 
         var body: some View {
-            Section(header: Text("Target Hours of Sleep")) {
+            Section(header: Text("\(Image(systemName: "moon.zzz.fill")) Target Hours of Sleep")) {
                 Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
                     ForEach(4..<14, id: \.self) { i in
                         Text("\(i) hours").tag(i)
@@ -122,7 +119,7 @@ class settingsComponents {
         @Binding var windDownTime: Int
 
         var body: some View {
-            Section(header: Text("Wind down reminder")) {
+            Section(header: Text("\(Image(systemName: "moonset.fill")) Wind down reminder")) {
                 HStack {
                     Picker("Notify me ", selection: $windDownTime) {
                         ForEach(5..<60, id: \.self) { i in

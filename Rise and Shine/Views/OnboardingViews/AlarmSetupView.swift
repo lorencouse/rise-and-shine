@@ -27,24 +27,42 @@ struct AlarmSetupView: View {
                 VStack {
                     Text("Sunrise Alarm Time").font(.title).padding(.vertical)
                     
+                        Text("Choose when you want to wake up each day.")
+                            
 
                 
                 
                 Spacer()
                 
-                Image("sunrise")
+                Image(systemName: "sun.haze.circle")
+                        .font(.system(size: 240))
+                        .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
                 Spacer()
                 
-                // Picker and settings
-                VStack {
-                    Text("Choose when you want to wake up each day.")
+
+
+                    HStack {
+                        Spacer()
+                        Text("\(Image(systemName: "sun.haze.circle")) Sunrise\n\(sunData.first?.sunrise ?? "")")
+                            .multilineTextAlignment(.center)
+                            .padding()
                         
-                }
-                .padding(.bottom)
+                        
+                        Spacer()
+                        
+                        
+                        Text("\(                Image(systemName: "alarm")) Alarm\n \(alarmTime)")
+                            .multilineTextAlignment(.center)
+                        
+                        Spacer()
+                        
+                    }
+                    .background(Color(.appThird))
+                    .cornerRadius(20)
+
+
                     
-                            Text("Sunrise: \(sunData.first?.sunrise ?? "")")
-                            Text("Alarm: \(alarmTime)")
-                                .padding(.bottom)
+
 
                         
 
@@ -79,6 +97,7 @@ struct AlarmSetupView: View {
                                 .onChange(of: wakeUpOffsetMinutes) { _ in
                                     updateAlarmTime()
                                 }
+
                         
                         Spacer()
                     }
@@ -112,9 +131,6 @@ struct AlarmSetupView: View {
                 }
                 .padding(.all)
                 
-                
-                
-                
             }
             .foregroundColor(.white)
             .onAppear {
@@ -133,6 +149,8 @@ struct AlarmSetupView: View {
         alarmTime = String(alarmSchedule.first?.alarmTime.dropFirst(10)  ?? "")
     }
 }
+
+
 
 
 

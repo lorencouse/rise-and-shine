@@ -21,23 +21,26 @@ struct WindDownSetupView: View {
             VStack {
 
                 VStack {
-                    Text("Set Wind Down Reminder").font(.title).padding(.vertical)
+                    Text("Bedtime Reminder").font(.title).padding(.vertical)
                     Text("Choose how long before bedtime you want to be reminded to starting winding down for the night.")
                 }
                 .padding(.horizontal)
                 
                 Spacer()
-                Image("alarm-clock")
+                Image(systemName: "moonset.fill")
+                    .font(.system(size: 240))
+                    .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
+
+
                 Spacer()
                 
                 // Picker and settings
                 HStack {
+                    Spacer()
                     Text("Remind me")
                     timePicker
                     Text("before bedtime.")
                     Spacer()
-
-
                     
                 }.padding()
                 

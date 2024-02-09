@@ -63,6 +63,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         if let cachedCityName = geocodeCache[coordinateKey] {
             self.cityName = cachedCityName
+            UserDefaults.standard.currentCity = cachedCityName
             return
         }
         

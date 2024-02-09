@@ -27,15 +27,16 @@ struct WelcomeView: View {
                     
                     Spacer()
                     
-                    Image("appLogo")
+                    Image("AppLogoTransparent")
                     Spacer()
                     
                     // Picker and settings
                     VStack {
-                        Text("Sync your sleep with the sunrise each day, and align your body's clock with sun.")
-                            .padding()
 
-                        Text("Achieve your sleep goals and build healthier sleeping habbits.")
+                        
+                        Text("Sync your sleep with the sunrise, \nand align your body's natural clock.")
+                            .multilineTextAlignment(.center)
+                        
                     }
                     
                     

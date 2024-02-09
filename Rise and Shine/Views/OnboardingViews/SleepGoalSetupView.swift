@@ -12,6 +12,10 @@ struct SleepGoalSetupView: View {
     
     @AppStorage("targetHoursOfSleep") var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("targetMinutesOfSleep") var targetMinutesOfSleep = Constants.targetMinutesOfSleep
+    @State private var sunData: [SunData] =  AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
+    @State private var alarmSchedule: [AlarmSchedule] = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
+    @State private var alarmTime = ""
+    @State private var bedTime = ""
     
     var body: some View {
         
@@ -26,28 +30,56 @@ struct SleepGoalSetupView: View {
                     
                     Text("Set Your Sleep Goal").font(.title).padding(.vertical)
                     
-                    Text("Choose how many hours of sleep you would like to get each night. We will remind you when it's time to go to bed to reach your daily sleep goal.")
+                    Text("We will remind you when it's time for bed.")
                     
                     
                 }
                 .padding(.horizontal)
                 Spacer()
-                Image("moon")
+                Image(systemName: "moon.zzz.fill")
+                    .font(.system(size: 240))
+                    .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
+
                 Spacer()
                 
                 VStack {
-                    Text("I want to get")
+                    
                     HStack {
+                        Spacer()
+                        Text("\(Image(systemName: "sun.haze.circle")) Sleep Time\n\(bedTime)")
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        
+                        
+                        Spacer()
+                        
+                        
+                        Text("\(                Image(systemName: "alarm")) Alarm\n \(alarmTime)")
+                            .multilineTextAlignment(.center)
+                        
+                        Spacer()
+                        
+                    }
+                    .background(Color(.appThird))
+                    .cornerRadius(20)
+Spacer()
+                    Text("My sleep goal each night is")
+                    Spacer()
+                    HStack {
+
+
                         Spacer()
                         Picker("Sleep Goal: ", selection: $targetHoursOfSleep) {
                             ForEach(4..<14, id: \.self) { i in
                                 Text("\(i) hours").tag(i)
                             }
                         }.pickerStyle(MenuPickerStyle())
-//                            .background(Color.white)
-//                            .cornerRadius(10)
+                            .onChange(of: targetHoursOfSleep) { _ in
+                                updateAlarmTime()
+                            }
+
                         
-                        Text("and ")
+                        Text("and")
                         
                         Picker("", selection: $targetMinutesOfSleep) {
                             ForEach(0..<12, id: \.self) { index in
@@ -55,15 +87,19 @@ struct SleepGoalSetupView: View {
 
                             }
                         }.pickerStyle(MenuPickerStyle())
-                            
+                            .onChange(of: targetMinutesOfSleep) { _ in
+                                updateAlarmTime()
+                            }
+
                         Spacer()
+
                     }
-                    Text("of sleep each night.")
-                        .padding(.bottom)
                     
-                    
+                    Spacer()
+
                     
                 }
+                .padding(.bottom)
                 
                 NavigationLink(destination: WindDownSetupView()) {
                     HStack {
@@ -79,9 +115,21 @@ struct SleepGoalSetupView: View {
                 .padding(.all)
             }
             .foregroundColor(.white)
+            .onAppear {
+                updateAlarmTime()
+                
+            }
+
             
         }
 
+    }
+    
+    private func updateAlarmTime() {
+        calculateScheduleForSunData(sunData)
+        alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
+        alarmTime = String(alarmSchedule.first?.alarmTime.dropFirst(10)  ?? "")
+        bedTime = String(alarmSchedule.first?.bedTime.dropFirst(10)  ?? "")
     }
     
     }
