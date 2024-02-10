@@ -34,9 +34,9 @@ struct SetupSettingsConfirmationView: View {
                     Form {
                         
                         
-                        settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
-                        settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
-                        settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
+                        AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
+                        TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
+                        WindDownTimeSelector(windDownTime: $windDownTime)
                         
                         
                         

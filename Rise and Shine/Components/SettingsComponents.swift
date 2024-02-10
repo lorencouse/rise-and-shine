@@ -7,16 +7,16 @@
 
 import Foundation
 import SwiftUI
+import AVKit
 
 
-class settingsComponents {
     struct AlarmTimeSelector: View {
         @Binding var wakeUpOffsetHours: Int
         @Binding var wakeUpOffsetMinutes: Int
         @Binding var beforeSunrise: Bool
 
         var body: some View {
-            Section(header: Text("Alarm time:")) {
+            Section(header: Text("\(Image(systemName: "alarm")) Alarm time")) {
                 HStack {
                     Text("Wake up ")
 
@@ -53,7 +53,7 @@ class settingsComponents {
         
         var body: some View {
             
-            Section(header: Text("\(Image(systemName: "location.fill")) Location:")) {
+            Section(header: Text("\(Image(systemName: "location.fill")) Location")) {
                 
                 Button("\(Image(systemName: "location.circle")) \(cityName)") {
                     
@@ -67,7 +67,7 @@ class settingsComponents {
                     Text("Please ensure the app has permission to access your location and try again.")
                 }
                 
-                Button("\(Image(systemName: "sun.haze.circle")) Sunrise Time: \(sunriseTime)") {
+                Button("\(Image(systemName: "sun.haze.circle")) Sunrise Today: \(sunriseTime)") {
                     updateLocationAndSunrise()
                 }
                 
@@ -135,4 +135,25 @@ class settingsComponents {
     }
 
 
+struct DNDExceptionEducationView: View {
+    
+    private let player = AVPlayer(url: Bundle.main.url(forResource: "notification-h264", withExtension: "mp4")!)
+    
+    var body: some View {
+        VStack() {
+            Text("Enable Alarm Notifications")
+                .font(.title)
+            
+            LoopingVideoView()
+
+            Text("To receive alarm notifications, please add this app to your \"Focus Mode\" exceptions:\n\n1. Open Settings app. \n2. Tap \"Focus\". \n3. Modify the \"Do Not Disturb\" and \"Sleep\" Focus. \n4. Tap \"Apps\". \n5. Search for \"Rise and Shine\". \n6. Tap \"Allow Notifications\".")
+
+                .multilineTextAlignment(.leading)
+
+            FocusModesButton()
+        }
+
+    }
+
 }
+

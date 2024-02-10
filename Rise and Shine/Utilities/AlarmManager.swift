@@ -7,7 +7,7 @@
 
 import Foundation
 
-    func calculateScheduleForSunData(_ sunDataArray: [SunData]) {
+    func calculateAlarms(_ sunDataArray: [SunData]) {
         var schedules = [AlarmSchedule]()
         let dateFormatter = DateFormatter.dateAndTime
  

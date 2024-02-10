@@ -11,16 +11,18 @@ import CoreLocation
 
 struct SettingsView: View {
     @ObservedObject private var locationManager = LocationManager()
+    
+//    Read Deafaults
     @AppStorage("wakeUpOffsetHours") private var wakeUpOffsetHours = Constants.wakeUpOffsetHoursDefault
     @AppStorage("wakeUpOffsetMinutes") private var wakeUpOffsetMinutes = Constants.wakeUpOffsetMinutesDefault
     @AppStorage("beforeSunrise") private var beforeSunrise = true
     @AppStorage("targetHoursOfSleep") private var targetHoursOfSleep = Constants.targetHoursOfSleepDefault
     @AppStorage("windDownTime") private var windDownTime = Constants.windDownTimeDefault
+    
+//    Load JSON Data
     @State private var sunData: [SunData] =  AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
-    
-    
     @State private var showingResetAlert = false
-
+    
     
     var body: some View {
         NavigationView {
@@ -30,22 +32,27 @@ struct SettingsView: View {
                 VStack {
                     
                     Form {
-                        settingsComponents.LocationSelector(sunData: $sunData, locationManager: locationManager)
+                        LocationSelector(sunData: $sunData, locationManager: locationManager)
                         
-                        settingsComponents.AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
-                        settingsComponents.TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
-                        settingsComponents.WindDownTimeSelector(windDownTime: $windDownTime)
+                        AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
+                        TargetHoursOfSleepSelector(targetHoursOfSleep: $targetHoursOfSleep)
+                        WindDownTimeSelector(windDownTime: $windDownTime)
                         
+                        
+                        Section(header: Text("\(Image(systemName: "bell.badge")) Notifications")) {
+                            DNDExceptionEducationView()
+                                .listRowBackground(Color.appThird)
+                        }
+                        
+
                         
                         
                         
                         VStack {
-                            Spacer()
-                            updateLocationButton(locationManager: locationManager)
+
                             resetAppButton
                             
-
-                         
+                            
                         }
                         .listRowBackground(Color.appPrimary)
                         
@@ -56,22 +63,22 @@ struct SettingsView: View {
                     }
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white)
-
-
-
+                    
+                    
+                    
                 }
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
                 
-            
-  
+                
+                
             }
         }
     }
     
-
     
-
+    
+    
     
     private var notificationSettingsSection: some View {
         Section(header: Text("Notification Settings")) {
@@ -89,30 +96,30 @@ struct SettingsView: View {
             }
         }
     }
- 
-
     
-
+    
+    
+    
     
     private var resetAppButton: some View {
         
         CustomButton(title: "Reset App") {
-                    showingResetAlert = true
-                }
-                .alert(isPresented: $showingResetAlert) {
-                    Alert(
-                        title: Text("Reset App Data"),
-                        message: Text("Are you sure you want to reset all app data? This action cannot be undone."),
-                        primaryButton: .destructive(Text("Reset All App Data")) {
-                            Task {
-                                clearUserDefaults()
-                                AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
-                                AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
-                            }
-                        },
-                        secondaryButton: .cancel()
-                    )
-                }
+            showingResetAlert = true
+        }
+        .alert(isPresented: $showingResetAlert) {
+            Alert(
+                title: Text("Reset App Data"),
+                message: Text("Are you sure you want to reset all app data? This action cannot be undone."),
+                primaryButton: .destructive(Text("Reset All App Data")) {
+                    Task {
+                        clearUserDefaults()
+                        AppDataManager.deleteFile(fileName: Constants.alarmDataFileName)
+                        AppDataManager.deleteFile(fileName: Constants.sunDataFileName)
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
         
         
     }
@@ -121,13 +128,16 @@ struct SettingsView: View {
         Section {
             
             Link("API Data from SunriseSunset.io", destination: URL(string: "https://sunrisesunset.io/api/")!)
-
+            
         }
         .listRowBackground(Color.appPrimary)
-
+        
     }
-
+    
 }
+
+
+
 
 
 

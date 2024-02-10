@@ -68,11 +68,13 @@ struct ContentView: View {
         Form {
             datePickerView
             
-            Section(header: Text("Location")) {
-                Text("\(UserDefaults.standard.currentCity)")
-                    .listRowBackground(Color.appThird)
+//            Section(header: Text("Location")) {
+//                Text("\(UserDefaults.standard.currentCity)")
+//                    .listRowBackground(Color.appThird)
                 
-            }
+                LocationSelector(sunData: $sunData, locationManager: locationManager)
+                
+//            }
             
             alarmsSection
             sunTimesSection
@@ -112,16 +114,12 @@ struct ContentView: View {
             if let currentIndex = alarmSchedule.firstIndex(where: { $0.date == data.date }),
                alarmSchedule.indices.contains(currentIndex + 1) {
                 let nextDayData = alarmSchedule[currentIndex + 1]
-                Text("Sunrise Tomorrow: \(nextDayData.sunriseTime)")
+                TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Sunrise\n\(nextDayData.sunriseTime.dropSecondsFromTime())", rightSymbolName: "alarm", rightText: "Alarm\n \(data.alarmTime.convertToTimeWithoutSeconds())")
             } else {
                 Text("Sunrise Time Tomorrow: Not available")
             }
-            // Show times with out date string
-            Text("Alarm Tomorrow: \(String(data.alarmTime.dropFirst(10)))")
-            Text("Sleep Reminder Tonight: \(String(data.windDownTime.dropFirst(10)))")
-            Text("Bed Time Tonight: \(String(data.bedTime.dropFirst(10)))")
             
-            
+            TimesPairView(leftSymbolName: "moonset.fill", leftText: "Sleep Reminder\n \(data.windDownTime.convertToTimeWithoutSeconds())", rightSymbolName: "moon.zzz.fill", rightText: "Bed Time\n \(data.bedTime.convertToTimeWithoutSeconds())")
             
         }
     }
@@ -139,10 +137,10 @@ struct ContentView: View {
     private func sunDataSection(_ data: SunData) -> some View {
         Section(header: Text("For Today: \(data.date)")) {
             Text("Day Length: \(data.dayLength)")
-            Text("Last Light: \(data.lastLight)")
-            Text("Sunset: \(data.sunset)")
-            Text("First Light: \(data.firstLight)")
-            Text("Dawn: \(data.dawn)")
+            Text("Last Light: \(data.lastLight.dropSecondsFromTime())")
+            Text("Sunset: \(data.sunset.dropSecondsFromTime())")
+            Text("First Light: \(data.firstLight.dropSecondsFromTime())")
+            Text("Dawn: \(data.dawn.dropSecondsFromTime())")
             
         }
         
@@ -180,12 +178,11 @@ struct ContentView: View {
                 
                 APIManager.fetchSunData(latitude: locationManager.currentLocation?.coordinate.latitude, longitude: locationManager.currentLocation?.coordinate.longitude, startDate: DateFormatter.formattedDateString(date: selectedDate), missingDate: true)
                 
-                sunData
-                = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? sunData
+                sunData = loadSunData()
                 
-                calculateScheduleForSunData(sunData)
+                calculateAlarms(sunData)
                 
-                alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
+                alarmSchedule = loadAlarmSchedule()
                 
             }
             
@@ -211,8 +208,8 @@ struct ContentView: View {
     }
     
     private func updateLists() {
-        sunData = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) ?? []
-        alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? []
+        sunData = loadSunData()
+        alarmSchedule = loadAlarmSchedule()
     }
     
     private func loadData() {
@@ -221,7 +218,6 @@ struct ContentView: View {
             await updateSunData(date: DateFormatter.formattedDateString(date: selectedDate), locationManager: locationManager)
             updateAlarms()
             updateLists()
-            
         }
     }
     

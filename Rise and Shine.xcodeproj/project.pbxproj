@@ -12,6 +12,9 @@
 		5C063D542B5CD74D00DC7C6B /* AlarmManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */; };
 		5C0928AB2B75F83D003AA0BC /* OnboardingPageComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0928AA2B75F83D003AA0BC /* OnboardingPageComponents.swift */; };
 		5C0928AD2B75F944003AA0BC /* SleepGoalRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0928AC2B75F944003AA0BC /* SleepGoalRefactored.swift */; };
+		5C13165B2B7741470010768D /* VideoComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13165A2B7741470010768D /* VideoComponents.swift */; };
+		5C13165D2B77427F0010768D /* notification-h265.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 5C13165C2B77427F0010768D /* notification-h265.mp4 */; };
+		5C13165F2B7742D40010768D /* notification-h264.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 5C13165E2B7742D40010768D /* notification-h264.mp4 */; };
 		5C2823662B71FDD400E88D6F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2823652B71FDD400E88D6F /* AppDelegate.swift */; };
 		5C2823692B72120400E88D6F /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2823682B72120400E88D6F /* SettingsComponents.swift */; };
 		5C28236B2B72148A00E88D6F /* ButtonComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C28236A2B72148A00E88D6F /* ButtonComponent.swift */; };
@@ -65,6 +68,9 @@
 		5C063D532B5CD74D00DC7C6B /* AlarmManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmManager.swift; sourceTree = "<group>"; };
 		5C0928AA2B75F83D003AA0BC /* OnboardingPageComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageComponents.swift; sourceTree = "<group>"; };
 		5C0928AC2B75F944003AA0BC /* SleepGoalRefactored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGoalRefactored.swift; sourceTree = "<group>"; };
+		5C13165A2B7741470010768D /* VideoComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoComponents.swift; sourceTree = "<group>"; };
+		5C13165C2B77427F0010768D /* notification-h265.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "notification-h265.mp4"; sourceTree = "<group>"; };
+		5C13165E2B7742D40010768D /* notification-h264.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "notification-h264.mp4"; sourceTree = "<group>"; };
 		5C2823652B71FDD400E88D6F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5C2823682B72120400E88D6F /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		5C28236A2B72148A00E88D6F /* ButtonComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonComponent.swift; sourceTree = "<group>"; };
@@ -131,6 +137,7 @@
 				5C2823682B72120400E88D6F /* SettingsComponents.swift */,
 				5C28236A2B72148A00E88D6F /* ButtonComponent.swift */,
 				5C0928AA2B75F83D003AA0BC /* OnboardingPageComponents.swift */,
+				5C13165A2B7741470010768D /* VideoComponents.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -138,6 +145,8 @@
 		5C55493C2B51FEEB00758980 = {
 			isa = PBXGroup;
 			children = (
+				5C13165E2B7742D40010768D /* notification-h264.mp4 */,
+				5C13165C2B77427F0010768D /* notification-h265.mp4 */,
 				5C5549472B51FEEB00758980 /* Rise and Shine */,
 				5C5549582B51FEEC00758980 /* Rise and ShineTests */,
 				5C5549622B51FEEC00758980 /* Rise and ShineUITests */,
@@ -369,7 +378,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C13165D2B77427F0010768D /* notification-h265.mp4 in Resources */,
 				5C940D732B6F5C620002A862 /* Launch Screen.storyboard in Resources */,
+				5C13165F2B7742D40010768D /* notification-h264.mp4 in Resources */,
 				5C5549502B51FEEC00758980 /* Preview Assets.xcassets in Resources */,
 				5C55494D2B51FEEC00758980 /* Assets.xcassets in Resources */,
 			);
@@ -401,6 +412,7 @@
 				5CEC25462B58D6B600F3CC2B /* APIManager.swift in Sources */,
 				5C55494B2B51FEEB00758980 /* ContentView.swift in Sources */,
 				5C0928AD2B75F944003AA0BC /* SleepGoalRefactored.swift in Sources */,
+				5C13165B2B7741470010768D /* VideoComponents.swift in Sources */,
 				5C98521B2B70AD52000B259B /* LocationSelectionView.swift in Sources */,
 				5C0928AB2B75F83D003AA0BC /* OnboardingPageComponents.swift in Sources */,
 				5C98521F2B70AD86000B259B /* SleepGoalSetupView.swift in Sources */,

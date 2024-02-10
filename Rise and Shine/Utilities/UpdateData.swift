@@ -15,7 +15,7 @@ func updateData(date: Date, locationManager: LocationManager) async {
     do {
         try await APIManager.fetchSunData(latitude: locationManager.currentLocation?.coordinate.latitude, longitude: locationManager.currentLocation?.coordinate.longitude, startDate: dateString, missingDate: false)
         if let sunDataArray = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) {
-            calculateScheduleForSunData(sunDataArray)
+            calculateAlarms(sunDataArray)
             
         } else {
             print("Sunrise time not found for date: \(date)")
@@ -40,7 +40,7 @@ func updateSunData(date: String, locationManager: LocationManager) async {
 
 func updateAlarms() {
     if let sunDataArray = AppDataManager.loadFile(fileName: Constants.sunDataFileName, type: [SunData].self) {
-        calculateScheduleForSunData(sunDataArray)
+        calculateAlarms(sunDataArray)
         
     } else {
         print("Sunrise time not found.")

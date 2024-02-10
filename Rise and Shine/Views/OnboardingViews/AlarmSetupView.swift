@@ -88,7 +88,7 @@ struct AlarmSetupView: View {
     }
     
     private func updateAlarmTime() {
-        calculateScheduleForSunData(sunData)
+        calculateAlarms(sunData)
         alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
         alarmTime = String(alarmSchedule.first?.alarmTime.dropFirst(10)  ?? "")
     }

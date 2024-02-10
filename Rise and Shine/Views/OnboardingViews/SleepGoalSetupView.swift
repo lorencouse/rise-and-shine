@@ -90,7 +90,7 @@ struct SleepGoalSetupView: View {
     }
     
     func updateSelectedTimes() {
-        calculateScheduleForSunData(sunData)
+        calculateAlarms(sunData)
         alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
         alarmTime = String(alarmSchedule.first?.alarmTime.dropFirst(10)  ?? "")
         bedTime = String(alarmSchedule.first?.bedTime.dropFirst(10)  ?? "")

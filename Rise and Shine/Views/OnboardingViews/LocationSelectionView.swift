@@ -32,7 +32,7 @@ struct LocationSelectionView: View {
 
                     Form {
                         
-                        settingsComponents.LocationSelector( sunData: $sunData, locationManager: locationManager)
+                        LocationSelector( sunData: $sunData, locationManager: locationManager)
                         
                             
                     }
