@@ -67,7 +67,7 @@ import AVKit
                     Text("Please ensure the app has permission to access your location and try again.")
                 }
                 
-                Button("\(Image(systemName: "sun.haze.circle")) Sunrise Today: \(sunriseTime)") {
+                Button("\(Image(systemName: "sun.haze.circle")) Sunrise Today: \(sunriseTime.dropSecondsFromTime())") {
                     updateLocationAndSunrise()
                 }
                 

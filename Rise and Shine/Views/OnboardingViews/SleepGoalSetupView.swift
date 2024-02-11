@@ -31,8 +31,10 @@ struct SleepGoalSetupView: View {
                 Spacer()
                 
                 VStack {
+                    Spacer()
                     
                     TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Sleep Time\n\(bedTime)", rightSymbolName: "alarm", rightText: "Alarm\n \(alarmTime)")
+                        .cornerRadius(20)
                     
                     Spacer()
                     Text("My sleep goal each night is")
@@ -92,8 +94,8 @@ struct SleepGoalSetupView: View {
     func updateSelectedTimes() {
         calculateAlarms(sunData)
         alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
-        alarmTime = String(alarmSchedule.first?.alarmTime.dropFirst(10)  ?? "")
-        bedTime = String(alarmSchedule.first?.bedTime.dropFirst(10)  ?? "")
+        alarmTime = String(alarmSchedule.first?.alarmTime.convertToTimeWithoutSeconds()  ?? "")
+        bedTime = String(alarmSchedule.first?.bedTime.convertToTimeWithoutSeconds()  ?? "")
     }
     
 }

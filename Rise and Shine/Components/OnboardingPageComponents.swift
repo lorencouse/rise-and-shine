@@ -83,14 +83,16 @@ struct TimesPairView: View {
             Spacer()
             Text("\(Image(systemName: leftSymbolName)) \(leftText)")
                 .multilineTextAlignment(.center)
-                .padding()
+
             Spacer()
+            
             Text("\(Image(systemName: rightSymbolName)) \(rightText)")
                 .multilineTextAlignment(.center)
+                .padding(.vertical)
             Spacer()
         }
-        .background(Color("appThird")) // Adjust the color access method based on your project setup
-        .cornerRadius(20)
+        .background(Color("appThird"))
+        
     }
 }
 

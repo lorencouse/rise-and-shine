@@ -104,25 +104,34 @@ struct ContentView: View {
             
         }
         .listRowBackground(Color.appThird)
+        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+
         
     }
     
     
     
     private func alarmSection(_ data: AlarmSchedule) -> some View {
-        Section(header: Text("Tomorrow's Sunrise & Alarms")) {
-            if let currentIndex = alarmSchedule.firstIndex(where: { $0.date == data.date }),
-               alarmSchedule.indices.contains(currentIndex + 1) {
-                let nextDayData = alarmSchedule[currentIndex + 1]
-                TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Sunrise\n\(nextDayData.sunriseTime.dropSecondsFromTime())", rightSymbolName: "alarm", rightText: "Alarm\n \(data.alarmTime.convertToTimeWithoutSeconds())")
-            } else {
-                Text("Sunrise Time Tomorrow: Not available")
-            }
+        Section(header: Text("\(Image(systemName: "alarm")) Alarm time")) {
             
-            TimesPairView(leftSymbolName: "moonset.fill", leftText: "Sleep Reminder\n \(data.windDownTime.convertToTimeWithoutSeconds())", rightSymbolName: "moon.zzz.fill", rightText: "Bed Time\n \(data.bedTime.convertToTimeWithoutSeconds())")
+            VStack(alignment: .leading) {
+                
+                if let currentIndex = alarmSchedule.firstIndex(where: { $0.date == data.date }),
+                   alarmSchedule.indices.contains(currentIndex + 1) {
+                    let nextDayData = alarmSchedule[currentIndex + 1]
+                    TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Next Sunrise\n\(nextDayData.sunriseTime.dropSecondsFromTime())", rightSymbolName: "alarm", rightText: "Alarm\n \(data.alarmTime.convertToTimeWithoutSeconds())")
+                } else {
+                    Text("Sunrise Time Tomorrow: Not available")
+                }
+                
+                TimesPairView(leftSymbolName: "moonset.fill", leftText: "Sleep Reminder\n \(data.windDownTime.convertToTimeWithoutSeconds())", rightSymbolName: "moon.zzz.fill", rightText: "Bed Time\n \(data.bedTime.convertToTimeWithoutSeconds())")
+                
+            }
             
         }
     }
+    
+    
     
     private var sunTimesSection: some View {
         List {

@@ -25,10 +25,13 @@ struct AlarmSetupView: View {
             VStack {
                 
                 VStack {
+                    
                     HeaderView(title: "Sunrise Alarm Time", subtitle: "Choose when you want to wake up each day.", imageName: "sun.haze.circle")
+                    
                     Spacer()
                     
-                    TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Sunrise\n\(sunData.first?.sunrise ?? "")", rightSymbolName: "alarm", rightText: "Alarm\n \(alarmTime)")
+                    TimesPairView(leftSymbolName: "sun.haze.circle", leftText: "Sunrise\n\(sunData.first?.sunrise.dropSecondsFromTime() ?? "")", rightSymbolName: "alarm", rightText: "Alarm\n \(alarmTime)")
+                        .cornerRadius(10)
                     
                     
                     Spacer()
@@ -90,7 +93,7 @@ struct AlarmSetupView: View {
     private func updateAlarmTime() {
         calculateAlarms(sunData)
         alarmSchedule = AppDataManager.loadFile(fileName: Constants.alarmDataFileName, type: [AlarmSchedule].self) ?? alarmSchedule
-        alarmTime = String(alarmSchedule.first?.alarmTime.dropFirst(10)  ?? "")
+        alarmTime = String(alarmSchedule.first?.alarmTime.convertToTimeWithoutSeconds()  ?? "")
     }
 }
 
