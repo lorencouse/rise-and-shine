@@ -39,6 +39,12 @@ struct SettingsView: View {
                         WindDownTimeSelector(windDownTime: $windDownTime)
                         
                         
+                        Section(header: Text("\(Image(systemName: "music.note")) Alarm Sound")) {
+                            SoundSelector()
+                        }
+                        
+
+                        
                         Section(header: Text("\(Image(systemName: "bell.badge")) Notifications")) {
                             DNDExceptionEducationView()
                                 .listRowBackground(Color.appThird)

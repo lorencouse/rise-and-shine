@@ -91,3 +91,9 @@ func getDocumentsDirectory() -> URL {
     let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     return paths[0]
 }
+
+
+func loadMP3Filenames() -> [String] {
+    guard let urls = Bundle.main.urls(forResourcesWithExtension: "mp3", subdirectory: "AlarmSounds") else { return [] }
+    return urls.compactMap { $0.deletingPathExtension().lastPathComponent }
+}
