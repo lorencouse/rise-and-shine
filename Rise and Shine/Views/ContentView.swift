@@ -162,7 +162,7 @@ struct ContentView: View {
         DatePicker("Choose Date", selection: $selectedDate, in: Date.now..., displayedComponents: .date)
             .datePickerStyle(GraphicalDatePickerStyle())
             .frame(maxHeight: 400)
-            .onChange(of: selectedDate) { _ in
+            .onChange(of: selectedDate) {
                 checkMissingData()
             }
             .shadow(radius: 10)

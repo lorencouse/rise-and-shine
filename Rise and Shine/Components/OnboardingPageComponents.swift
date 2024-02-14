@@ -111,7 +111,7 @@ struct CustomPicker: View {
             }
         }
         .pickerStyle(MenuPickerStyle())
-        .onChange(of: selection) { _ in
+        .onChange(of: selection) {
             onChange()
         }
     }

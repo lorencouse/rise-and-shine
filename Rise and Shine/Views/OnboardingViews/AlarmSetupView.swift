@@ -71,7 +71,7 @@ struct AlarmSetupView: View {
                         Text("After Sunrise").tag(false)
                     }.padding().pickerStyle(SegmentedPickerStyle())
                 }
-                .onChange(of: beforeSunrise) { _ in
+                .onChange(of: beforeSunrise) {
                     updateAlarmTime()
                 }
                 
