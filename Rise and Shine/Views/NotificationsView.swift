@@ -29,10 +29,6 @@ struct NotificationsView: View {
             
         }
         
-
-        
-
-        
     }
     
 }

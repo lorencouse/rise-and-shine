@@ -45,7 +45,7 @@ struct AlarmTimeSelector: View {
 struct SoundSelector: View {
     
     @State private var selectedSong: String = ""
-    private var sounds: [String] = loadMP3Filenames()
+    private var sounds: [String] = loadMP3Filenames().sorted(by: <)
     @State private var audioPlayer: AVAudioPlayer?
     @State private var soundPlaying: Bool = false
     
@@ -87,18 +87,24 @@ struct SoundSelector: View {
     }
     
     private func playSound(soundName: String) {
-        guard let path = Bundle.main.path(forResource: soundName, ofType: "mp3", inDirectory: "AlarmSounds"),
-              let url = URL(string: path) else { return }
+        guard let path = Bundle.main.path(forResource: soundName, ofType: "mp3", inDirectory: "AlarmSounds") else {
+            print("Sound file not found")
+            return
+        }
+        
+        let url = URL(fileURLWithPath: path) // Directly create the URL
+
         do {
+            // Assuming `audioPlayer` is a previously defined variable in your class
             audioPlayer = try AVAudioPlayer(contentsOf: url)
-            audioPlayer?.numberOfLoops = -1
+            audioPlayer?.numberOfLoops = -1 // Loop indefinitely
             audioPlayer?.play()
             soundPlaying = true
-            
         } catch {
-            print("Could not load file")
+            print("Could not load file: \(error.localizedDescription)")
         }
     }
+
 }
 
 

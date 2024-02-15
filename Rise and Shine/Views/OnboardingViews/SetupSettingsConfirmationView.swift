@@ -7,6 +7,8 @@
 
 import Foundation
 import SwiftUI
+import EventKit
+
 
 struct SetupSettingsConfirmationView: View {
     
@@ -17,7 +19,7 @@ struct SetupSettingsConfirmationView: View {
     @State private var windDownTime: Int = UserDefaults.standard.windDownTime
     @State private var targetHoursOfSleep: Int = UserDefaults.standard.targetHoursOfSleep
     
-    
+    private let eventStore = EKEventStore()
 
     
     var body: some View {
@@ -50,7 +52,7 @@ struct SetupSettingsConfirmationView: View {
             }
 
         }
-        
+
         }
     
     private func finishOnboarding() {
@@ -60,6 +62,8 @@ struct SetupSettingsConfirmationView: View {
     private var finishButton: some View {
         CustomButton(title: "Finish", action: finishOnboarding)
     }
+    
+
 
     
     

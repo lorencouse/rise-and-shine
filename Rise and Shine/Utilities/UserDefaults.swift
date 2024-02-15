@@ -27,6 +27,7 @@ extension UserDefaults {
         static let currentCity = "currentCity"
         static let sunriseData = "sunriseData"
         static let lastDate = "lastDate"
+        static let alarmSound = "alarmSound"
 
         // Add other keys as needed
     }
@@ -110,27 +111,13 @@ extension UserDefaults {
         set { set(newValue, forKey: Keys.lastCity) }
     }
     
-
+    var alarmSound: String {
+        get { string(forKey: Keys.alarmSound) ?? "Phone Chime 1" }
+        set { set(newValue, forKey: Keys.alarmSound) }
+    }
     
 
-    
-//    static func binding<T>(key: String, defaultValue: T) -> Binding<T> where T: Codable {
-//        Binding(
-//            get: {
-//                if let data = UserDefaults.standard.data(forKey: key),
-//                   let value = try? JSONDecoder().decode(T.self, from: data) {
-//                    return value
-//                }
-//                return defaultValue
-//            },
-//            set: {
-//                if let data = try? JSONEncoder().encode($0) {
-//                    UserDefaults.standard.set(data, forKey: key)
-//                }
-//            }
-//        )
-//    }
-}
+    }
 
 
 
@@ -142,9 +129,6 @@ func clearUserDefaults() {
      userDefaults.beforeSunrise = Constants.beforeSunriseDefault
      userDefaults.targetHoursOfSleep = Constants.targetHoursOfSleepDefault
      userDefaults.windDownTime = Constants.windDownTimeDefault
-//     userDefaults.bedTime = Constants.bedTime
-//     userDefaults.alarmTime = Constants.alarmTime
-//     userDefaults.windDownTimeReminder = Constants.windDownTimer
      UserDefaults.standard.synchronize()
 
  }

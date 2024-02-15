@@ -32,6 +32,12 @@ struct SettingsView: View {
                 VStack {
                     
                     Form {
+                        
+                        Button("Test Alarm") {
+                            testAlarm()
+                        }
+                        .foregroundColor(.blue)
+                        
                         LocationSelector(sunData: $sunData, locationManager: locationManager)
                         
                         AlarmTimeSelector(wakeUpOffsetHours: $wakeUpOffsetHours, wakeUpOffsetMinutes: $wakeUpOffsetMinutes, beforeSunrise: $beforeSunrise)
@@ -83,7 +89,24 @@ struct SettingsView: View {
     }
     
     
-    
+    private func testAlarm() {
+        let tenSecondsFromNow = Date().addingTimeInterval(10)
+        let alarmOffset: TimeInterval = -5 // Alarm 5 seconds before the event starts, adjust as needed
+        let soundName = UserDefaults.standard.string(forKey: "alarmSound") ?? "defaultSound"
+        
+        let title = "Test Calendar Alarm"
+        let startDate = tenSecondsFromNow
+        
+        NotificationManager.addEventToCalendar(title: title, startDate: startDate, alarmOffset: alarmOffset, soundName: soundName) { success, error in
+            if success {
+                print("Event successfully added to the calendar.")
+            } else if let error = error {
+                print("Failed to add event to the calendar: \(error.localizedDescription)")
+            }
+        }
+    }
+
+
     
     
     private var notificationSettingsSection: some View {

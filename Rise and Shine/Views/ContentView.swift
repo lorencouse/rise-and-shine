@@ -67,14 +67,8 @@ struct ContentView: View {
     private var formView: some View {
         Form {
             datePickerView
-            
-//            Section(header: Text("Location")) {
-//                Text("\(UserDefaults.standard.currentCity)")
-//                    .listRowBackground(Color.appThird)
                 
                 LocationSelector(sunData: $sunData, locationManager: locationManager)
-                
-//            }
             
             alarmsSection
             sunTimesSection
