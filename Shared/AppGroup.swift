@@ -2,7 +2,7 @@ import Foundation
 
 /// Identifiers shared between the app and the widget extension.
 /// Change `bundleIdentifier` in one place: project.yml.
-enum AppGroup {
+nonisolated enum AppGroup {
     /// The App Group container both targets can read. Must match the entitlements.
     static let identifier = "group.com.lomaco.riseandshine"
 

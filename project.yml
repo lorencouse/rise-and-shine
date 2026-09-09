@@ -19,7 +19,7 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     CODE_SIGN_STYLE: Automatic
     # Set your Apple Developer team id here (or select it once in Xcode › Signing).
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "QQB33452MG"
     MARKETING_VERSION: "2.0.0"
     CURRENT_PROJECT_VERSION: 1
     TARGETED_DEVICE_FAMILY: "1"
@@ -68,7 +68,9 @@ targets:
       path: RiseAndShine/RiseAndShine.entitlements
       properties:
         com.apple.security.application-groups: [group.com.lomaco.riseandshine]
-        com.apple.developer.usernotifications.time-sensitive: true
+        # Restore for release. Apple does not issue this capability to free/personal
+        # teams, so signing fails on one; without it reminders cannot break a Focus.
+        # com.apple.developer.usernotifications.time-sensitive: true
 
   RiseAndShineWidgets:
     type: app-extension

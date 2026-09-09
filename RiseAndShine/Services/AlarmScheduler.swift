@@ -1,5 +1,5 @@
 import Foundation
-import AlarmKit
+@preconcurrency import AlarmKit
 import ActivityKit
 import SwiftUI
 import RiseCore

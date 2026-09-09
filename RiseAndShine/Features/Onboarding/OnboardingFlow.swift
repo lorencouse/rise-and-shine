@@ -278,8 +278,16 @@ private struct PermissionsPage: View {
                      subtitle: "Rise and Shine needs permission to ring alarms. Reminders are optional.",
                      systemImage: "bell.badge.fill") {
             VStack(spacing: 12) {
-                permission("Alarms", detail: "Rings through Silent and Focus, like the Clock app.", granted: model.alarms.authorization == .authorized, denied: model.alarms.authorization == .denied)
-                permission("Notifications", detail: "For wind-down and bedtime reminders.", granted: model.reminders.authorization == .authorized, denied: model.reminders.authorization == .denied)
+                permission("Alarms", detail: "Rings through Silent and Focus, like the Clock app.",
+                           granted: model.alarms.authorization == .authorized,
+                           denied: model.alarms.authorization == .denied) {
+                    await model.alarms.requestAuthorization()
+                }
+                permission("Notifications", detail: "For wind-down and bedtime reminders.",
+                           granted: model.reminders.authorization == .authorized,
+                           denied: model.reminders.authorization == .denied) {
+                    await model.reminders.requestAuthorization()
+                }
             }
             Spacer()
             if model.alarms.authorization == .authorized {
@@ -303,18 +311,34 @@ private struct PermissionsPage: View {
         .task { model.alarms.refreshAuthorization(); await model.reminders.refreshAuthorization() }
     }
 
-    private func permission(_ title: String, detail: String, granted: Bool, denied: Bool) -> some View {
-        Card {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.cardTitle)
-                    Text(detail).font(.footnote).foregroundStyle(Theme.mist)
+    /// A tappable permission row. Tapping asks the system for that permission directly,
+    /// or opens Settings when it was already denied, so the row is never a dead checkbox.
+    private func permission(_ title: String, detail: String, granted: Bool, denied: Bool,
+                            request: @escaping () async -> Void) -> some View {
+        Button {
+            guard !granted, !requesting else { return }
+            if denied { openSystemSettings(); return }
+            requesting = true
+            Task {
+                await request()
+                requesting = false
+            }
+        } label: {
+            Card {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).font(.cardTitle)
+                        Text(detail).font(.footnote).foregroundStyle(Theme.mist)
+                    }
+                    Spacer()
+                    Image(systemName: granted ? "checkmark.circle.fill" : denied ? "xmark.circle.fill" : "circle")
+                        .foregroundStyle(granted ? .green : denied ? Theme.horizon : Theme.faint)
+                        .font(.title3)
                 }
-                Spacer()
-                Image(systemName: granted ? "checkmark.circle.fill" : denied ? "xmark.circle.fill" : "circle")
-                    .foregroundStyle(granted ? .green : denied ? Theme.horizon : Theme.faint)
-                    .font(.title3)
             }
         }
+        .buttonStyle(.plain)
+        .disabled(granted || requesting)
+        .accessibilityHint(granted ? "Already allowed" : denied ? "Opens Settings to allow" : "Asks for permission")
     }
 }
