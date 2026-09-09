@@ -1,0 +1,126 @@
+# XcodeGen project definition. Regenerate the .xcodeproj with:  xcodegen generate
+# Change identifiers here, never in the generated project.
+name: RiseAndShine
+
+options:
+  bundleIdPrefix: com.lomaco
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # Xcode 26 "approachable concurrency": UI code is main-actor by default.
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    CODE_SIGN_STYLE: Automatic
+    # Set your Apple Developer team id here (or select it once in Xcode › Signing).
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: 1
+    TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+
+packages:
+  RiseCore:
+    path: Packages/RiseCore
+
+targets:
+  RiseAndShine:
+    type: application
+    platform: iOS
+    sources:
+      - path: RiseAndShine
+        excludes: ["Info.plist", "*.entitlements"]
+      - path: Shared
+    dependencies:
+      - package: RiseCore
+      - target: RiseAndShineWidgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lomaco.riseandshine
+        PRODUCT_NAME: "Rise and Shine"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    info:
+      path: RiseAndShine/Info.plist
+      properties:
+        CFBundleDisplayName: Rise and Shine
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.lifestyle
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        NSAlarmKitUsageDescription: Rise and Shine schedules your sunrise alarm so it rings even in Silent mode or a Focus.
+        NSLocationWhenInUseUsageDescription: Your location is used only to calculate local sunrise and sunset times, on your device.
+        NSSupportsLiveActivities: true
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers: [com.lomaco.riseandshine.refresh]
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: RiseAndShine/RiseAndShine.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.lomaco.riseandshine]
+        com.apple.developer.usernotifications.time-sensitive: true
+
+  RiseAndShineWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: RiseAndShineWidgets
+        excludes: ["Info.plist", "*.entitlements"]
+      - path: Shared
+    dependencies:
+      - package: RiseCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lomaco.riseandshine.widgets
+        PRODUCT_NAME: RiseAndShineWidgets
+        SKIP_INSTALL: YES
+    info:
+      path: RiseAndShineWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Rise and Shine
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: RiseAndShineWidgets/RiseAndShineWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.lomaco.riseandshine]
+
+  RiseAndShineTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RiseAndShineTests
+    dependencies:
+      - target: RiseAndShine
+      - package: RiseCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lomaco.riseandshine.tests
+
+schemes:
+  RiseAndShine:
+    build:
+      targets:
+        RiseAndShine: all
+        RiseAndShineWidgets: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - RiseAndShineTests
+        - package: RiseCore/RiseCoreTests
+    archive:
+      config: Release
