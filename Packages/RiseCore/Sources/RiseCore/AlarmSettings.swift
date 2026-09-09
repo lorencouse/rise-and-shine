@@ -7,12 +7,23 @@ public struct SavedLocation: Sendable, Codable, Equatable {
     public var longitude: Double
     /// When true the app refreshes coordinates from Core Location on each launch.
     public var followsDevice: Bool
+    /// The place's own zone, e.g. "Atlantic/Reykjavik". Optional because locations saved
+    /// before this existed decode without it; `timeZone` falls back to the device's.
+    public var timeZoneIdentifier: String?
 
-    public init(name: String, latitude: Double, longitude: Double, followsDevice: Bool) {
+    public init(name: String, latitude: Double, longitude: Double, followsDevice: Bool,
+                timeZoneIdentifier: String? = nil) {
         self.name = name
         self.latitude = latitude
         self.longitude = longitude
         self.followsDevice = followsDevice
+        self.timeZoneIdentifier = timeZoneIdentifier
+    }
+
+    /// The zone sun events and wake windows are reckoned in. "Sunrise" and "no earlier
+    /// than 5:30" are statements about the place, not about wherever the phone is.
+    public var timeZone: TimeZone {
+        timeZoneIdentifier.flatMap(TimeZone.init(identifier:)) ?? .current
     }
 }
 
@@ -90,6 +101,17 @@ public struct AlarmSettings: Sendable, Codable, Equatable {
     public var onboardingCompleted: Bool = false
 
     public init() {}
+
+    /// The zone every time in the plan is computed and displayed in.
+    public var timeZone: TimeZone { location?.timeZone ?? .current }
+
+    /// A calendar in the location's zone. Day boundaries, the active-weekday check and the
+    /// wake-window clamp all have to agree with the place the sun is rising over.
+    public var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar
+    }
 
     /// The offset as a human phrase, e.g. "30 min before sunrise".
     public var offsetDescription: String {

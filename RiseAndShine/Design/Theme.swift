@@ -8,10 +8,15 @@ nonisolated enum Theme {
     static let horizon = Color(red: 0.86, green: 0.36, blue: 0.30)      // coral
     static let sunrise = Color(red: 0.98, green: 0.62, blue: 0.24)      // warm orange
     static let sun = Color(red: 1.00, green: 0.84, blue: 0.45)          // pale gold
+    static let moon = Color(red: 0.62, green: 0.70, blue: 0.98)         // cool blue, for sleep
+
     static let mist = Color.white.opacity(0.72)
     static let faint = Color.white.opacity(0.45)
     static let card = Color.white.opacity(0.08)
     static let cardStroke = Color.white.opacity(0.10)
+    /// Slightly lifted surface for the hero, so it reads above the ordinary cards.
+    static let hero = Color.white.opacity(0.12)
+    static let heroStroke = Color.white.opacity(0.16)
 
     static var skyGradient: LinearGradient {
         LinearGradient(
@@ -30,6 +35,42 @@ nonisolated enum Theme {
     }
 }
 
+/// Layout rhythm. One place to change the spacing scale, so cards, stacks and screens
+/// stay in step with each other.
+nonisolated enum Metrics {
+    static let screenPadding: CGFloat = 20
+    /// Between top-level sections on Home.
+    static let sectionGap: CGFloat = 14
+    /// Between rows inside a card.
+    static let rowGap: CGFloat = 12
+    static let cardPadding: CGFloat = 16
+    static let cardRadius: CGFloat = 22
+    static let chipRadius: CGFloat = 14
+    /// Apple's minimum comfortable hit target.
+    static let tapTarget: CGFloat = 44
+}
+
+nonisolated enum Motion {
+    static let card = Animation.spring(response: 0.35, dampingFraction: 0.85)
+    static let quick = Animation.easeInOut(duration: 0.18)
+}
+
+/// Small wrapper so feedback is consistent and easy to remove.
+@MainActor
+enum Haptics {
+    static func selection() {
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
+    }
+
+    static func notify(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        UINotificationFeedbackGenerator().notificationOccurred(type)
+    }
+}
+
 struct DawnBackground: View {
     var body: some View {
         ZStack {
@@ -45,8 +86,10 @@ struct DawnBackground: View {
 // MARK: - Type ramp
 
 extension Font {
-    static let displayTime = Font.system(size: 64, weight: .thin, design: .rounded)
-    static let bigTime = Font.system(size: 34, weight: .light, design: .rounded)
+    static let displayTime = Font.system(size: 68, weight: .thin, design: .rounded)
+    static let bigTime = Font.system(size: 32, weight: .light, design: .rounded)
     static let cardTitle = Font.system(.subheadline, design: .rounded).weight(.semibold)
     static let label = Font.system(.footnote, design: .rounded)
+    /// All-caps section labels.
+    static let eyebrow = Font.system(.caption, design: .rounded).weight(.semibold)
 }

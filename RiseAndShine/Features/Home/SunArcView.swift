@@ -7,7 +7,16 @@ import RiseCore
 struct SunArcView: View {
     let day: SolarDay
     let alarmTime: Date?
+    /// The location's zone. The arc's x-axis is a civil day *there*, so every instant has
+    /// to be placed against that midnight, not the phone's.
+    let timeZone: TimeZone
     var now: Date = .now
+
+    private var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -21,15 +30,15 @@ struct SunArcView: View {
 
     private var accessibilityText: String {
         var parts: [String] = []
-        if let s = day.sunrise { parts.append("Sunrise \(Formatters.time(s))") }
-        if let s = day.sunset { parts.append("sunset \(Formatters.time(s))") }
-        if let a = alarmTime { parts.append("alarm \(Formatters.time(a))") }
+        if let s = day.sunrise { parts.append("Sunrise \(Formatters.time(s, in: timeZone))") }
+        if let s = day.sunset { parts.append("sunset \(Formatters.time(s, in: timeZone))") }
+        if let a = alarmTime { parts.append("alarm \(Formatters.time(a, in: timeZone))") }
         return parts.joined(separator: ", ")
     }
 
     /// Maps an instant to 0…1 across the civil day.
     private func fraction(_ date: Date) -> CGFloat {
-        let start = day.date.startOfDay()
+        let start = day.date.startOfDay(in: calendar)
         let f = date.timeIntervalSince(start) / 86400
         return CGFloat(min(max(f, 0), 1))
     }
@@ -53,18 +62,24 @@ struct SunArcView: View {
         let rect = CGRect(x: inset, y: 16, width: size.width - inset * 2, height: size.height - 40)
         let horizonY = rect.maxY
 
-        // Twilight bands
-        func band(_ a: Date?, _ b: Date?, opacity: Double) {
+        // Twilight. Drawn as a glow sitting on the horizon at dawn and dusk rather than as
+        // vertical bands: hard-edged rectangles read as chart furniture, a glow reads as light.
+        func glow(from a: Date?, to b: Date?, strength: Double) {
             guard let a, let b else { return }
             let x0 = rect.minX + fraction(a) * rect.width
             let x1 = rect.minX + fraction(b) * rect.width
-            let r = CGRect(x: min(x0, x1), y: rect.minY - 10, width: abs(x1 - x0), height: rect.height + 10)
-            ctx.fill(Path(r), with: .color(Theme.sunrise.opacity(opacity)))
+            let centre = CGPoint(x: (x0 + x1) / 2, y: horizonY)
+            let radius = max(abs(x1 - x0), 18)
+            let box = CGRect(x: centre.x - radius, y: centre.y - radius,
+                             width: radius * 2, height: radius * 2)
+            ctx.fill(Path(ellipseIn: box),
+                     with: .radialGradient(Gradient(colors: [Theme.sunrise.opacity(strength), .clear]),
+                                           center: centre, startRadius: 0, endRadius: radius))
         }
-        band(day.astronomicalDawn, day.sunrise, opacity: 0.05)
-        band(day.civilDawn, day.sunrise, opacity: 0.07)
-        band(day.sunset, day.civilDusk, opacity: 0.07)
-        band(day.sunset, day.astronomicalDusk, opacity: 0.05)
+        glow(from: day.astronomicalDawn, to: day.sunrise, strength: 0.16)
+        glow(from: day.civilDawn, to: day.sunrise, strength: 0.20)
+        glow(from: day.sunset, to: day.civilDusk, strength: 0.20)
+        glow(from: day.sunset, to: day.astronomicalDusk, strength: 0.16)
 
         // Horizon
         var horizon = Path()
@@ -100,24 +115,24 @@ struct SunArcView: View {
             ctx.stroke(tick, with: .color(.white.opacity(0.7)), style: StrokeStyle(lineWidth: 1.5, dash: [2, 3]))
             let bell = ctx.resolve(Image(systemName: "alarm.fill").symbolRenderingMode(.monochrome))
             ctx.draw(bell, at: CGPoint(x: p.x, y: y - 22))
-            let label = ctx.resolve(Text(Formatters.time(alarmTime)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.mist))
+            let label = ctx.resolve(Text(Formatters.time(alarmTime, in: timeZone)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.mist))
             ctx.draw(label, at: CGPoint(x: p.x, y: horizonY + 14))
         }
 
         // Sunrise / sunset labels
         if let s = day.sunrise {
             let p = point(for: fraction(s), in: rect)
-            let t = ctx.resolve(Text(Formatters.time(s)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.faint))
+            let t = ctx.resolve(Text(Formatters.time(s, in: timeZone)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.faint))
             ctx.draw(t, at: CGPoint(x: p.x, y: horizonY + 14), anchor: alarmTime == nil ? .center : .trailing)
         }
         if let s = day.sunset {
             let p = point(for: fraction(s), in: rect)
-            let t = ctx.resolve(Text(Formatters.time(s)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.faint))
+            let t = ctx.resolve(Text(Formatters.time(s, in: timeZone)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.faint))
             ctx.draw(t, at: CGPoint(x: p.x, y: horizonY + 14))
         }
 
         // Sun (current position) — only if today
-        if Calendar.current.isDate(now, inSameDayAs: day.date.startOfDay()) {
+        if calendar.isDate(now, inSameDayAs: day.date.startOfDay(in: calendar)) {
             let p = point(for: fraction(now), in: rect)
             let above = p.y <= horizonY
             let radius: CGFloat = above ? 9 : 6

@@ -1,32 +1,56 @@
 import SwiftUI
 
-/// Frosted card used across the app.
-struct Card<Content: View>: View {
+// MARK: - Surfaces
+
+/// Frosted card used across the app. `accessory` puts an action (usually a button) on the
+/// title row so a section's own control lives with its content instead of in Settings.
+struct Card<Content: View, Accessory: View>: View {
     var title: String? = nil
     var systemImage: String? = nil
+    var isHero = false
     @ViewBuilder var content: Content
+    @ViewBuilder var accessory: Accessory
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let title {
-                Label {
-                    Text(title.uppercased())
-                        .font(.label.weight(.semibold))
-                        .tracking(1.2)
-                } icon: {
-                    if let systemImage { Image(systemName: systemImage) }
+        VStack(alignment: .leading, spacing: Metrics.rowGap) {
+            if title != nil || Accessory.self != EmptyView.self {
+                HStack(alignment: .firstTextBaseline) {
+                    if let title {
+                        Label {
+                            Text(title.uppercased())
+                                .font(.eyebrow)
+                                .tracking(1.2)
+                        } icon: {
+                            if let systemImage { Image(systemName: systemImage) }
+                        }
+                        .foregroundStyle(Theme.faint)
+                        .labelStyle(.titleAndIcon)
+                    }
+                    Spacer(minLength: 8)
+                    accessory
                 }
-                .foregroundStyle(Theme.faint)
-                .labelStyle(.titleAndIcon)
             }
             content
         }
-        .padding(16)
+        .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.card, in: .rect(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Theme.cardStroke))
+        .background(isHero ? Theme.hero : Theme.card, in: .rect(cornerRadius: Metrics.cardRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: Metrics.cardRadius)
+                .strokeBorder(isHero ? Theme.heroStroke : Theme.cardStroke)
+        )
     }
 }
+
+extension Card where Accessory == EmptyView {
+    init(title: String? = nil, systemImage: String? = nil, isHero: Bool = false,
+         @ViewBuilder content: () -> Content) {
+        self.init(title: title, systemImage: systemImage, isHero: isHero,
+                  content: content, accessory: { EmptyView() })
+    }
+}
+
+// MARK: - Buttons
 
 /// Large filled call-to-action.
 struct PrimaryButton: View {
@@ -36,7 +60,10 @@ struct PrimaryButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            Haptics.impact()
+            action()
+        } label: {
             HStack(spacing: 8) {
                 if let systemImage { Image(systemName: systemImage) }
                 Text(title).fontWeight(.semibold)
@@ -73,6 +100,51 @@ struct SecondaryButton: View {
     }
 }
 
+/// A tappable pill that both *shows* a setting and *is* the way to change it. Home uses
+/// these so the two settings that define the app are one tap away, not four.
+struct ControlChip<Label: View>: View {
+    var systemImage: String
+    var tint: Color = Theme.sun
+    let action: () -> Void
+    @ViewBuilder var label: Label
+
+    var body: some View {
+        Button {
+            Haptics.selection()
+            action()
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: systemImage)
+                    .font(.footnote)
+                    .foregroundStyle(tint)
+                label
+                    .font(.system(.footnote, design: .rounded).weight(.medium))
+                    .foregroundStyle(.white)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.faint)
+            }
+            .lineLimit(1)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(Color.white.opacity(0.10), in: .rect(cornerRadius: Metrics.chipRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: Metrics.chipRadius)
+                    .strokeBorder(Color.white.opacity(0.12))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+extension ControlChip where Label == Text {
+    init(_ text: String, systemImage: String, tint: Color = Theme.sun, action: @escaping () -> Void) {
+        self.init(systemImage: systemImage, tint: tint, action: action) { Text(text) }
+    }
+}
+
+// MARK: - Values
+
 /// A labelled value, e.g. "Sunrise  6:42 AM".
 struct StatView: View {
     let title: String
@@ -88,13 +160,111 @@ struct StatView: View {
             }
             .font(.label)
             .foregroundStyle(Theme.faint)
+            .lineLimit(1)
             Text(value)
                 .font(emphasis ? .bigTime : .system(.title3, design: .rounded).weight(.medium))
                 .foregroundStyle(emphasis ? Theme.sun : .white)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Four-across stat rows crowd and truncate on small phones and at large type sizes.
+/// A two-column grid keeps every value legible without scaling the text down.
+struct MetricGrid: View {
+    struct Item: Identifiable {
+        let id = UUID()
+        let title: String
+        let value: String
+        let systemImage: String
+    }
+
+    let items: [Item]
+    var columns = 2
+
+    var body: some View {
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: Metrics.rowGap, alignment: .leading),
+                           count: columns),
+            alignment: .leading,
+            spacing: Metrics.rowGap
+        ) {
+            ForEach(items) { item in
+                StatView(title: item.title, value: item.value, systemImage: item.systemImage)
+                    .accessibilityElement(children: .combine)
+            }
         }
     }
 }
+
+/// Wind down → bedtime → alarm as one connected strip, so the night reads as a single
+/// span instead of three unrelated numbers.
+struct SleepTimeline: View {
+    struct Stop {
+        let time: String
+        let label: String
+        let systemImage: String
+        var tint: Color = .white
+    }
+
+    let stops: [Stop]
+    /// Rendered under the strip, e.g. "8 hr in bed".
+    var caption: String?
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ZStack(alignment: .top) {
+                // The stops are equal-width columns, so the outer dot centres sit one half
+                // column in. Inset the rule by exactly that, or it overshoots the end dots.
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(LinearGradient(colors: [Theme.moon.opacity(0.2), Theme.moon.opacity(0.55), Theme.sun],
+                                             startPoint: .leading, endPoint: .trailing))
+                        .frame(height: 2)
+                        .padding(.horizontal, proxy.size.width / CGFloat(max(stops.count, 1) * 2))
+                        .padding(.top, 5)
+                }
+                .frame(height: 12)
+                .allowsHitTesting(false)
+
+                HStack(alignment: .top, spacing: 0) {
+                    ForEach(Array(stops.enumerated()), id: \.offset) { index, stop in
+                        VStack(spacing: 6) {
+                            Circle()
+                                .fill(stop.tint)
+                                .frame(width: 8, height: 8)
+                                .overlay(Circle().stroke(Theme.night, lineWidth: 3))
+                            Image(systemName: stop.systemImage)
+                                .font(.caption)
+                                .foregroundStyle(stop.tint.opacity(0.9))
+                            Text(stop.time)
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(.white)
+                            Text(stop.label)
+                                .font(.caption2)
+                                .foregroundStyle(Theme.faint)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(stop.label) \(stop.time)")
+                        .id(index)
+                    }
+                }
+            }
+            if let caption {
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(Theme.mist)
+            }
+        }
+    }
+}
+
+// MARK: - Weekdays
 
 /// Seven tappable weekday chips. Uses Calendar weekday numbering (1 = Sunday).
 struct WeekdayPicker: View {
@@ -111,7 +281,10 @@ struct WeekdayPicker: View {
             ForEach(orderedWeekdays, id: \.self) { day in
                 let on = selection.contains(day)
                 Button {
-                    if on { selection.remove(day) } else { selection.insert(day) }
+                    Haptics.selection()
+                    withAnimation(Motion.quick) {
+                        if on { selection.remove(day) } else { selection.insert(day) }
+                    }
                 } label: {
                     Text(calendar.veryShortWeekdaySymbols[day - 1])
                         .font(.system(.footnote, design: .rounded).weight(.semibold))
@@ -127,6 +300,24 @@ struct WeekdayPicker: View {
         }
     }
 }
+
+/// Read-only "M T W T F" summary for the Home chips.
+nonisolated enum WeekdaySummary {
+    static func text(for selection: Set<Int>, calendar: Calendar = .current) -> String {
+        if selection.isEmpty { return "No days" }
+        if selection == Set(1...7) { return "Every day" }
+        if selection == [2, 3, 4, 5, 6] { return "Weekdays" }
+        if selection == [1, 7] { return "Weekends" }
+        let first = calendar.firstWeekday
+        let ordered = (0..<7).map { ((first - 1 + $0) % 7) + 1 }
+        return ordered
+            .filter(selection.contains)
+            .map { calendar.veryShortWeekdaySymbols[$0 - 1] }
+            .joined(separator: " ")
+    }
+}
+
+// MARK: - Pickers
 
 /// Wheel picker for a signed minute offset: direction + hours + minutes.
 struct OffsetPicker: View {
@@ -144,6 +335,12 @@ struct OffsetPicker: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            Picker("Direction", selection: Binding(get: { isBefore }, set: { set(before: $0, hours: hours, minutes: minutes) })) {
+                Text("Before \(anchorTitle.lowercased())").tag(true)
+                Text("After \(anchorTitle.lowercased())").tag(false)
+            }
+            .pickerStyle(.segmented)
+
             HStack(spacing: 0) {
                 Picker("Hours", selection: Binding(get: { hours }, set: { set(before: isBefore, hours: $0, minutes: minutes) })) {
                     ForEach(0..<4) { Text("\($0) hr").tag($0) }
@@ -154,12 +351,6 @@ struct OffsetPicker: View {
             }
             .pickerStyle(.wheel)
             .frame(height: 130)
-
-            Picker("Direction", selection: Binding(get: { isBefore }, set: { set(before: $0, hours: hours, minutes: minutes) })) {
-                Text("Before \(anchorTitle.lowercased())").tag(true)
-                Text("After \(anchorTitle.lowercased())").tag(false)
-            }
-            .pickerStyle(.segmented)
         }
     }
 }
@@ -184,29 +375,51 @@ struct DurationPicker: View {
     }
 }
 
-/// Banner shown when a permission blocks core functionality.
+// MARK: - Status
+
+/// Banner shown when a permission blocks core functionality. `isBlocking` distinguishes
+/// "nothing will ring" (loud, coral) from "you could set this up" (quiet, gold).
 struct PermissionBanner: View {
     let title: String
     let message: String
     let buttonTitle: String
+    var isBlocking = true
     let action: () -> Void
 
+    private var tint: Color { isBlocking ? Theme.horizon : Theme.sun }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(Theme.sun)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.cardTitle)
-                Text(message).font(.footnote).foregroundStyle(Theme.mist)
-                Button(buttonTitle, action: action)
-                    .font(.footnote.weight(.semibold))
-                    .padding(.top, 4)
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isBlocking ? "exclamationmark.triangle.fill" : "info.circle.fill")
+                    .foregroundStyle(tint)
+                    .font(.body)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.cardTitle)
+                        .foregroundStyle(.white)
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.mist)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(buttonTitle)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .padding(.top, 3)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Theme.faint)
+                    .padding(.top, 3)
             }
-            Spacer(minLength: 0)
+            .multilineTextAlignment(.leading)
+            .padding(14)
+            .background(tint.opacity(0.18), in: .rect(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(tint.opacity(0.45)))
         }
-        .padding(14)
-        .background(Theme.horizon.opacity(0.25), in: .rect(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.horizon.opacity(0.5)))
+        .buttonStyle(.plain)
+        .accessibilityHint(buttonTitle)
     }
 }
 

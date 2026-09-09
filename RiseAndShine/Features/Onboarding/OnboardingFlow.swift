@@ -14,8 +14,27 @@ struct OnboardingFlow: View {
         ZStack {
             DawnBackground()
             VStack(spacing: 0) {
-                ProgressDots(count: stepCount, index: step)
-                    .padding(.top, 12)
+                // A one-way flow with no way back is the classic onboarding trap: users
+                // pick something wrong on step 2 and have to reinstall to fix it.
+                ZStack {
+                    ProgressDots(count: stepCount, index: step)
+                    HStack {
+                        Button {
+                            withAnimation { step = max(step - 1, 0) }
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(Theme.mist)
+                                .frame(width: Metrics.tapTarget, height: Metrics.tapTarget)
+                        }
+                        .opacity(step == 0 ? 0 : 1)
+                        .disabled(step == 0)
+                        .accessibilityLabel("Back")
+                        Spacer()
+                    }
+                }
+                .padding(.top, 4)
+                .padding(.horizontal, 8)
                 TabView(selection: $step) {
                     WelcomePage(next: advance).tag(0)
                     LocationPage(draft: $draft, next: advance).tag(1)
@@ -61,27 +80,35 @@ private struct PageScaffold<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 12)
-            Image(systemName: systemImage)
-                .font(.system(size: 52, weight: .thin))
-                .foregroundStyle(Theme.sunGradient)
-                .symbolRenderingMode(.hierarchical)
-            VStack(spacing: 8) {
-                Text(title)
-                    .font(.system(.largeTitle, design: .rounded).weight(.semibold))
-                    .multilineTextAlignment(.center)
-                Text(subtitle)
-                    .font(.body).foregroundStyle(Theme.mist)
-                    .multilineTextAlignment(.center)
+        // Scrolling matters here: these pages carry wheel pickers and a search field, and
+        // on a small phone with the keyboard up a fixed layout clips the primary button.
+        // `minHeight` centres a short page without trapping a tall one.
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: 20) {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 48, weight: .thin))
+                        .foregroundStyle(Theme.sunGradient)
+                        .symbolRenderingMode(.hierarchical)
+                    VStack(spacing: 8) {
+                        Text(title)
+                            .font(.system(.title, design: .rounded).weight(.semibold))
+                            .multilineTextAlignment(.center)
+                        Text(subtitle)
+                            .font(.subheadline).foregroundStyle(Theme.mist)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 24)
+                    content
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, Metrics.screenPadding)
+                .padding(.vertical, 20)
+                .frame(minHeight: proxy.size.height, alignment: .center)
             }
-            .padding(.horizontal, 28)
-            content
-            Spacer(minLength: 12)
+            .scrollDismissesKeyboard(.interactively)
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 16)
     }
 }
 
@@ -95,13 +122,12 @@ private struct WelcomePage: View {
                      systemImage: "sun.horizon.fill") {
             VStack(alignment: .leading, spacing: 14) {
                 feature("sunrise", "Alarm tracks sunrise", "Earlier in summer, later in winter, automatically.")
-                feature("bell.badge.waves.left.and.right", "A real alarm", "Rings through Silent mode and Focus, with snooze on the Lock Screen.")
+                feature("bell.and.waves.left.and.right.fill", "A real alarm", "Rings through Silent mode and Focus, with snooze on the Lock Screen.")
                 feature("moon.zzz", "Bedtime that fits", "A wind-down nudge and bedtime based on your sleep goal.")
                 feature("lock.shield", "Private by design", "Sunrise is computed on your phone. No account, no tracking.")
             }
             .padding(20)
             .background(Theme.card, in: .rect(cornerRadius: 20))
-            Spacer()
             PrimaryButton(title: "Get started", action: next)
         }
     }
@@ -138,7 +164,7 @@ private struct LocationPage: View {
                             VStack(alignment: .leading) {
                                 Text(loc.name).font(.cardTitle)
                                 if let preview = model.preview(draft), let s = preview.solar.sunrise {
-                                    Text("Sunrise today \(Formatters.time(s))").font(.footnote).foregroundStyle(Theme.mist)
+                                    Text("Sunrise today \(Formatters.time(s, in: draft.timeZone))").font(.footnote).foregroundStyle(Theme.mist)
                                 }
                             }
                             Spacer()
@@ -184,7 +210,6 @@ private struct LocationPage: View {
                     .buttonStyle(.plain)
                 }
             }
-            Spacer()
             PrimaryButton(title: "Next", isEnabled: draft.location != nil, action: next)
         }
     }
@@ -209,13 +234,13 @@ private struct WakeTimePage: View {
                     OffsetPicker(offsetMinutes: $draft.offsetMinutes, anchorTitle: draft.anchor.title)
                 }
 
-                if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: .now),
+                if let tomorrow = draft.calendar.date(byAdding: .day, value: 1, to: .now),
                    let p = model.preview(draft, on: tomorrow) {
                     let inst = AlarmPlanner.alarmInstant(settings: draft, day: p.solar)
                     HStack {
-                        StatView(title: "\(draft.anchor.title) tomorrow", value: p.solar.time(for: draft.anchor).map(Formatters.time) ?? "—", systemImage: "sunrise")
+                        StatView(title: "\(draft.anchor.title) tomorrow", value: p.solar.time(for: draft.anchor).map { Formatters.time($0, in: draft.timeZone) } ?? "—", systemImage: "sunrise")
                         Spacer()
-                        StatView(title: "Alarm", value: inst.time.map(Formatters.time) ?? "—", systemImage: "alarm", emphasis: true)
+                        StatView(title: "Alarm", value: inst.time.map { Formatters.time($0, in: draft.timeZone) } ?? "—", systemImage: "alarm", emphasis: true)
                     }
                     .padding(.horizontal, 8)
                     if inst.clamped {
@@ -224,14 +249,14 @@ private struct WakeTimePage: View {
                     }
                 }
             }
-            Spacer()
             PrimaryButton(title: "Next", action: next)
         }
     }
 
     private var windowText: String {
-        let key = DateKey(date: .now)
-        return "\(Formatters.time(draft.earliest.date(on: key)))–\(Formatters.time(draft.latest.date(on: key)))"
+        let calendar = draft.calendar
+        let key = DateKey(date: .now, calendar: calendar)
+        return "\(Formatters.time(draft.earliest.date(on: key, calendar: calendar), in: draft.timeZone))–\(Formatters.time(draft.latest.date(on: key, calendar: calendar), in: draft.timeZone))"
     }
 }
 
@@ -256,13 +281,12 @@ private struct SleepPage: View {
                 WeekdayPicker(selection: $draft.activeWeekdays)
                 Text("Days the alarm rings").font(.caption).foregroundStyle(Theme.faint)
 
-                if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: .now),
+                if let tomorrow = draft.calendar.date(byAdding: .day, value: 1, to: .now),
                    let p = model.preview(draft, on: tomorrow), let bed = p.bedtime {
-                    Text("For tomorrow's alarm, bedtime tonight is \(Formatters.time(bed)).")
+                    Text("For tomorrow's alarm, bedtime tonight is \(Formatters.time(bed, in: draft.timeZone)).")
                         .font(.footnote).foregroundStyle(Theme.mist)
                 }
             }
-            Spacer()
             PrimaryButton(title: "Next", action: next)
         }
     }
@@ -289,7 +313,6 @@ private struct PermissionsPage: View {
                     await model.reminders.requestAuthorization()
                 }
             }
-            Spacer()
             if model.alarms.authorization == .authorized {
                 PrimaryButton(title: "Finish", systemImage: "checkmark", action: finish)
             } else if model.alarms.authorization == .denied {

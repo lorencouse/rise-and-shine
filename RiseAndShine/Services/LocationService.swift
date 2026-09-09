@@ -39,26 +39,40 @@ final class LocationService {
         }
         guard let fix else { throw LocationError.unavailable }
 
-        let name = await placeName(for: fix)
-        return SavedLocation(name: name,
+        let place = await describe(fix)
+        return SavedLocation(name: place.name,
                              latitude: fix.coordinate.latitude,
                              longitude: fix.coordinate.longitude,
-                             followsDevice: true)
+                             followsDevice: true,
+                             timeZoneIdentifier: place.timeZoneIdentifier)
     }
 
     /// Reverse-geocodes to "City" or "City, Region". Falls back to coordinates.
     func placeName(for location: CLLocation) async -> String {
+        await describe(location).name
+    }
+
+    /// Reverse-geocodes once for both the display name and the place's time zone, so a
+    /// location picked here already knows which zone its sunrises belong to.
+    private func describe(_ location: CLLocation) async -> (name: String, timeZoneIdentifier: String?) {
         let fallback = Formatters.coordinate(location.coordinate.latitude, location.coordinate.longitude)
-        guard let request = MKReverseGeocodingRequest(location: location) else { return fallback }
+        guard let request = MKReverseGeocodingRequest(location: location) else { return (fallback, nil) }
         do {
             let items = try await request.mapItems
-            if let address = items.first?.addressRepresentations {
-                return address.cityWithContext ?? address.regionName ?? fallback
-            }
+            guard let item = items.first else { return (fallback, nil) }
+            let name = item.addressRepresentations?.cityWithContext
+                ?? item.addressRepresentations?.regionName
+                ?? fallback
+            return (name, item.timeZone?.identifier)
         } catch {
-            // ignore and fall back
+            return (fallback, nil)
         }
-        return fallback
+    }
+
+    /// The zone for a saved coordinate. Used to backfill locations stored before
+    /// `timeZoneIdentifier` existed, so upgrading users get local times too.
+    func timeZoneIdentifier(latitude: Double, longitude: Double) async -> String? {
+        await describe(CLLocation(latitude: latitude, longitude: longitude)).timeZoneIdentifier
     }
 
     /// Free-text place search, e.g. "Lisbon".
@@ -77,7 +91,8 @@ final class LocationService {
                 return SavedLocation(name: name,
                                      latitude: coordinate.latitude,
                                      longitude: coordinate.longitude,
-                                     followsDevice: false)
+                                     followsDevice: false,
+                                     timeZoneIdentifier: item.timeZone?.identifier)
             }
         } catch {
             return []

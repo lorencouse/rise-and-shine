@@ -1,20 +1,42 @@
 import Foundation
 
 nonisolated enum Formatters {
-    static func time(_ date: Date) -> String {
-        date.formatted(date: .omitted, time: .shortened)
+    /// Times are rendered in the *location's* zone, never the device's: a sunrise alarm
+    /// for Reykjavík reads "5:36 AM" even while the phone is still on Pacific time.
+    /// `zone` is deliberately required — a default would let a call site silently fall
+    /// back to the device and print a time the user never experiences.
+    static func time(_ date: Date, in zone: TimeZone) -> String {
+        date.formatted(zoned(.init(date: .omitted, time: .shortened), zone))
     }
 
-    static func weekdayShort(_ date: Date) -> String {
-        date.formatted(.dateTime.weekday(.abbreviated))
+    static func weekdayShort(_ date: Date, in zone: TimeZone) -> String {
+        date.formatted(zoned(.dateTime.weekday(.abbreviated), zone))
     }
 
-    static func dayLabel(_ date: Date, relativeTo now: Date = .now, calendar: Calendar = .current) -> String {
+    /// `.timeZone(_:)` on a format style appends a zone *symbol*; setting the property is
+    /// what actually renders the instant in that zone.
+    private static func zoned(_ style: Date.FormatStyle, _ zone: TimeZone) -> Date.FormatStyle {
+        var style = style
+        style.timeZone = zone
+        return style
+    }
+
+    static func dayLabel(_ date: Date, in zone: TimeZone, relativeTo now: Date = .now) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
         if calendar.isDate(date, inSameDayAs: now) { return "Today" }
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) {
             return "Tomorrow"
         }
-        return date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        return date.formatted(zoned(.dateTime.weekday(.wide).month(.abbreviated).day(), zone))
+    }
+
+    /// Short label for the zone itself, e.g. "GMT+1" — shown only when the location's zone
+    /// differs from the phone's, so the reader knows which clock the times belong to.
+    static func zoneAbbreviation(_ zone: TimeZone, at date: Date = .now) -> String {
+        zone.localizedName(for: .shortGeneric, locale: .current)
+            ?? zone.abbreviation(for: date)
+            ?? zone.identifier
     }
 
     static func duration(minutes: Int) -> String {

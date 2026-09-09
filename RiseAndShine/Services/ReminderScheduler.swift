@@ -57,7 +57,7 @@ final class ReminderScheduler {
             if windDown > now {
                 let content = UNMutableNotificationContent()
                 content.title = "Time to wind down"
-                content.body = "Bed in \(settings.windDownMinutes) min to get \(sleepGoal) before your \(Formatters.time(alarm)) sunrise alarm."
+                content.body = "Bed in \(settings.windDownMinutes) min to get \(sleepGoal) before your \(Formatters.time(alarm, in: settings.timeZone)) sunrise alarm."
                 content.sound = .default
                 content.interruptionLevel = .timeSensitive
                 content.threadIdentifier = "sleep"
@@ -67,7 +67,7 @@ final class ReminderScheduler {
             if bedtime > now {
                 let content = UNMutableNotificationContent()
                 content.title = "Bedtime"
-                content.body = "Lights out now for \(sleepGoal) of sleep. Alarm at \(Formatters.time(alarm))."
+                content.body = "Lights out now for \(sleepGoal) of sleep. Alarm at \(Formatters.time(alarm, in: settings.timeZone))."
                 content.sound = .default
                 content.interruptionLevel = .timeSensitive
                 content.threadIdentifier = "sleep"

@@ -25,13 +25,17 @@ nonisolated struct NextAlarmEntry: TimelineEntry {
     let bedtime: Date?
     let locationName: String
     let enabled: Bool
+    /// The location's zone, so the widget shows the same clock as the app rather than
+    /// the phone's when the two differ.
+    let timeZone: TimeZone
 }
 
 /// WidgetKit calls the provider off the main actor, so opt out of the project's MainActor default.
 nonisolated struct NextAlarmProvider: TimelineProvider {
     func placeholder(in context: Context) -> NextAlarmEntry {
         NextAlarmEntry(date: .now, alarm: .now.addingTimeInterval(8 * 3600), sunrise: .now.addingTimeInterval(8.5 * 3600),
-                       bedtime: .now.addingTimeInterval(3600), locationName: "Your city", enabled: true)
+                       bedtime: .now.addingTimeInterval(3600), locationName: "Your city", enabled: true,
+                       timeZone: .current)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (NextAlarmEntry) -> Void) {
@@ -61,7 +65,8 @@ nonisolated struct NextAlarmProvider: TimelineProvider {
                               sunrise: next?.solar.sunrise,
                               bedtime: tonight?.bedtime,
                               locationName: settings?.location?.name ?? "",
-                              enabled: settings?.isEnabled ?? false)
+                              enabled: settings?.isEnabled ?? false,
+                              timeZone: settings?.timeZone ?? .current)
     }
 }
 
@@ -69,13 +74,31 @@ struct NextAlarmView: View {
     @Environment(\.widgetFamily) private var family
     let entry: NextAlarmEntry
 
-    private var alarmText: String { entry.alarm.map { $0.formatted(date: .omitted, time: .shortened) } ?? "—" }
-    private var sunriseText: String { entry.sunrise.map { $0.formatted(date: .omitted, time: .shortened) } ?? "—" }
+    private var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = entry.timeZone
+        return calendar
+    }
+
+    private func clock(_ date: Date) -> String {
+        date.formatted(zoned(.init(date: .omitted, time: .shortened)))
+    }
+
+    /// Setting the style's `timeZone` renders the instant in that zone; `.timeZone(_:)`
+    /// would merely append a zone symbol.
+    private func zoned(_ style: Date.FormatStyle) -> Date.FormatStyle {
+        var style = style
+        style.timeZone = entry.timeZone
+        return style
+    }
+
+    private var alarmText: String { entry.alarm.map(clock) ?? "—" }
+    private var sunriseText: String { entry.sunrise.map(clock) ?? "—" }
     private var dayText: String {
         guard let a = entry.alarm else { return entry.enabled ? "No alarm set" : "Alarm off" }
-        if Calendar.current.isDateInToday(a) { return "Today" }
-        if Calendar.current.isDateInTomorrow(a) { return "Tomorrow" }
-        return a.formatted(.dateTime.weekday(.wide))
+        if calendar.isDateInToday(a) { return "Today" }
+        if calendar.isDateInTomorrow(a) { return "Tomorrow" }
+        return a.formatted(zoned(.dateTime.weekday(.wide)))
     }
 
     var body: some View {
@@ -103,7 +126,7 @@ struct NextAlarmView: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 10) {
                     stat("Sunrise", sunriseText, "sunrise.fill")
-                    if let b = entry.bedtime { stat("Bedtime", b.formatted(date: .omitted, time: .shortened), "bed.double.fill") }
+                    if let b = entry.bedtime { stat("Bedtime", clock(b), "bed.double.fill") }
                 }
             }
             .foregroundStyle(.white)

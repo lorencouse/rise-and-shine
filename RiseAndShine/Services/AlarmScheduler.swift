@@ -145,7 +145,7 @@ final class AlarmScheduler {
             offsetDescription: day.wasClamped ? "Clamped to your wake window" : settings.offsetDescription,
             locationName: settings.location?.name ?? ""
         )
-        let title = "Sunrise at \(Formatters.time(sunrise))"
+        let title = "Sunrise at \(Formatters.time(sunrise, in: settings.timeZone))"
         return makeConfiguration(fireDate: fireDate, metadata: metadata, title: title, settings: settings)
     }
 

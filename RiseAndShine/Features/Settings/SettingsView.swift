@@ -5,11 +5,20 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var showReset = false
+    @State private var testState: TestState = .idle
+
+    private enum TestState: Equatable { case idle, scheduling, scheduled, failed(String) }
 
     var body: some View {
         @Bindable var model = model
         NavigationStack {
             Form {
+                Section {
+                    Toggle(isOn: $model.settings.isEnabled) {
+                        Label("Sunrise alarm", systemImage: "alarm.fill")
+                    }
+                }
+
                 Section {
                     NavigationLink { WakeTimeSettingsView() } label: {
                         row("Wake time", value: model.settings.offsetDescription, systemImage: "sunrise.fill")
@@ -20,9 +29,20 @@ struct SettingsView: View {
                     NavigationLink { SoundPickerView() } label: {
                         row("Alarm sound", value: displayName(model.settings.soundFile), systemImage: "speaker.wave.2.fill")
                     }
+                } header: {
+                    Text("Alarm")
+                } footer: {
+                    Text("Wake time and sleep are also one tap from the home screen.")
+                }
+
+                Section {
                     NavigationLink { LocationSettingsView() } label: {
                         row("Location", value: model.settings.location?.name ?? "Not set", systemImage: "location.fill")
                     }
+                } header: {
+                    Text("Place")
+                } footer: {
+                    Text("Sunrise is computed from these coordinates. Following your device keeps the alarm right when you travel.")
                 }
 
                 Section("Permissions") {
@@ -35,8 +55,30 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Button("Ring a test alarm in 10 seconds", systemImage: "bell.and.waves.left.and.right") {
-                        Task { await model.testAlarm() }
+                    Button {
+                        testState = .scheduling
+                        Task {
+                            await model.testAlarm()
+                            if let error = model.lastError {
+                                testState = .failed(error)
+                                Haptics.notify(.error)
+                            } else {
+                                testState = .scheduled
+                                Haptics.notify(.success)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Label(testLabel, systemImage: "bell.and.waves.left.and.right")
+                            Spacer()
+                            if testState == .scheduled {
+                                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            }
+                        }
+                    }
+                    .disabled(testState == .scheduling)
+                    if case .failed(let message) = testState {
+                        Text(message).font(.footnote).foregroundStyle(Theme.horizon)
                     }
                     Stepper("Schedule \(model.settings.horizonDays) days ahead", value: $model.settings.horizonDays, in: 3...30)
                 } header: {
@@ -71,6 +113,14 @@ struct SettingsView: View {
             }
         }
         .task { await model.reminders.refreshAuthorization(); model.alarms.refreshAuthorization() }
+    }
+
+    private var testLabel: String {
+        switch testState {
+        case .idle, .failed: "Ring a test alarm in 10 seconds"
+        case .scheduling: "Scheduling…"
+        case .scheduled: "Test alarm set — lock your phone"
+        }
     }
 
     private func row(_ title: String, value: String, systemImage: String) -> some View {
@@ -133,9 +183,9 @@ struct WakeTimeSettingsView: View {
             } header: {
                 Text("Wake up")
             } footer: {
-                if let p = model.preview(model.settings, on: Calendar.current.date(byAdding: .day, value: 1, to: .now) ?? .now),
+                if let p = model.preview(model.settings, on: model.settings.calendar.date(byAdding: .day, value: 1, to: .now) ?? .now),
                    let t = AlarmPlanner.alarmInstant(settings: model.settings, day: p.solar).time {
-                    Text("Tomorrow that's \(Formatters.time(t))\(p.wasClamped ? ", after the wake window is applied" : "").")
+                    Text("Tomorrow that's \(Formatters.time(t, in: model.timeZone))\(p.wasClamped ? ", after the wake window is applied" : "").")
                 }
             }
 
@@ -204,7 +254,7 @@ struct SleepSettingsView: View {
                 Text("Sleep goal")
             } footer: {
                 if let next = model.nextAlarm, let bed = next.bedtime {
-                    Text("For your next alarm, bedtime is \(Formatters.time(bed)).")
+                    Text("For your next alarm, bedtime is \(Formatters.time(bed, in: model.timeZone)).")
                 }
             }
             Section {

@@ -37,8 +37,16 @@ final class AppModel {
 
     // MARK: Derived
 
+    /// The zone every displayed time belongs to: the location's, not the phone's.
+    var timeZone: TimeZone { settings.timeZone }
+
+    /// True when the phone's clock disagrees with the location's, so the UI can say so.
+    var timeZoneDiffersFromDevice: Bool {
+        timeZone.secondsFromGMT() != TimeZone.current.secondsFromGMT()
+    }
+
     var today: PlannedDay? {
-        let key = DateKey(date: .now)
+        let key = DateKey(date: .now, calendar: settings.calendar)
         return plan.first { $0.date == key }
     }
 
@@ -53,18 +61,48 @@ final class AppModel {
     }
 
     var upcoming: [PlannedDay] {
-        let start = Calendar.current.startOfDay(for: .now)
-        return plan.filter { $0.date.startOfDay() >= start }
+        let calendar = settings.calendar
+        let start = calendar.startOfDay(for: .now)
+        return plan.filter { $0.date.startOfDay(in: calendar) >= start }
     }
 
     var hasLocation: Bool { settings.location != nil }
+
+    /// Upcoming days the user has skipped, for the "skipped days" list.
+    var skippedUpcoming: [PlannedDay] {
+        upcoming.filter { $0.status == .skipped }
+    }
+
+    /// The alarm marker to draw on today's arc: only while it's still ahead of us.
+    var alarmMarkerForToday: Date? {
+        guard let today, let t = today.alarmTime, t > .now else { return nil }
+        return t
+    }
+
+    /// "+2 min of daylight since yesterday" — the reason a sunrise alarm moves at all.
+    /// The plan deliberately starts a day early, so yesterday is available here.
+    var daylightDrift: String? {
+        let calendar = settings.calendar
+        let key = DateKey(date: .now, calendar: calendar)
+        guard let today = plan.first(where: { $0.date == key })?.solar.dayLength,
+              let yesterdayKey = calendar.date(byAdding: .day, value: -1, to: .now),
+              let yesterday = plan.first(where: { $0.date == DateKey(date: yesterdayKey, calendar: calendar) })?.solar.dayLength
+        else { return nil }
+        let deltaMinutes = Int(((today - yesterday) / 60).rounded())
+        guard deltaMinutes != 0 else { return "Same daylight as yesterday" }
+        let word = deltaMinutes > 0 ? "more" : "less"
+        return "\(abs(deltaMinutes)) min \(word) daylight than yesterday"
+    }
 
     /// A preview of what the alarm would be for a given day under hypothetical settings.
     /// Used by onboarding and settings screens for live feedback.
     func preview(_ candidate: AlarmSettings, on date: Date = .now) -> PlannedDay? {
         guard let loc = candidate.location else { return nil }
-        let day = SolarCalculator.solarDay(for: date, latitude: loc.latitude, longitude: loc.longitude)
-        return AlarmPlanner.plan(settings: candidate, day: day)
+        let day = SolarCalculator.solarDay(for: date,
+                                           latitude: loc.latitude,
+                                           longitude: loc.longitude,
+                                           timeZone: candidate.timeZone)
+        return AlarmPlanner.plan(settings: candidate, day: day, calendar: candidate.calendar)
     }
 
     // MARK: Actions
@@ -79,6 +117,7 @@ final class AppModel {
                 if fresh != settings.location { settings.location = fresh }
             }
         }
+        await backfillTimeZone()
         recompute()
         await syncNow()
         BackgroundRefresh.scheduleNext()
@@ -131,18 +170,31 @@ final class AppModel {
 
     // MARK: Internals
 
+    /// Locations saved before `timeZoneIdentifier` existed fall back to the device zone,
+    /// which is wrong the moment the two differ. Resolve it once, in the background.
+    private func backfillTimeZone() async {
+        guard let loc = settings.location, loc.timeZoneIdentifier == nil else { return }
+        guard let identifier = await location.timeZoneIdentifier(latitude: loc.latitude,
+                                                                 longitude: loc.longitude) else { return }
+        settings.location?.timeZoneIdentifier = identifier
+    }
+
     private func recompute() {
         guard let loc = settings.location else {
             plan = []
             return
         }
+        // Everything is reckoned in the location's zone, not the phone's: "sunrise", the
+        // wake window and the active weekdays are all statements about where you wake up.
+        let calendar = settings.calendar
         // Start from yesterday so "tonight" and a bedtime that already passed still render.
-        let start = Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .now
+        let start = calendar.date(byAdding: .day, value: -1, to: .now) ?? .now
         let days = SolarCalculator.solarDays(from: start,
                                              count: settings.horizonDays + 1,
                                              latitude: loc.latitude,
-                                             longitude: loc.longitude)
-        plan = AlarmPlanner.plan(settings: settings, days: days)
+                                             longitude: loc.longitude,
+                                             timeZone: settings.timeZone)
+        plan = AlarmPlanner.plan(settings: settings, days: days, calendar: calendar)
         try? store.save(plan, to: AppGroup.planFile)
         scheduleSync()
     }
