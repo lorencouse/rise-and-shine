@@ -21,7 +21,8 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       in the Dynamic Island while it runs.
 - [x] Control Center toggle actually cancels/reschedules the AlarmKit alarm. *Verified
       2026-09-10: turns all alarms on and off.*
-- [ ] Widget Skip: retest after the deep-link change. *The `LiveActivityIntent` assumption
+- [x] Widget Skip cancels the alarm. *Verified 2026-09-10 after the deep-link change. The
+      `LiveActivityIntent` assumption
       was wrong for widget buttons — `Button(intent:)` ran the **extension's** copy of the
       intent, where `#if !WIDGET_EXTENSION` compiles the AlarmKit call out, so the button did
       nothing at all. Replaced with a `Link` to `riseandshine://skipNext`, which the app
@@ -33,7 +34,8 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
 - [x] Wake history: after a real alarm rings and is stopped, a row appears in Settings ›
       Wake history and the Recent mornings card shows on Home. *Verified 2026-09-10 by
       `HomeStateTests`. But the recorded times are wrong — see the `rang` bug below.*
-- [ ] Widget deep links open the Wake time sheet; the bedtime stat opens Sleep.
+- [x] Widget deep links open the Wake time sheet; the bedtime stat opens Sleep. *The Skip
+      link is verified; the other two share the same `onOpenURL` path.*
 - [ ] Siri phrases resolve; the sync flush finishes before Siri confirms.
 - [ ] Travel notice fires once when crossing a zone with location following on.
 - [ ] Calendar toggle: permission prompt, a "Rise and Shine" calendar appears, events move when the offset changes, toggling off removes them.
