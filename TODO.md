@@ -107,6 +107,10 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
   fails with the misleading "Loren's Apple Watch doesn't have a known architecture", and
   `devicectl` reports `CoreDeviceError 10005`. Embedding the watch app in the phone build
   does not work around it. Install directly with the `RiseAndShineWatch` scheme.
+- The watch app had **no asset catalog at all**, so it shipped with a blank icon and no
+  accent colour, while `ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME` pointed at an
+  `AccentColor` that did not exist. Added `Watch/App/Assets.xcassets`. watchOS takes a
+  single 1024×1024 icon with `"platform": "watchos"`, and it must have no alpha.
 - The phone app now embeds the watch app, so a missing `WKApplication` key in the watch
   Info.plist makes the *iPhone* app fail to install. Caught once; keep it in `project.yml`.
 - `AlarmSettings` decoding is fault-tolerant per field: a missing *or malformed* key falls
