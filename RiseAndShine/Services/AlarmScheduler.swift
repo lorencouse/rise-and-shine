@@ -83,6 +83,18 @@ final class AlarmScheduler {
 
     /// Turns state transitions of our day alarms into wake records. Only the transitions
     /// carry information: an alarm that is simply "scheduled" says nothing yet.
+    /// AlarmKit's state, in the vocabulary `WakeHistory` understands. `nil` means the
+    /// alarm is not in that snapshot: not scheduled yet, or gone because it was stopped.
+    private func phase(_ state: Alarm.State?) -> AlarmPhase {
+        switch state {
+        case .scheduled: .scheduled
+        case .countdown: .countdown
+        case .alerting: .alerting
+        case .paused: .paused
+        default: .absent
+        }
+    }
+
     private func record(previous: [UUID: Alarm]?, current: [UUID: Alarm]) {
         guard let previous else { return }   // first snapshot: nothing to compare against
         let now = Date()
@@ -112,27 +124,11 @@ final class AlarmScheduler {
                 return d.addingTimeInterval(alarm?.countdownDuration?.preAlert ?? 0)
             }
 
-            switch (before, after) {
-            case (.scheduled?, .alerting?), (.countdown?, .alerting?), (nil, .alerting?):
-                // Rang, or rang again after a snooze. Only the first ring is "rang".
-                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate())
-                if r.rang == nil { r.rang = rangDate() }
-                history[day] = r; changed = true
-            case (.alerting?, .countdown?):
-                // Snooze pressed.
-                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: rangDate())
-                r.snoozes += 1
-                history[day] = r; changed = true
-            case (.alerting?, nil), (.countdown?, nil), (.paused?, nil):
-                // Stopped from the alert or during a snooze. The removal itself is a diff
-                // between two in-process snapshots, so `now` is the real stop time.
-                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: rangDate())
-                if r.rang == nil { r.rang = rangDate() }
-                r.stopped = now
-                history[day] = r; changed = true
-            default:
-                break
+            if history.record(from: phase(before), to: phase(after), day: day,
+                              scheduled: scheduledDate(), rangAt: rangDate(), now: now) {
+                changed = true
             }
+
         }
 
         if changed {

@@ -5,6 +5,16 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
 
 ## Remaining open items
 
+### Before submitting
+
+- [x] `PrivacyInfo.xcprivacy` declared no required-reason APIs, which is an automatic
+      ITMS-91053 rejection. Now declares `UserDefaults` (CA92.1) and file timestamps (C617.1).
+- [x] `MARKETING_VERSION` was 2.0.0, below the last shipped App Store version (3.74), which
+      App Store Connect rejects. Now 4.0.0.
+- [x] Release configuration builds for a generic iOS device.
+- [ ] No translations; `Localizable.xcstrings` has keys but no localisations. English-only
+      release is fine, this is only a gap if you want more.
+
 ### Release-time entitlements (personal team cannot sign these; restore on the paid team)
 
 - [ ] `com.apple.developer.usernotifications.time-sensitive` — without it wind-down/bedtime reminders are silently downgraded from time-sensitive. Uncomment in `project.yml`.
@@ -80,10 +90,10 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       rather than relying on transitions. Found while fixing the `rang` bug; not reproduced
       yet.
 
-- [ ] **The wake-record logic has no test.** It lives in `AlarmScheduler` and switches on
-      AlarmKit's `Alarm.State`, so it cannot be exercised from `RiseCoreTests`. Extracting the
-      transition-to-record decision into RiseCore behind its own small state enum would make
-      both bugs above testable.
+- [x] **The wake-record logic has no test.** *Extracted into `WakeHistory.record(from:to:…)`
+      in RiseCore behind an `AlarmPhase` enum that mirrors `Alarm.State`; `AlarmScheduler`
+      now just maps AlarmKit's state onto it. Six tests in `WakeRecordTransitionTests`,
+      including a regression for the 06:49-recorded-as-08:26 bug.*
 
 ### Larger features
 

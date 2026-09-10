@@ -86,3 +86,53 @@ public struct WakeHistory: Sendable, Codable, Equatable {
         records.removeAll { $0.date < cutoff }
     }
 }
+
+// MARK: - Recording observed alarm transitions
+
+/// The states a scheduled alarm can be observed in. Mirrors AlarmKit's `Alarm.State` so
+/// this logic can live here — and be tested — without RiseCore depending on AlarmKit.
+/// `absent` covers both "not scheduled yet" and "gone", which is what the system reports
+/// once an alarm is stopped.
+public enum AlarmPhase: String, Sendable, Codable, Equatable {
+    case absent, scheduled, countdown, alerting, paused
+}
+
+extension WakeHistory {
+    /// Folds one observed state transition into the history, returning whether anything
+    /// changed. Only transitions carry information: an alarm that stays `scheduled` says
+    /// nothing yet.
+    ///
+    /// - Parameters:
+    ///   - rangAt: when the alarm alerted, derived from its schedule rather than from the
+    ///     clock. Updates are only delivered while the app runs, so a ring is usually first
+    ///     seen at the next launch and "now" would record the launch time.
+    ///   - now: the moment the transition was observed. Correct for `stopped`, because the
+    ///     alarm's removal is a diff between two in-process snapshots.
+    public mutating func record(from before: AlarmPhase, to after: AlarmPhase,
+                                day: DateKey, scheduled: Date, rangAt: Date, now: Date) -> Bool {
+        switch (before, after) {
+        case (.scheduled, .alerting), (.countdown, .alerting), (.absent, .alerting):
+            // Rang, or rang again after a snooze. Only the first ring is "rang".
+            var r = self[day] ?? WakeRecord(date: day, scheduled: scheduled)
+            guard r.rang == nil else { return false }
+            r.rang = rangAt
+            self[day] = r
+            return true
+        case (.alerting, .countdown):
+            // Snooze pressed.
+            var r = self[day] ?? WakeRecord(date: day, scheduled: scheduled, rang: rangAt)
+            r.snoozes += 1
+            self[day] = r
+            return true
+        case (.alerting, .absent), (.countdown, .absent), (.paused, .absent):
+            // Stopped from the alert or during a snooze.
+            var r = self[day] ?? WakeRecord(date: day, scheduled: scheduled, rang: rangAt)
+            if r.rang == nil { r.rang = rangAt }
+            r.stopped = now
+            self[day] = r
+            return true
+        default:
+            return false
+        }
+    }
+}

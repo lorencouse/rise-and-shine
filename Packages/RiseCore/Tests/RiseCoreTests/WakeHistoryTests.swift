@@ -43,3 +43,92 @@ struct WakeHistoryTests {
         #expect(record(2, snoozes: 0).wokeCleanly)
     }
 }
+
+// MARK: - Recording observed transitions
+
+@Suite("Wake record transitions")
+struct WakeRecordTransitionTests {
+    private let day = DateKey(year: 2026, month: 9, day: 10)
+    /// The alarm was set for 06:49 and stopped at 06:52; the app only looked at 08:26.
+    private let scheduled = Date(timeIntervalSince1970: 1_788_000_000)
+    private var rangAt: Date { scheduled }
+    private var muchLater: Date { scheduled.addingTimeInterval(5_820) }   // +1h37m
+
+    @Test("A ring seen live records the schedule's time, not the observation's")
+    func ringUsesScheduleTime() {
+        var h = WakeHistory()
+        let changed = h.record(from: .scheduled, to: .alerting, day: day,
+                         scheduled: scheduled, rangAt: rangAt, now: muchLater)
+        #expect(changed)
+        #expect(h[day]?.rang == rangAt)
+    }
+
+    /// The regression: `rang` used to be stamped with the observation time, so an alarm
+    /// that rang at 06:49 and was first seen at 08:26 recorded 08:26.
+    @Test("A stop seen at the next launch still records when the alarm actually rang")
+    func stopObservedLateKeepsTheRealRingTime() {
+        var h = WakeHistory()
+        let changed = h.record(from: .alerting, to: .absent, day: day,
+                         scheduled: scheduled, rangAt: rangAt, now: muchLater)
+        #expect(changed)
+        let r = try! #require(h[day])
+        #expect(r.rang == rangAt)
+        #expect(r.stopped == muchLater)
+        #expect(r.lingered == 5_820)
+    }
+
+    @Test("Only the first ring counts as rang")
+    func reRingAfterSnoozeDoesNotMoveRang() {
+        var h = WakeHistory()
+        _ = h.record(from: .scheduled, to: .alerting, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        _ = h.record(from: .alerting, to: .countdown, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        // Rings again when the snooze ends.
+        let changed = h.record(from: .countdown, to: .alerting, day: day,
+                          scheduled: scheduled, rangAt: rangAt, now: muchLater)
+        #expect(!changed)
+        #expect(h[day]?.rang == rangAt)
+        #expect(h[day]?.snoozes == 1)
+    }
+
+    @Test("Snoozing then stopping counts the snooze and is not a clean wake")
+    func snoozeThenStop() {
+        var h = WakeHistory()
+        _ = h.record(from: .scheduled, to: .alerting, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        _ = h.record(from: .alerting, to: .countdown, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        _ = h.record(from: .countdown, to: .absent, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: muchLater)
+        let r = try! #require(h[day])
+        #expect(r.snoozes == 1)
+        #expect(r.stopped == muchLater)
+        #expect(!r.wokeCleanly)
+        #expect(h.cleanStreak == 0)
+    }
+
+    @Test("Stopping straight from the alert is a clean wake")
+    func stopWithoutSnoozeIsClean() {
+        var h = WakeHistory()
+        _ = h.record(from: .scheduled, to: .alerting, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        _ = h.record(from: .alerting, to: .absent, day: day,
+                     scheduled: scheduled, rangAt: rangAt, now: rangAt.addingTimeInterval(180))
+        #expect(h[day]?.wokeCleanly == true)
+        #expect(h.cleanStreak == 1)
+        #expect(h.completed.count == 1)
+    }
+
+    @Test("Transitions that carry no information change nothing")
+    func inertTransitions() {
+        var h = WakeHistory()
+        let becameScheduled = h.record(from: .absent, to: .scheduled, day: day,
+                                       scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        #expect(!becameScheduled)
+        let stayedScheduled = h.record(from: .scheduled, to: .scheduled, day: day,
+                                       scheduled: scheduled, rangAt: rangAt, now: rangAt)
+        #expect(!stayedScheduled)
+        #expect(h[day] == nil)
+    }
+}

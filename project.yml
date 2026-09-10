@@ -21,7 +21,9 @@ settings:
     CODE_SIGN_STYLE: Automatic
     # Set your Apple Developer team id here (or select it once in Xcode › Signing).
     DEVELOPMENT_TEAM: "QQB33452MG"
-    MARKETING_VERSION: "2.0.0"
+    # Must stay above the last shipped App Store version (3.74); the SwiftUI rewrite was
+    # called 2.0 internally, but App Store Connect rejects a version that goes backwards.
+    MARKETING_VERSION: "4.0.0"
     CURRENT_PROJECT_VERSION: 1
     TARGETED_DEVICE_FAMILY: "1,2"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
