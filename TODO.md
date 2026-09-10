@@ -38,12 +38,12 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       link is verified; the other two share the same `onOpenURL` path.*
 - [x] Siri phrases resolve; the sync flush finishes before Siri confirms. *Verified 2026-09-10.*
 - [ ] Travel notice fires once when crossing a zone with location following on.
-- [ ] Calendar toggle: permission prompt, a "Rise and Shine" calendar appears, events move when the offset changes, toggling off removes them.
+- [x] Calendar toggle: permission prompt, a "Rise and Shine" calendar appears, events move when the offset changes, toggling off removes them. *Verified 2026-09-10.*
 - [x] Day paging: sideways swipe pages a day, the chevrons still tap, and the vertical
       scroll still works. *Verified 2026-09-10 by `DayPagingTests`; no threshold tuning
       needed.*
 - [x] Dark/tinted icon variants render acceptably on the Home Screen. *Verified 2026-09-10.*
-- [ ] Health: toggle prompts for Sleep read access; after allowing, "Last night" appears in Settings › Health and on the Tonight card (needs Watch sleep data).
+- [x] Health: toggle prompts for Sleep read access; after allowing, "Last night" appears in Settings › Health and on the Tonight card. *Verified 2026-09-10.*
 
 ### Device checks for the Watch (paired watch needed)
 
