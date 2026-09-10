@@ -54,8 +54,10 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       the phone.*
 - [x] Skip on the watch reaches the phone and actually cancels the AlarmKit alarm; the watch's
       optimistic row is confirmed by the context that comes back. *Verified 2026-09-10.*
-- [ ] Alarm toggle on the watch round-trips.
-- [ ] Complication families (circular, rectangular, inline, corner) render and roll over after an alarm passes.
+- [x] Alarm toggle on the watch round-trips. *Verified 2026-09-10.*
+- [x] Watch app icon renders. *Verified 2026-09-10 after adding the missing asset catalog.*
+- [x] Complication families (circular, rectangular, inline, corner) render. *Verified
+      2026-09-10. Roll-over after an alarm passes not separately watched.*
 - [ ] Watch app works with the phone out of range: it should still show a correct plan from the last mirrored settings, and queue actions until the phone is back.
 
 ### Bugs found by the device checks
