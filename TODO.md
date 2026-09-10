@@ -48,14 +48,28 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
 
 ### Bugs found by the device checks
 
-- [ ] **Wake history stamps the wrong times.** `AlarmScheduler.swift:107` sets `r.rang = now`,
-      but `AlarmManager.alarmUpdates` only delivers while the app is running — and you are
-      asleep when the alarm fires. The transition is therefore observed at the next launch
-      and `rang` becomes the launch time. Seen 2026-09-10: the alarm rang at 06:49 and
-      history recorded 08:26, the time the app was first opened. `stopped = now` has the
-      same flaw, so `averageLinger` ("Ring to stop") is meaningless — both stamps collapse
-      onto the launch. Options: use `scheduledDate()` for `rang` when the update is
-      observed late, or only trust `now` when the app was already in the foreground.
+- [x] **Wake history stamped the wrong times.** `AlarmScheduler` set `r.rang = now`, but
+      `AlarmManager.alarmUpdates` only delivers while the app runs — and you are asleep when
+      the alarm fires. The transition was first seen at the next launch, so `rang` became the
+      launch time. Seen 2026-09-10: rang at 06:49, recorded 08:26. *Fixed: `rangDate()`
+      derives the ring from the alarm's own `.fixed` schedule plus `countdownDuration.preAlert`,
+      since AlarmKit alerts exactly on schedule and `scheduleDate(for:)` deliberately shifts
+      the schedule earlier by the countdown. `stopped` still uses `now`, which is correct —
+      the removal is a diff between two in-process snapshots. Needs one real morning to
+      confirm end to end; the record already on the phone keeps its bad 08:26 stamp unless
+      history is cleared.*
+
+- [ ] **A morning is missed entirely if the app is not opened while the alarm still exists.**
+      Records are only created from a state *transition*, so if you stop the alarm and do not
+      open the app until AlarmKit has dropped the alarm, it appears in neither snapshot and no
+      record is written. Would need reconciling the registry against past dates at launch
+      rather than relying on transitions. Found while fixing the `rang` bug; not reproduced
+      yet.
+
+- [ ] **The wake-record logic has no test.** It lives in `AlarmScheduler` and switches on
+      AlarmKit's `Alarm.State`, so it cannot be exercised from `RiseCoreTests`. Extracting the
+      transition-to-record decision into RiseCore behind its own small state enum would make
+      both bugs above testable.
 
 ### Larger features
 

@@ -100,21 +100,34 @@ final class AlarmScheduler {
                 return now
             }
 
+            // When the alarm alerted, which is not when we noticed. `alarmUpdates` only
+            // delivers while the app runs, and the user is asleep when the alarm fires:
+            // the transition is usually first seen at the next launch, so stamping `now`
+            // recorded the launch time as the ring time. AlarmKit alerts exactly on the
+            // schedule, so derive it instead — plus the pre-alarm countdown, which the
+            // schedule is deliberately shifted earlier by (see `scheduleDate(for:)`).
+            func rangDate() -> Date {
+                let alarm = current[id] ?? previous[id]
+                guard case .fixed(let d)? = alarm?.schedule else { return now }
+                return d.addingTimeInterval(alarm?.countdownDuration?.preAlert ?? 0)
+            }
+
             switch (before, after) {
             case (.scheduled?, .alerting?), (.countdown?, .alerting?), (nil, .alerting?):
                 // Rang, or rang again after a snooze. Only the first ring is "rang".
                 var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate())
-                if r.rang == nil { r.rang = now }
+                if r.rang == nil { r.rang = rangDate() }
                 history[day] = r; changed = true
             case (.alerting?, .countdown?):
                 // Snooze pressed.
-                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: now)
+                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: rangDate())
                 r.snoozes += 1
                 history[day] = r; changed = true
             case (.alerting?, nil), (.countdown?, nil), (.paused?, nil):
-                // Stopped from the alert or during a snooze.
-                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: now)
-                if r.rang == nil { r.rang = now }
+                // Stopped from the alert or during a snooze. The removal itself is a diff
+                // between two in-process snapshots, so `now` is the real stop time.
+                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: rangDate())
+                if r.rang == nil { r.rang = rangDate() }
                 r.stopped = now
                 history[day] = r; changed = true
             default:
