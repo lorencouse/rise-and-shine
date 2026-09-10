@@ -86,8 +86,10 @@ struct DawnBackground: View {
 // MARK: - Type ramp
 
 extension Font {
-    static let displayTime = Font.system(size: 68, weight: .thin, design: .rounded)
-    static let bigTime = Font.system(size: 32, weight: .light, design: .rounded)
+    /// Big clock faces. Sizes come from `@ScaledMetric` at the call site so they follow
+    /// Dynamic Type; these are the defaults at the standard size.
+    static func displayTime(_ size: CGFloat = 68) -> Font { .system(size: size, weight: .thin, design: .rounded) }
+    static func bigTime(_ size: CGFloat = 32) -> Font { .system(size: size, weight: .light, design: .rounded) }
     static let cardTitle = Font.system(.subheadline, design: .rounded).weight(.semibold)
     static let label = Font.system(.footnote, design: .rounded)
     /// All-caps section labels.

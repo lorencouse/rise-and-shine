@@ -22,6 +22,17 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.lomaco.riseandshine</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>riseandshine</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -30,6 +41,10 @@
 	<string>public.app-category.lifestyle</string>
 	<key>NSAlarmKitUsageDescription</key>
 	<string>Rise and Shine schedules your sunrise alarm so it rings even in Silent mode or a Focus.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Optional. Adds a "Sleep" event from bedtime to your alarm in its own calendar, and keeps it up to date as sunrise moves.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Optional. Reads the sleep your Apple Watch or another app recorded, to compare last night with your sleep goal. Nothing is written to Health.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your location is used only to calculate local sunrise and sunset times, on your device.</string>
 	<key>NSSupportsLiveActivities</key>
@@ -46,6 +61,13 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

@@ -3,7 +3,9 @@ import RiseCore
 
 @main
 struct RiseAndShineApp: App {
-    @State private var model = AppModel()
+    private let model = AppModel.shared
+
+    init() { WatchBridge.shared.activate() }
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {

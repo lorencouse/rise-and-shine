@@ -61,7 +61,7 @@ final class ReminderScheduler {
                 content.sound = .default
                 content.interruptionLevel = .timeSensitive
                 content.threadIdentifier = "sleep"
-                schedule(id: Self.windDownPrefix + key, content: content, at: windDown)
+                schedule(id: Self.windDownPrefix + key, content: content, at: windDown, calendar: settings.calendar)
             }
 
             if bedtime > now {
@@ -71,15 +71,37 @@ final class ReminderScheduler {
                 content.sound = .default
                 content.interruptionLevel = .timeSensitive
                 content.threadIdentifier = "sleep"
-                schedule(id: Self.bedtimePrefix + key, content: content, at: bedtime)
+                schedule(id: Self.bedtimePrefix + key, content: content, at: bedtime, calendar: settings.calendar)
             }
         }
     }
 
-    private func schedule(id: String, content: UNNotificationContent, at date: Date) {
-        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+    /// The trigger carries the location's zone explicitly. Without one, iOS evaluates the
+    /// components in whatever zone the phone is in when the time comes, so a reminder set
+    /// in Denver would fire at Lisbon wall-clock time after a flight.
+    private func schedule(id: String, content: UNNotificationContent, at date: Date, calendar: Calendar) {
+        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        components.timeZone = calendar.timeZone
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    }
+
+    /// One-off "your alarm moved" notice after the followed location changed zone. Posted
+    /// only when notifications are already allowed; a permission prompt mid-trip would be
+    /// worse than silence.
+    func postTravelNotice(from old: SavedLocation, to new: SavedLocation, nextAlarm: Date?, zone: TimeZone) async {
+        await refreshAuthorization()
+        guard authorization == .authorized else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Alarm updated for \(new.name)"
+        if let nextAlarm {
+            content.body = "Sunrise here is different. Your next alarm is \(Formatters.time(nextAlarm, in: zone)) local time."
+        } else {
+            content.body = "Sunrise here is different, so your alarm times have been recalculated."
+        }
+        content.sound = nil
+        content.threadIdentifier = "travel"
+        try? await center.add(UNNotificationRequest(identifier: "travel-\(new.name)", content: content, trigger: nil))
     }
 
     func cancelAll() async {

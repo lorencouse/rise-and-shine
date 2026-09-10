@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 import RiseCore
 
 /// Home Screen and Lock Screen widget: the next alarm and sunrise.
@@ -7,6 +8,8 @@ struct NextAlarmWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "NextAlarm", provider: NextAlarmProvider()) { entry in
             NextAlarmView(entry: entry)
+                // The alarm half opens the wake-time sheet; the bedtime half opens sleep.
+                .widgetURL(AppGroup.DeepLink.wakeTime.url)
                 .containerBackground(for: .widget) {
                     LinearGradient(colors: [WidgetTheme.night, Color(red: 0.16, green: 0.13, blue: 0.32)],
                                    startPoint: .top, endPoint: .bottom)
@@ -122,11 +125,24 @@ struct NextAlarmView: View {
                     Text(dayText.uppercased()).font(.caption2.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
                     Text(alarmText).font(.system(size: 40, weight: .light, design: .rounded)).monospacedDigit()
                     Label(entry.locationName, systemImage: "location").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    if entry.alarm != nil {
+                        Button(intent: SkipNextAlarmWidgetIntent()) {
+                            Label("Skip", systemImage: "forward.end")
+                                .font(.caption2.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(WidgetTheme.sun)
+                        .padding(.top, 2)
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 10) {
                     stat("Sunrise", sunriseText, "sunrise.fill")
-                    if let b = entry.bedtime { stat("Bedtime", clock(b), "bed.double.fill") }
+                    if let b = entry.bedtime {
+                        Link(destination: AppGroup.DeepLink.sleep.url) {
+                            stat("Bedtime", clock(b), "bed.double.fill")
+                        }
+                    }
                 }
             }
             .foregroundStyle(.white)

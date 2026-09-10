@@ -194,7 +194,7 @@ private struct LocationPage: View {
                             results = await model.location.search(q)
                         }
                     }
-                ForEach(results.prefix(4), id: \.name) { place in
+                ForEach(results.prefix(4), id: \.self) { place in
                     Button {
                         draft.location = place
                         query = ""; results = []
@@ -246,6 +246,10 @@ private struct WakeTimePage: View {
                     if inst.clamped {
                         Text("Kept inside your wake window (\(windowText)). You can change the window in Settings.")
                             .font(.caption).foregroundStyle(Theme.sun)
+                    } else {
+                        Text("Sunrise drifts by hours over the year, so the alarm stays inside a wake window of \(windowText). You can change it later.")
+                            .font(.caption).foregroundStyle(Theme.faint)
+                            .multilineTextAlignment(.center)
                     }
                 }
             }

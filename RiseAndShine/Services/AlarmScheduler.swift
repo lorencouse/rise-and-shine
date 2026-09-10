@@ -21,6 +21,15 @@ final class AlarmScheduler {
     private(set) var lastSyncError: String?
     private(set) var scheduledCount = 0
 
+    /// The one-off test alarm, kept out of the day registry so a routine sync doesn't
+    /// cancel it as "unwanted" before it gets a chance to ring.
+    private var testAlarmID: UUID? {
+        get { store.load(UUID.self, from: AppGroup.testAlarmFile) }
+        set {
+            if let newValue { try? store.save(newValue, to: AppGroup.testAlarmFile) } else { store.delete(AppGroup.testAlarmFile) }
+        }
+    }
+
     private let manager = AlarmManager.shared
     private let store = SharedStore.shared
 
@@ -30,8 +39,126 @@ final class AlarmScheduler {
         set { try? store.save(newValue, to: AppGroup.alarmRegistryFile) }
     }
 
+    /// Alarms iOS still knows about, refreshed from `alarmUpdates`. `nil` until the first
+    /// update arrives.
+    private(set) var liveAlarms: [UUID: Alarm]?
+
+    /// What happened on past mornings, derived from alarm state transitions.
+    private(set) var history: WakeHistory = SharedStore.shared.load(WakeHistory.self, from: AppGroup.wakeHistoryFile) ?? WakeHistory()
+    private var updatesTask: Task<Void, Never>?
+
     init() {
         refreshAuthorization()
+        observeUpdates()
+    }
+
+    /// iOS removes a fixed-date alarm once the user stops it, and tells us through
+    /// `alarmUpdates`. Mirroring that keeps the registry honest without a full sync, and
+    /// is the hook a wake history will hang off later.
+    private func observeUpdates() {
+        updatesTask?.cancel()
+        updatesTask = Task { [weak self] in
+            for await alarms in AlarmManager.shared.alarmUpdates {
+                guard let self, !Task.isCancelled else { return }
+                self.apply(alarms)
+            }
+        }
+    }
+
+    private func apply(_ alarms: [Alarm]) {
+        let previous = liveAlarms
+        liveAlarms = Dictionary(alarms.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        record(previous: previous, current: liveAlarms ?? [:])
+        var registry = registry
+        let before = registry.count
+        registry = registry.filter { liveAlarms?[$0.value] != nil }
+        if registry.count != before {
+            self.registry = registry
+            scheduledCount = registry.count
+        }
+        if let id = testAlarmID, liveAlarms?[id] == nil {
+            testAlarmID = nil
+        }
+    }
+
+    /// Turns state transitions of our day alarms into wake records. Only the transitions
+    /// carry information: an alarm that is simply "scheduled" says nothing yet.
+    private func record(previous: [UUID: Alarm]?, current: [UUID: Alarm]) {
+        guard let previous else { return }   // first snapshot: nothing to compare against
+        let now = Date()
+        var history = history
+        var changed = false
+
+        for (key, id) in registry {
+            guard let day = DateKey(string: key) else { continue }
+            let before = previous[id]?.state
+            let after = current[id]?.state
+
+            // Fire date for a new record.
+            func scheduledDate() -> Date {
+                if case .fixed(let d)? = (current[id] ?? previous[id])?.schedule { return d }
+                return now
+            }
+
+            switch (before, after) {
+            case (.scheduled?, .alerting?), (.countdown?, .alerting?), (nil, .alerting?):
+                // Rang, or rang again after a snooze. Only the first ring is "rang".
+                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate())
+                if r.rang == nil { r.rang = now }
+                history[day] = r; changed = true
+            case (.alerting?, .countdown?):
+                // Snooze pressed.
+                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: now)
+                r.snoozes += 1
+                history[day] = r; changed = true
+            case (.alerting?, nil), (.countdown?, nil), (.paused?, nil):
+                // Stopped from the alert or during a snooze.
+                var r = history[day] ?? WakeRecord(date: day, scheduled: scheduledDate(), rang: now)
+                if r.rang == nil { r.rang = now }
+                r.stopped = now
+                history[day] = r; changed = true
+            default:
+                break
+            }
+        }
+
+        if changed {
+            let cutoff = DateKey(date: now.addingTimeInterval(-Double(WakeHistory.retentionDays) * 86_400))
+            history.prune(before: cutoff)
+            self.history = history
+            try? store.save(history, to: AppGroup.wakeHistoryFile)
+        }
+    }
+
+    /// Attach a Health sleep figure to a completed record.
+    func setSleep(_ minutes: Int, for day: DateKey) {
+        guard var record = history[day], record.sleepMinutes != minutes else { return }
+        record.sleepMinutes = minutes
+        history[day] = record
+        try? store.save(history, to: AppGroup.wakeHistoryFile)
+    }
+
+    func clearHistory() {
+        history = WakeHistory()
+        store.delete(AppGroup.wakeHistoryFile)
+    }
+
+    enum LiveState: Equatable { case ringing, snoozing, paused }
+
+    /// What one of our alarms is doing right now, if anything. Lets Home say "ringing" or
+    /// "snoozing" instead of pointing at the next morning as if nothing happened.
+    var liveState: LiveState? {
+        guard let liveAlarms else { return nil }
+        let ours = Set(registry.values).union(testAlarmID.map { [$0] } ?? [])
+        for alarm in liveAlarms.values where ours.contains(alarm.id) {
+            switch alarm.state {
+            case .alerting: return .ringing
+            case .countdown: return .snoozing
+            case .paused: return .paused
+            default: continue
+            }
+        }
+        return nil
     }
 
     func refreshAuthorization() {
@@ -90,12 +217,14 @@ final class AlarmScheduler {
 
         // 2. Schedule or reschedule the wanted ones.
         for day in wanted {
-            guard let fireDate = day.alarmTime, let sunrise = day.solar.sunrise ?? day.solar.civilDawn else { continue }
+            // No sunrise is not a reason to skip: in polar night the clamp still yields a
+            // fire date and the plan calls the day active, so the alarm has to exist.
+            guard let fireDate = day.alarmTime else { continue }
             let key = day.date.description
 
             if let id = registry[key], let alarm = existing[id],
                case .fixed(let date)? = alarm.schedule,
-               abs(date.timeIntervalSince(fireDate)) < 1 {
+               abs(date.timeIntervalSince(scheduleDate(for: fireDate, settings: settings))) < 1 {
                 continue // unchanged
             }
 
@@ -105,7 +234,7 @@ final class AlarmScheduler {
 
             let id = UUID()
             do {
-                let configuration = makeConfiguration(fireDate: fireDate, sunrise: sunrise, day: day, settings: settings)
+                let configuration = makeConfiguration(fireDate: fireDate, day: day, settings: settings)
                 _ = try await manager.schedule(id: id, configuration: configuration)
                 registry[key] = id
             } catch {
@@ -123,29 +252,50 @@ final class AlarmScheduler {
         for (_, id) in registry { try? manager.cancel(id: id) }
         registry = [:]
         scheduledCount = 0
+        cancelTest()
+    }
+
+    func cancelTest() {
+        if let id = testAlarmID { try? manager.cancel(id: id) }
+        testAlarmID = nil
     }
 
     /// Fires a one-off alarm shortly, so the user can hear the sound and see the alert.
     func scheduleTest(in seconds: TimeInterval = 10, settings: AlarmSettings) async throws {
         guard await requestAuthorization() == .authorized else { return }
-        let fire = Date().addingTimeInterval(seconds)
+        // With a pre-alarm countdown on, the test starts that countdown now and rings when
+        // it ends, which is also how to verify the countdown semantics on a device.
+        let preAlert = TimeInterval(max(settings.preAlarmMinutes, 0) * 60)
+        let fire = Date().addingTimeInterval(seconds + preAlert)
         let metadata = SunriseAlarmMetadata(dateKey: "test", sunrise: fire,
                                             offsetDescription: "Test alarm",
-                                            locationName: settings.location?.name ?? "")
+                                            locationName: settings.location?.name ?? "",
+                                            alarmTime: fire)
         let configuration = makeConfiguration(fireDate: fire, metadata: metadata, title: "Test alarm", settings: settings)
-        _ = try await manager.schedule(id: UUID(), configuration: configuration)
+        cancelTest()
+        let id = UUID()
+        _ = try await manager.schedule(id: id, configuration: configuration)
+        testAlarmID = id
     }
 
     // MARK: - Configuration
 
-    private func makeConfiguration(fireDate: Date, sunrise: Date, day: PlannedDay, settings: AlarmSettings) -> AlarmManager.AlarmConfiguration<SunriseAlarmMetadata> {
+    /// The instant handed to AlarmKit for an alarm that should alert at `fireDate`.
+    private func scheduleDate(for fireDate: Date, settings: AlarmSettings) -> Date {
+        guard settings.preAlarmMinutes > 0 else { return fireDate }
+        return fireDate.addingTimeInterval(-TimeInterval(settings.preAlarmMinutes * 60))
+    }
+
+    private func makeConfiguration(fireDate: Date, day: PlannedDay, settings: AlarmSettings) -> AlarmManager.AlarmConfiguration<SunriseAlarmMetadata> {
+        let sunrise = day.solar.sunrise ?? day.solar.civilDawn
         let metadata = SunriseAlarmMetadata(
             dateKey: day.date.description,
             sunrise: sunrise,
-            offsetDescription: day.wasClamped ? "Clamped to your wake window" : settings.offsetDescription,
-            locationName: settings.location?.name ?? ""
+            offsetDescription: day.isOverridden ? "Custom time" : day.wasClamped ? "Clamped to your wake window" : settings.profile(for: day.date, calendar: settings.calendar).offsetDescription,
+            locationName: settings.location?.name ?? "",
+            alarmTime: fireDate
         )
-        let title = "Sunrise at \(Formatters.time(sunrise, in: settings.timeZone))"
+        let title = sunrise.map { "Sunrise at \(Formatters.time($0, in: settings.timeZone))" } ?? "Rise and Shine"
         return makeConfiguration(fireDate: fireDate, metadata: metadata, title: title, settings: settings)
     }
 
@@ -159,8 +309,9 @@ final class AlarmScheduler {
             secondaryButton: snooze,
             secondaryButtonBehavior: .countdown
         )
+        // One title serves both the snooze countdown and the pre-alarm countdown.
         let countdown = AlarmPresentation.Countdown(
-            title: "Snoozing",
+            title: "Until alarm",
             pauseButton: AlarmButton(text: "Pause", textColor: .white, systemImageName: "pause.fill")
         )
         let paused = AlarmPresentation.Paused(
@@ -177,9 +328,13 @@ final class AlarmScheduler {
 
         let sound: AlertConfiguration.AlertSound = settings.soundFile.isEmpty ? .default : .named(settings.soundFile)
 
+        // Pre-alarm: AlarmKit starts the `preAlert` countdown when the schedule fires and
+        // alerts when it ends, so the schedule is moved earlier by the same amount and the
+        // alert still lands on `fireDate`. (Verify on device: see TODO.)
+        let preAlert: TimeInterval? = settings.preAlarmMinutes > 0 ? TimeInterval(settings.preAlarmMinutes * 60) : nil
         return AlarmManager.AlarmConfiguration(
-            countdownDuration: Alarm.CountdownDuration(preAlert: nil, postAlert: TimeInterval(settings.snoozeMinutes * 60)),
-            schedule: .fixed(fireDate),
+            countdownDuration: Alarm.CountdownDuration(preAlert: preAlert, postAlert: TimeInterval(settings.snoozeMinutes * 60)),
+            schedule: .fixed(scheduleDate(for: fireDate, settings: settings)),
             attributes: attributes,
             sound: sound
         )

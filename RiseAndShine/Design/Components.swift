@@ -162,7 +162,7 @@ struct StatView: View {
             .foregroundStyle(Theme.faint)
             .lineLimit(1)
             Text(value)
-                .font(emphasis ? .bigTime : .system(.title3, design: .rounded).weight(.medium))
+                .font(emphasis ? .bigTime() : .system(.title3, design: .rounded).weight(.medium))
                 .foregroundStyle(emphasis ? Theme.sun : .white)
                 .monospacedDigit()
                 .lineLimit(1)
@@ -361,10 +361,17 @@ struct DurationPicker: View {
     var hourRange: ClosedRange<Int> = 4...12
     var minuteStep = 15
 
+    /// Widened to include the stored value, so a goal outside the default range still
+    /// shows a selected row instead of a blank wheel.
+    private var visibleHours: ClosedRange<Int> {
+        let h = minutes / 60
+        return min(hourRange.lowerBound, h)...max(hourRange.upperBound, h)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             Picker("Hours", selection: Binding(get: { minutes / 60 }, set: { minutes = $0 * 60 + minutes % 60 })) {
-                ForEach(Array(hourRange), id: \.self) { Text("\($0) hr").tag($0) }
+                ForEach(Array(visibleHours), id: \.self) { Text("\($0) hr").tag($0) }
             }
             Picker("Minutes", selection: Binding(get: { minutes % 60 }, set: { minutes = (minutes / 60) * 60 + $0 })) {
                 ForEach(Array(stride(from: 0, to: 60, by: minuteStep)), id: \.self) { Text("\($0) min").tag($0) }

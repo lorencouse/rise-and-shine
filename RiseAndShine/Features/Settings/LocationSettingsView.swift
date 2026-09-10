@@ -35,6 +35,31 @@ struct LocationSettingsView: View {
                 Text("When following your device, the app re-checks your location each time it opens, so alarms adjust when you travel.")
             }
 
+            if !model.settings.savedPlaces.isEmpty {
+                Section {
+                    ForEach(model.settings.savedPlaces, id: \.self) { place in
+                        Button {
+                            model.setLocation(place)
+                        } label: {
+                            HStack {
+                                Label(place.name, systemImage: "mappin").foregroundStyle(.primary)
+                                Spacer()
+                                if model.settings.location == place {
+                                    Image(systemName: "checkmark").foregroundStyle(Theme.sunrise)
+                                }
+                            }
+                        }
+                    }
+                    .onDelete { offsets in
+                        for i in offsets { model.forgetPlace(model.settings.savedPlaces[i]) }
+                    }
+                } header: {
+                    Text("Saved places")
+                } footer: {
+                    Text("Cities you've picked before. Swipe to remove.")
+                }
+            }
+
             Section("Or choose a city") {
                 TextField("Search for a city", text: $query)
                     .textInputAutocapitalization(.words)
@@ -47,7 +72,7 @@ struct LocationSettingsView: View {
                             results = await model.location.search(q)
                         }
                     }
-                ForEach(results, id: \.name) { place in
+                ForEach(results, id: \.self) { place in
                     Button {
                         model.setLocation(place)
                         query = ""

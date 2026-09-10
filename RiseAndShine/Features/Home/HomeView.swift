@@ -7,6 +7,9 @@ import RiseCore
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @State private var sheet: HomeSheet?
+    /// The day the hero and light card are showing. `nil` is the resting state: the next
+    /// alarm and today's light. Swiping either card pages through days.
+    @State private var focus = DayFocus()
 
     var body: some View {
         NavigationStack {
@@ -15,11 +18,12 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: Metrics.sectionGap) {
                         permissionBanners
-                        NextAlarmHero(sheet: $sheet)
+                        NextAlarmHero(sheet: $sheet, focus: $focus)
                         TimeZoneNote()
-                        TodayLightCard()
+                        TodayLightCard(sheet: $sheet, focus: $focus)
                         TonightCard(sheet: $sheet)
-                        UpcomingCard()
+                        UpcomingCard(sheet: $sheet)
+                        RecentMorningsCard()
                         if let error = model.lastError {
                             Label(error, systemImage: "exclamationmark.circle")
                                 .font(.footnote)
@@ -32,6 +36,7 @@ struct HomeView: View {
                     .animation(Motion.card, value: model.settings.isEnabled)
                 }
                 .refreshable { await model.refresh() }
+                .accessibilityIdentifier("home.scroll")
             }
             .navigationTitle(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
             .navigationBarTitleDisplayMode(.large)
@@ -40,6 +45,7 @@ struct HomeView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { sheet = .settings } label: { Image(systemName: "gearshape") }
                         .accessibilityLabel("Settings")
+                        .accessibilityIdentifier("home.settings")
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -49,20 +55,55 @@ struct HomeView: View {
                 case .days: DaysSheet()
                 case .sleep: SleepSheet()
                 case .settings: SettingsView()
+                case .trends: TrendsSheet()
+                case .customTime(let day): CustomTimeSheet(day: day)
                 }
             }
-            .task { await model.refresh() }
+            // No `.task { refresh }` here: the scene-phase handler in the App already
+            // refreshes on every activation, including launch.
+            .onOpenURL { url in
+                guard let link = AppGroup.DeepLink(url: url) else { return }
+                switch link {
+                case .home: sheet = nil
+                case .wakeTime: sheet = .wakeTime
+                case .days: sheet = .days
+                case .sleep: sheet = .sleep
+                }
+            }
         }
     }
 
     /// The location lives in the nav bar rather than in a card: it's context, not content,
     /// and it's still tappable for the one case that matters — you travelled.
     private var locationButton: some View {
-        Button { sheet = .settings } label: {
+        Menu {
+            Button {
+                Task { try? await model.useDeviceLocation() }
+            } label: {
+                Label("Use my location", systemImage: "location.fill")
+            }
+            if !model.settings.savedPlaces.isEmpty {
+                Section("Saved places") {
+                    ForEach(model.settings.savedPlaces, id: \.self) { place in
+                        Button {
+                            model.setLocation(place)
+                        } label: {
+                            if model.settings.location == place {
+                                Label(place.name, systemImage: "checkmark")
+                            } else {
+                                Text(place.name)
+                            }
+                        }
+                    }
+                }
+            }
+            Button { sheet = .settings } label: { Label("Search for a city…", systemImage: "magnifyingglass") }
+        } label: {
             HStack(spacing: 4) {
                 Image(systemName: model.settings.location?.followsDevice == true ? "location.fill" : "mappin")
                     .font(.caption2)
                 Text(model.settings.location?.name ?? "No location")
+                    .accessibilityIdentifier("home.locationName")
                     .lineLimit(1)
             }
             .font(.footnote)
@@ -101,20 +142,109 @@ struct HomeView: View {
 
 /// The one thing you open the app to see, plus the two settings that produce it. The
 /// chips underneath make "30 min before sunrise" a control, not a caption.
+/// Which day Home is looking at, and which way it got there (for the slide direction).
+struct DayFocus: Equatable {
+    /// `nil` = resting state (next alarm / today).
+    var day: DateKey? = nil
+    var direction: Direction = .forward
+    enum Direction { case forward, backward }
+
+    static let backLimit = 60
+    static let forwardLimit = 365
+
+    var isResting: Bool { day == nil }
+}
+
+/// Horizontal swipe → page a day. Lives on the cards, not the screen, so the ScrollView
+/// keeps vertical drags. The threshold and the "more horizontal than vertical" test keep a
+/// sloppy scroll from flipping days.
+struct DayPagingGesture: ViewModifier {
+    @Environment(AppModel.self) private var model
+    @Binding var focus: DayFocus
+
+    func body(content: Content) -> some View {
+        content.simultaneousGesture(
+            DragGesture(minimumDistance: 24, coordinateSpace: .local)
+                .onEnded { value in
+                    let dx = value.translation.width, dy = value.translation.height
+                    guard abs(dx) > 50, abs(dx) > abs(dy) * 1.5 else { return }
+                    focus.step(dx < 0 ? 1 : -1, model: model)
+                }
+        )
+    }
+}
+
+extension DayFocus {
+    /// The day being shown, resolved against the model's resting choice.
+    func resolved(_ model: AppModel) -> DateKey {
+        day ?? model.nextAlarm?.date ?? model.todayKey
+    }
+
+    mutating func step(_ delta: Int, model: AppModel) {
+        let calendar = model.settings.calendar
+        let today = model.todayKey
+        let target = resolved(model).adding(days: delta, in: calendar)
+        let back = today.adding(days: -Self.backLimit, in: calendar)
+        let forward = today.adding(days: Self.forwardLimit, in: calendar)
+        guard target >= back, target <= forward else { Haptics.notify(.warning); return }
+        direction = delta > 0 ? .forward : .backward
+        Haptics.selection()
+        // Landing back on the resting day returns to the resting state, so the countdown
+        // and "NEXT ALARM" come back rather than a frozen copy of the same day.
+        let resting = model.nextAlarm?.date ?? today
+        withAnimation(Motion.card) { day = target == resting ? nil : target }
+    }
+
+    mutating func reset() {
+        direction = .backward
+        withAnimation(Motion.card) { day = nil }
+    }
+}
+
 struct NextAlarmHero: View {
     @Environment(AppModel.self) private var model
     @Binding var sheet: HomeSheet?
+    @Binding var focus: DayFocus
+    @ScaledMetric(relativeTo: .largeTitle) private var displaySize: CGFloat = 68
+
+    private var focusedKey: DateKey { focus.resolved(model) }
+    private var focusedDay: PlannedDay? { model.plannedDay(for: focusedKey) }
+
+    private var eyebrow: String {
+        if focus.isResting { return model.settings.isEnabled ? "NEXT ALARM" : "ALARM OFF" }
+        return Formatters.dayLabel(focusedKey.startOfDay(in: model.settings.calendar), in: model.timeZone).uppercased()
+    }
+
+    private var slide: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: focus.direction == .forward ? .trailing : .leading).combined(with: .opacity),
+            removal: .move(edge: focus.direction == .forward ? .leading : .trailing).combined(with: .opacity)
+        )
+    }
 
     var body: some View {
         @Bindable var model = model
         Card(isHero: true) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(model.settings.isEnabled ? "NEXT ALARM" : "ALARM OFF")
+            HStack(alignment: .center, spacing: 6) {
+                pageButton(systemImage: "chevron.left", delta: -1)
+                Text(eyebrow)
+                    .accessibilityIdentifier("home.eyebrow")
                     .font(.eyebrow).tracking(1.2)
-                    .foregroundStyle(model.settings.isEnabled ? Theme.faint : Theme.horizon)
+                    .foregroundStyle(!focus.isResting ? Theme.sun : model.settings.isEnabled ? Theme.faint : Theme.horizon)
                     .contentTransition(.opacity)
+                    .lineLimit(1)
+                pageButton(systemImage: "chevron.right", delta: 1)
+                if !focus.isResting {
+                    Button("Today") { focus.reset() }
+                        .accessibilityIdentifier("home.today")
+                        .font(.caption.weight(.semibold))
+                        .buttonStyle(.bordered).buttonBorderShape(.capsule)
+                        .controlSize(.mini)
+                        .tint(Theme.sun)
+                }
                 Spacer()
                 Toggle("Sunrise alarm", isOn: $model.settings.isEnabled)
+                    .accessibilityIdentifier("home.alarmToggle")
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .tint(Theme.sunrise)
@@ -123,7 +253,21 @@ struct NextAlarmHero: View {
                     }
             }
 
-            timeBlock
+            if focus.isResting, let live = model.alarms.liveState {
+                LiveStateBanner(state: live)
+            }
+
+            ZStack(alignment: .leading) {
+                if focus.isResting {
+                    timeBlock.transition(slide)
+                } else if let day = focusedDay {
+                    FocusedDayBlock(day: day, displaySize: displaySize, sheet: $sheet)
+                        .id(day.date)
+                        .transition(slide)
+                }
+            }
+            .clipped()
+            .animation(Motion.card, value: focus)
 
             // Direct manipulation: the settings that define the alarm sit under it. Side by
             // side when they fit, stacked at accessibility text sizes — a truncated
@@ -141,21 +285,54 @@ struct NextAlarmHero: View {
             }
             .padding(.top, 2)
 
-            if let next = model.nextAlarm, next.wasClamped {
+            let shown = focus.isResting ? model.nextAlarm : focusedDay
+            if let shown, shown.isActive, shown.isOverridden {
+                Label("Custom time for this morning", systemImage: "pin.fill")
+                    .font(.caption).foregroundStyle(Theme.sun)
+            } else if let shown, shown.isActive, shown.wasClamped {
                 Label("Held inside your wake window (\(windowText))",
                       systemImage: "arrow.left.and.right.square")
                     .font(.caption).foregroundStyle(Theme.sun)
             }
+            if let weekend = model.settings.weekendProfile {
+                Text("Weekends: \(weekend.offsetDescription.lowercased())")
+                    .font(.caption).foregroundStyle(Theme.faint)
+            }
         }
+        .modifier(DayPagingGesture(focus: $focus))
+        .accessibilityAction(named: "Next day") { focus.step(1, model: model) }
+        .accessibilityAction(named: "Previous day") { focus.step(-1, model: model) }
+    }
+
+    private func pageButton(systemImage: String, delta: Int) -> some View {
+        Button { focus.step(delta, model: model) } label: {
+            Image(systemName: systemImage)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Theme.faint)
+                .frame(width: 28, height: 28)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(delta > 0 ? "Next day" : "Previous day")
+        .accessibilityIdentifier(delta > 0 ? "home.pageNext" : "home.pagePrev")
     }
 
     private var offsetChip: some View {
         ControlChip(compactOffset, systemImage: "sun.horizon.fill") { sheet = .wakeTime }
+            .accessibilityIdentifier("home.wakeTimeChip")
     }
 
     private var daysChip: some View {
-        ControlChip(WeekdaySummary.text(for: model.settings.activeWeekdays),
-                    systemImage: "calendar", tint: Theme.moon) { sheet = .days }
+        ControlChip(daysChipText, systemImage: model.settings.pausedUntil == nil ? "calendar" : "pause.circle",
+                    tint: Theme.moon) { sheet = .days }
+            .accessibilityIdentifier("home.daysChip")
+    }
+
+    private var daysChipText: String {
+        if let until = model.settings.pausedUntil {
+            return "Paused until \(Formatters.weekdayShort(until.startOfDay(in: model.settings.calendar), in: model.timeZone))"
+        }
+        return WeekdaySummary.text(for: model.settings.activeWeekdays)
     }
 
     @ViewBuilder
@@ -163,7 +340,8 @@ struct NextAlarmHero: View {
         if let next = model.nextAlarm, let time = next.alarmTime {
             VStack(alignment: .leading, spacing: 2) {
                 Text(Formatters.time(time, in: model.timeZone))
-                    .font(.displayTime)
+                    .accessibilityIdentifier("home.heroTime")
+                    .font(.displayTime(displaySize))
                     .foregroundStyle(.white)
                     .monospacedDigit()
                     .contentTransition(.numericText())
@@ -189,7 +367,7 @@ struct NextAlarmHero: View {
             // alarm *would* ring makes the switch a preview rather than a dead end.
             VStack(alignment: .leading, spacing: 2) {
                 Text(Formatters.time(wouldBe, in: model.timeZone))
-                    .font(.displayTime)
+                    .font(.displayTime(displaySize))
                     .foregroundStyle(Theme.faint)
                     .monospacedDigit()
                     .minimumScaleFactor(0.6)
@@ -236,6 +414,7 @@ struct NextAlarmHero: View {
     private var emptyHeadline: String {
         if !model.settings.isEnabled { return "Alarm off" }
         if !model.hasLocation { return "No location" }
+        if model.isFullyPaused { return "Paused" }
         if model.settings.activeWeekdays.isEmpty { return "No days on" }
         return "Nothing scheduled"
     }
@@ -243,6 +422,9 @@ struct NextAlarmHero: View {
     private var emptyDetail: String {
         if !model.settings.isEnabled { return "Flip the switch to wake with the sun again." }
         if !model.hasLocation { return "Choose where you wake up and the sunrise times follow." }
+        if model.isFullyPaused, let until = model.settings.pausedUntil {
+            return "Alarms resume on \(Formatters.dayLabel(until.startOfDay(in: model.settings.calendar), in: model.timeZone))."
+        }
         if model.settings.activeWeekdays.isEmpty { return "Pick at least one day below." }
         return "No active mornings in the next \(model.settings.horizonDays) days."
     }
@@ -252,6 +434,117 @@ struct NextAlarmHero: View {
         let calendar = s.calendar
         let key = DateKey(date: .now, calendar: calendar)
         return "\(Formatters.time(s.earliest.date(on: key, calendar: calendar), in: model.timeZone))–\(Formatters.time(s.latest.date(on: key, calendar: calendar), in: model.timeZone))"
+    }
+}
+
+/// The hero's centre when paged away from the next alarm: that day's alarm, or why there
+/// isn't one, plus its sunrise and sunset. Past days say what happened if we know.
+struct FocusedDayBlock: View {
+    @Environment(AppModel.self) private var model
+    let day: PlannedDay
+    let displaySize: CGFloat
+    @Binding var sheet: HomeSheet?
+
+    private var isPast: Bool { day.date < model.todayKey }
+    private var hasRung: Bool { (day.alarmTime ?? .distantFuture) <= .now }
+    private var record: WakeRecord? { model.alarms.history[day.date] }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let time = day.alarmTime {
+                Text(Formatters.time(time, in: model.timeZone))
+                    .font(.displayTime(displaySize))
+                    .foregroundStyle(hasRung ? Theme.faint : .white)
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+            } else {
+                Text(headline)
+                    .font(.system(size: 30, weight: .light, design: .rounded))
+                    .foregroundStyle(Theme.mist)
+                    .padding(.vertical, 6)
+            }
+            HStack(spacing: 6) {
+                Text(subline)
+                    .font(.footnote).foregroundStyle(Theme.faint)
+                    .lineLimit(2)
+                Spacer(minLength: 0)
+                if !isPast && !hasRung && (day.status == .active || day.status == .skipped) {
+                    Button {
+                        Haptics.impact(.light)
+                        model.toggleSkip(day)
+                    } label: {
+                        Label(day.status == .skipped ? "Restore" : "Skip", systemImage: day.status == .skipped ? "arrow.uturn.backward" : "forward.end")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+                    .tint(Theme.sun)
+                    Button {
+                        sheet = .customTime(day.date)
+                    } label: {
+                        Image(systemName: "pin").font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered).buttonBorderShape(.circle).controlSize(.small)
+                    .tint(Theme.moon)
+                    .accessibilityLabel("Set a custom time")
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var headline: String {
+        switch day.status {
+        case .disabled: "Alarm off"
+        case .weekdayOff: "Day off"
+        case .skipped: "Skipped"
+        case .paused: "Paused"
+        case .noSunEvent: "No sunrise"
+        case .active: "—"
+        }
+    }
+
+    private var subline: String {
+        var parts: [String] = []
+        if let record, let rang = record.rang {
+            parts.append("Rang \(Formatters.time(rang, in: model.timeZone))\(record.snoozes > 0 ? ", snoozed \(record.snoozes)×" : "")")
+        } else if hasRung {
+            parts.append("Rang")
+        }
+        if let s = day.solar.sunrise { parts.append("Sunrise \(Formatters.time(s, in: model.timeZone))") }
+        if let s = day.solar.sunset { parts.append("Sunset \(Formatters.time(s, in: model.timeZone))") }
+        return parts.joined(separator: " · ")
+    }
+}
+
+/// "Ringing" or "Snoozing" while iOS has one of our alarms in flight. The hero otherwise
+/// already points at the *next* morning, which reads as if nothing is happening.
+struct LiveStateBanner: View {
+    let state: AlarmScheduler.LiveState
+
+    private var text: String {
+        switch state {
+        case .ringing: "Ringing now"
+        case .snoozing: "Snoozing. Stop or snooze again from the Lock Screen."
+        case .paused: "Snooze paused"
+        }
+    }
+
+    private var icon: String {
+        switch state {
+        case .ringing: "bell.and.waves.left.and.right.fill"
+        case .snoozing: "zzz"
+        case .paused: "pause.circle"
+        }
+    }
+
+    var body: some View {
+        Label(text, systemImage: icon)
+            .font(.system(.footnote, design: .rounded).weight(.semibold))
+            .foregroundStyle(Theme.night)
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(Theme.sun, in: .capsule)
+            .symbolEffect(.pulse, isActive: state == .ringing)
     }
 }
 
@@ -285,24 +578,45 @@ struct TimeZoneNote: View {
 
 struct TodayLightCard: View {
     @Environment(AppModel.self) private var model
+    @Binding var sheet: HomeSheet?
+    @Binding var focus: DayFocus
+
+    /// Resting state shows today; paged, it follows the hero so the two cards agree.
+    private var key: DateKey { focus.isResting ? model.todayKey : focus.resolved(model) }
+
+    private var title: String {
+        key == model.todayKey ? "Today's light"
+            : "Light \(Formatters.dayLabel(key.startOfDay(in: model.settings.calendar), in: model.timeZone))"
+    }
+
+    private var alarmMarker: Date? {
+        key == model.todayKey ? model.alarmMarkerForToday : model.plannedDay(for: key)?.alarmTime
+    }
 
     var body: some View {
-        if let today = model.today {
-            let solar = today.solar
-            Card(title: "Today's light", systemImage: "sun.horizon") {
-                SunArcView(day: solar, alarmTime: model.alarmMarkerForToday, timeZone: model.timeZone)
+        if let shown = model.plannedDay(for: key) {
+            let solar = shown.solar
+            Card(title: title, systemImage: "sun.horizon") {
+                SunArcView(day: solar, alarmTime: alarmMarker, timeZone: model.timeZone)
+                    .id(key)
                 MetricGrid(items: [
-                    .init(title: "First light", value: solar.civilDawn.map { Formatters.time($0, in: model.timeZone) } ?? "—", systemImage: "sunrise"),
+                    .init(title: "Dawn", value: solar.civilDawn.map { Formatters.time($0, in: model.timeZone) } ?? "—", systemImage: "sunrise"),
                     .init(title: "Sunrise", value: solar.sunrise.map { Formatters.time($0, in: model.timeZone) } ?? "—", systemImage: "sun.max"),
                     .init(title: "Sunset", value: solar.sunset.map { Formatters.time($0, in: model.timeZone) } ?? "—", systemImage: "sunset"),
                     .init(title: "Daylight", value: solar.dayLength.map(Formatters.duration(seconds:)) ?? "—", systemImage: "hourglass")
                 ])
-                if let drift = model.daylightDrift {
+                if let drift = model.daylightDrift(for: key) {
                     Label(drift, systemImage: "chart.line.uptrend.xyaxis")
                         .font(.caption)
                         .foregroundStyle(Theme.faint)
                 }
+            } accessory: {
+                Button("Trends") { sheet = .trends }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.sunrise)
             }
+            .modifier(DayPagingGesture(focus: $focus))
+            .animation(Motion.card, value: key)
         }
     }
 }
@@ -325,6 +639,13 @@ struct TonightCard: View {
                     ],
                     caption: "\(Formatters.duration(minutes: model.settings.sleepGoalMinutes)) in bed"
                 )
+                if let slept = model.lastNightSleepMinutes {
+                    let goal = model.settings.sleepGoalMinutes
+                    let delta = slept - goal
+                    Label("Last night \(Formatters.duration(minutes: slept))\(abs(delta) >= 10 ? ", \(Formatters.duration(minutes: abs(delta))) \(delta < 0 ? "under" : "over") your goal" : ", on goal")",
+                          systemImage: "heart.text.square")
+                        .font(.caption).foregroundStyle(delta < -30 ? Theme.horizon : Theme.faint)
+                }
                 if !model.settings.remindersEnabled {
                     Text("Reminders are off — these times are a plan, not a nudge.")
                         .font(.caption).foregroundStyle(Theme.faint)
@@ -344,10 +665,41 @@ struct TonightCard: View {
     }
 }
 
+// MARK: - Recent mornings
+
+/// Appears once there is at least one completed morning. Quiet by design: a streak and two
+/// averages, not a dashboard.
+struct RecentMorningsCard: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let history = model.alarms.history
+        if !history.completed.isEmpty {
+            Card(title: "Recent mornings", systemImage: "sun.max") {
+                MetricGrid(items: [
+                    .init(title: "Up with the alarm", value: "\(history.cleanStreak) in a row", systemImage: "flame"),
+                    .init(title: "Snoozes", value: history.averageSnoozes.map { String(format: "%.1f avg", $0) } ?? "—", systemImage: "zzz"),
+                    .init(title: history.averageSleepMinutes != nil ? "Avg sleep" : "Time to stop",
+                          value: history.averageSleepMinutes.map { Formatters.duration(minutes: $0) }
+                              ?? history.averageLinger.map { Formatters.duration(seconds: $0) } ?? "—",
+                          systemImage: history.averageSleepMinutes != nil ? "moon.zzz" : "hourglass"),
+                    .init(title: "Mornings", value: "\(history.completed.count)", systemImage: "calendar")
+                ])
+                if let last = history.completed.first, let rang = last.rang {
+                    Text("Last: \(Formatters.dayLabel(last.date.startOfDay(in: model.settings.calendar), in: model.timeZone)), rang \(Formatters.time(rang, in: model.timeZone))\(last.snoozes > 0 ? ", snoozed \(last.snoozes)×" : "").")
+                        .accessibilityIdentifier("home.recentMornings.last")
+                        .font(.caption).foregroundStyle(Theme.faint)
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Upcoming
 
 struct UpcomingCard: View {
     @Environment(AppModel.self) private var model
+    @Binding var sheet: HomeSheet?
 
     private var days: [PlannedDay] { Array(model.upcoming.prefix(7)) }
 
@@ -355,7 +707,7 @@ struct UpcomingCard: View {
         Card(title: "Next 7 days", systemImage: "calendar") {
             VStack(spacing: 0) {
                 ForEach(days) { day in
-                    UpcomingRow(day: day)
+                    UpcomingRow(day: day, sheet: $sheet)
                     if day.id != days.last?.id {
                         Divider().overlay(Theme.cardStroke)
                     }
@@ -371,6 +723,7 @@ struct UpcomingCard: View {
 struct UpcomingRow: View {
     @Environment(AppModel.self) private var model
     let day: PlannedDay
+    @Binding var sheet: HomeSheet?
 
     private var isSkipped: Bool { day.status == .skipped }
     /// This morning's alarm is still in the list after it rings; skipping it is meaningless.
@@ -398,6 +751,26 @@ struct UpcomingRow: View {
         .opacity(day.isActive && !hasRung ? 1 : 0.55)
         .animation(Motion.quick, value: day.status)
         .accessibilityElement(children: .combine)
+        .accessibilityHint(hasRung || day.status == .disabled ? "" : "Touch and hold for a custom time")
+        .contextMenu {
+            if !hasRung && day.status != .disabled {
+                Button {
+                    sheet = .customTime(day.date)
+                } label: {
+                    Label(day.isOverridden ? "Change custom time…" : "Set a custom time…", systemImage: "pin")
+                }
+                if day.isOverridden {
+                    Button { model.clearOverride(day.date) } label: {
+                        Label("Back to sunrise rule", systemImage: "sun.horizon")
+                    }
+                }
+                if canSkip {
+                    Button { model.toggleSkip(day) } label: {
+                        Label(isSkipped ? "Restore" : "Skip this morning", systemImage: isSkipped ? "arrow.uturn.backward" : "forward.end")
+                    }
+                }
+            }
+        }
     }
 
     private var dayName: String {
@@ -425,7 +798,11 @@ struct UpcomingRow: View {
         switch day.status {
         case .active:
             HStack(spacing: 6) {
-                if day.wasClamped && !hasRung {
+                if day.isOverridden && !hasRung {
+                    Image(systemName: "pin.fill")
+                        .font(.caption).foregroundStyle(Theme.sun)
+                        .accessibilityLabel("Custom time")
+                } else if day.wasClamped && !hasRung {
                     Image(systemName: "arrow.left.and.right.square")
                         .font(.caption).foregroundStyle(Theme.sun)
                         .accessibilityLabel("Held inside wake window")
@@ -447,6 +824,8 @@ struct UpcomingRow: View {
             Text("Alarm off").font(.caption).foregroundStyle(Theme.faint)
         case .noSunEvent:
             Text("No sunrise").font(.caption).foregroundStyle(Theme.faint)
+        case .paused:
+            Text("Paused").font(.caption).foregroundStyle(Theme.faint)
         }
     }
 }

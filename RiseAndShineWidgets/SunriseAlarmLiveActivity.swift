@@ -13,7 +13,7 @@ struct SunriseAlarmLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label("Sunrise", systemImage: "sunrise.fill")
+                    Label(phase(context).label, systemImage: phase(context).icon)
                         .font(.caption).foregroundStyle(WidgetTheme.sun)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
@@ -36,20 +36,48 @@ struct SunriseAlarmLiveActivity: Widget {
     }
 }
 
+/// What the countdown means right now. AlarmKit uses the same countdown mode for the
+/// pre-alarm and for snooze; the metadata's alarm time tells them apart.
+struct ActivityPhase {
+    let label: String
+    let icon: String
+
+    init(state: AlarmPresentationState, metadata: SunriseAlarmMetadata?) {
+        switch state.mode {
+        case .countdown(let c):
+            if let alarmTime = metadata?.alarmTime, abs(c.fireDate.timeIntervalSince(alarmTime)) < 2 {
+                label = "Sunrise soon"; icon = "sunrise"
+            } else {
+                label = "Snoozing"; icon = "zzz"
+            }
+        case .paused:
+            label = "Paused"; icon = "pause.circle"
+        default:
+            label = "Sunrise"; icon = "sunrise.fill"
+        }
+    }
+}
+
+private func phase(_ context: ActivityViewContext<AlarmAttributes<SunriseAlarmMetadata>>) -> ActivityPhase {
+    ActivityPhase(state: context.state, metadata: context.attributes.metadata)
+}
+
 private struct LockScreenView: View {
     let attributes: AlarmAttributes<SunriseAlarmMetadata>
     let state: AlarmPresentationState
 
+    private var phase: ActivityPhase { ActivityPhase(state: state, metadata: attributes.metadata) }
+
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "sunrise.fill")
+            Image(systemName: phase.icon)
                 .font(.system(size: 34))
                 .foregroundStyle(WidgetTheme.sunGradient)
             VStack(alignment: .leading, spacing: 4) {
                 Text(attributes.presentation.alert.title)
                     .font(.headline)
                 if let meta = attributes.metadata {
-                    Text(meta.offsetDescription)
+                    Text(phase.label == "Sunrise" ? meta.offsetDescription : "\(phase.label) · \(meta.offsetDescription)")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }

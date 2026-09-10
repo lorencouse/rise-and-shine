@@ -6,5 +6,6 @@ struct RiseAndShineWidgets: WidgetBundle {
     var body: some Widget {
         NextAlarmWidget()
         SunriseAlarmLiveActivity()
+        SunriseAlarmControl()
     }
 }

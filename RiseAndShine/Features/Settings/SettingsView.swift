@@ -36,6 +36,17 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink { WakeHistoryView() } label: {
+                        row("Wake history", value: "\(model.alarms.history.completed.count) mornings", systemImage: "clock.arrow.circlepath")
+                    }
+                    .accessibilityIdentifier("settings.wakeHistoryLink")
+                } header: {
+                    Text("History")
+                } footer: {
+                    Text("Recorded on your phone from when the alarm rang, snoozed and stopped. Nothing is uploaded.")
+                }
+
+                Section {
                     NavigationLink { LocationSettingsView() } label: {
                         row("Location", value: model.settings.location?.name ?? "Not set", systemImage: "location.fill")
                     }
@@ -43,6 +54,46 @@ struct SettingsView: View {
                     Text("Place")
                 } footer: {
                     Text("Sunrise is computed from these coordinates. Following your device keeps the alarm right when you travel.")
+                }
+
+                Section {
+                    Toggle(isOn: Binding(
+                        get: { model.settings.calendarEventsEnabled },
+                        set: { on in
+                            model.settings.calendarEventsEnabled = on
+                            if on { Task { await model.calendar.requestAuthorization(); await model.refresh() } }
+                        }
+                    )) {
+                        Label("Sleep events in Calendar", systemImage: "calendar.badge.plus")
+                    }
+                    if model.settings.calendarEventsEnabled, model.calendar.authorization == .denied {
+                        Button("Calendar access is off. Open Settings") { openSystemSettings() }.font(.footnote)
+                    }
+                } header: {
+                    Text("Calendar")
+                } footer: {
+                    Text("One \"Sleep\" event per night, from bedtime to the alarm, in a \"Rise and Shine\" calendar you can hide or delete. Updated as sunrise moves.")
+                }
+
+                if model.health.authorization != .unavailable {
+                    Section {
+                        Toggle(isOn: Binding(
+                            get: { model.settings.healthSleepEnabled },
+                            set: { on in
+                                model.settings.healthSleepEnabled = on
+                                if on { Task { await model.health.requestAuthorization(); await model.refresh() } }
+                            }
+                        )) {
+                            Label("Sleep from Health", systemImage: "heart.text.square")
+                        }
+                        if model.settings.healthSleepEnabled, let slept = model.lastNightSleepMinutes {
+                            LabeledContent("Last night", value: Formatters.duration(minutes: slept))
+                        }
+                    } header: {
+                        Text("Health")
+                    } footer: {
+                        Text("Reads sleep recorded by your Apple Watch or another app, to compare with your sleep goal. Read only; nothing is written to Health. If Health shows no data, check the app is allowed under Health › Sharing › Apps.")
+                    }
                 }
 
                 Section("Permissions") {
@@ -65,6 +116,9 @@ struct SettingsView: View {
                             } else {
                                 testState = .scheduled
                                 Haptics.notify(.success)
+                                // Back to idle once the test has rung, so the row can be used again.
+                                try? await Task.sleep(for: .seconds(20))
+                                if testState == .scheduled { testState = .idle }
                             }
                         }
                     } label: {
@@ -76,6 +130,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    .accessibilityIdentifier("settings.testAlarm")
                     .disabled(testState == .scheduling)
                     if case .failed(let message) = testState {
                         Text(message).font(.footnote).foregroundStyle(Theme.horizon)
@@ -117,7 +172,9 @@ struct SettingsView: View {
 
     private var testLabel: String {
         switch testState {
-        case .idle, .failed: "Ring a test alarm in 10 seconds"
+        case .idle, .failed: model.settings.preAlarmMinutes > 0
+            ? "Test: countdown now, ring in \(model.settings.preAlarmMinutes) min"
+            : "Ring a test alarm in 10 seconds"
         case .scheduling: "Scheduling…"
         case .scheduled: "Test alarm set — lock your phone"
         }
@@ -162,6 +219,60 @@ extension Bundle {
         let v = infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let b = infoDictionary?["CFBundleVersion"] as? String ?? "?"
         return "\(v) (\(b))"
+    }
+}
+
+// MARK: - History
+
+struct WakeHistoryView: View {
+    @Environment(AppModel.self) private var model
+    @State private var confirmClear = false
+
+    var body: some View {
+        let history = model.alarms.history
+        Form {
+            if history.completed.isEmpty {
+                Section {
+                    Text("Nothing yet. Mornings appear here after the alarm rings and you stop it.")
+                        .accessibilityIdentifier("history.empty")
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Section {
+                    LabeledContent("Up with the alarm", value: "\(history.cleanStreak) in a row")
+                    if let s = history.averageSnoozes { LabeledContent("Average snoozes", value: String(format: "%.1f", s)) }
+                    if let l = history.averageLinger { LabeledContent("Ring to stop", value: Formatters.duration(seconds: l)) }
+                    if let s = history.averageSleepMinutes {
+                        LabeledContent("Average sleep", value: "\(Formatters.duration(minutes: s)) of \(Formatters.duration(minutes: model.settings.sleepGoalMinutes))")
+                    }
+                }
+                Section("Mornings") {
+                    ForEach(history.completed) { r in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(Formatters.dayLabel(r.date.startOfDay(in: model.settings.calendar), in: model.timeZone))
+                                .font(.subheadline.weight(.medium))
+                            HStack(spacing: 10) {
+                                if let rang = r.rang { Label(Formatters.time(rang, in: model.timeZone), systemImage: "bell") }
+                                if let stopped = r.stopped { Label(Formatters.time(stopped, in: model.timeZone), systemImage: "stop") }
+                                if r.snoozes > 0 { Label("\(r.snoozes)", systemImage: "zzz") }
+                                if let slept = r.sleepMinutes { Label(Formatters.duration(minutes: slept), systemImage: "moon.zzz") }
+                            }
+                            .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                Section {
+                    Button("Clear history", role: .destructive) { confirmClear = true }
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Theme.night)
+        .navigationTitle("Wake history")
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog("Clear wake history?", isPresented: $confirmClear, titleVisibility: .visible) {
+            Button("Clear", role: .destructive) { model.alarms.clearHistory() }
+        }
     }
 }
 

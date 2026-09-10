@@ -7,6 +7,10 @@ import RiseCore
 @Observable
 final class AppModel {
 
+    /// One instance for the process. The App owns it for the UI; App Intents, which run
+    /// in this process without a scene, reach the same object here.
+    static let shared = AppModel()
+
     // MARK: State
 
     var settings: AlarmSettings {
@@ -24,16 +28,36 @@ final class AppModel {
     let alarms = AlarmScheduler()
     let reminders = ReminderScheduler()
     let location = LocationService()
+    let calendar = CalendarSync()
+    let health = HealthService()
+
+    /// Minutes slept last night per Health, when enabled and available.
+    private(set) var lastNightSleepMinutes: Int?
 
     private let store = SharedStore.shared
+    private let cloud = CloudSettings()
     private var syncTask: Task<Void, Never>?
 
     // MARK: Init
 
     init(settings: AlarmSettings? = nil) {
-        self.settings = settings ?? SharedStore.shared.loadSettings() ?? AlarmSettings()
+        // Local file first; iCloud only fills in when this device has nothing of its own.
+        let local = settings ?? SharedStore.shared.loadSettings()
+        self.settings = local ?? cloud.remote()?.settings ?? AlarmSettings()
         recompute()
+        cloud.onRemoteChange = { [weak self] remote in
+            guard let self else { return }
+            // Keep this device's own location fix; take everything else from the other device.
+            var merged = remote
+            if let mine = self.settings.location, mine.followsDevice { merged.location = mine }
+            self.applyingRemote = true
+            self.settings = merged
+            self.applyingRemote = false
+        }
     }
+
+    /// True while a remote change is being applied, so it isn't pushed straight back.
+    private var applyingRemote = false
 
     // MARK: Derived
 
@@ -73,25 +97,50 @@ final class AppModel {
         upcoming.filter { $0.status == .skipped }
     }
 
+    /// Upcoming mornings pinned to a fixed time.
+    var overriddenUpcoming: [PlannedDay] {
+        upcoming.filter { $0.isOverridden && $0.status == .active }
+    }
+
+    /// True when every remaining day in the horizon is paused, so Home can say why.
+    var isFullyPaused: Bool {
+        guard let until = settings.pausedUntil else { return false }
+        return until > DateKey(date: .now, calendar: settings.calendar).adding(days: settings.horizonDays, in: settings.calendar)
+    }
+
     /// The alarm marker to draw on today's arc: only while it's still ahead of us.
     var alarmMarkerForToday: Date? {
         guard let today, let t = today.alarmTime, t > .now else { return nil }
         return t
     }
 
+    /// Today in the location's calendar.
+    var todayKey: DateKey { DateKey(date: .now, calendar: settings.calendar) }
+
+    /// The plan for any day, not just the scheduled horizon. Days inside the horizon come
+    /// from `plan` (so they carry the real status); others are computed on the spot, which
+    /// is what lets Home page back into last week or forward past the horizon.
+    func plannedDay(for key: DateKey) -> PlannedDay? {
+        if let cached = plan.first(where: { $0.date == key }) { return cached }
+        guard let loc = settings.location else { return nil }
+        let day = SolarCalculator.solarDay(for: key, latitude: loc.latitude, longitude: loc.longitude, timeZone: settings.timeZone)
+        return AlarmPlanner.plan(settings: settings, day: day, calendar: settings.calendar)
+    }
+
     /// "+2 min of daylight since yesterday" — the reason a sunrise alarm moves at all.
-    /// The plan deliberately starts a day early, so yesterday is available here.
-    var daylightDrift: String? {
+    var daylightDrift: String? { daylightDrift(for: todayKey) }
+
+    /// Same, relative to the day before `key`.
+    func daylightDrift(for key: DateKey) -> String? {
         let calendar = settings.calendar
-        let key = DateKey(date: .now, calendar: calendar)
-        guard let today = plan.first(where: { $0.date == key })?.solar.dayLength,
-              let yesterdayKey = calendar.date(byAdding: .day, value: -1, to: .now),
-              let yesterday = plan.first(where: { $0.date == DateKey(date: yesterdayKey, calendar: calendar) })?.solar.dayLength
+        guard let day = plannedDay(for: key)?.solar.dayLength,
+              let previous = plannedDay(for: key.adding(days: -1, in: calendar))?.solar.dayLength
         else { return nil }
-        let deltaMinutes = Int(((today - yesterday) / 60).rounded())
-        guard deltaMinutes != 0 else { return "Same daylight as yesterday" }
+        let deltaMinutes = Int(((day - previous) / 60).rounded())
+        let than = key == todayKey ? "than yesterday" : "than the day before"
+        guard deltaMinutes != 0 else { return "Same daylight \(than)" }
         let word = deltaMinutes > 0 ? "more" : "less"
-        return "\(abs(deltaMinutes)) min \(word) daylight than yesterday"
+        return "\(abs(deltaMinutes)) min \(word) daylight \(than)"
     }
 
     /// A preview of what the alarm would be for a given day under hypothetical settings.
@@ -114,10 +163,21 @@ final class AppModel {
 
         if settings.location?.followsDevice ?? false {
             if let fresh = try? await location.currentLocation() {
-                if fresh != settings.location { settings.location = fresh }
+                let old = settings.location
+                if old?.isMeaningfullyDifferent(from: fresh) ?? true {
+                    settings.location = fresh
+                    // Crossing into a new zone is the one move worth telling the user about:
+                    // it's when the alarm silently jumps by an hour or more.
+                    if let old, old.timeZoneIdentifier != nil, old.timeZoneIdentifier != fresh.timeZoneIdentifier {
+                        await reminders.postTravelNotice(from: old, to: fresh,
+                                                         nextAlarm: nextAlarm?.alarmTime, zone: settings.timeZone)
+                    }
+                }
             }
         }
         await backfillTimeZone()
+        pruneSkippedDays()
+        await refreshSleep()
         recompute()
         await syncNow()
         BackgroundRefresh.scheduleNext()
@@ -131,8 +191,30 @@ final class AppModel {
         }
     }
 
+    /// Skip the next active morning and push the change to the system straight away.
+    /// Used by Siri and the widget, which don't stick around for the debounce.
+    func skipNext() async {
+        guard let next = nextAlarm else { return }
+        settings.skippedDays.insert(next.date)
+        await flushSync()
+    }
+
+    func setOverride(_ day: DateKey, time: ClockTime) {
+        settings.dayOverrides[day] = time
+        settings.skippedDays.remove(day)   // a time set by hand means "do ring"
+    }
+
+    func clearOverride(_ day: DateKey) {
+        settings.dayOverrides.removeValue(forKey: day)
+    }
+
     func setLocation(_ location: SavedLocation) {
         settings.location = location
+        if !location.followsDevice { settings.remember(location) }
+    }
+
+    func forgetPlace(_ place: SavedLocation) {
+        settings.savedPlaces.removeAll { $0 == place }
     }
 
     func useDeviceLocation() async throws {
@@ -147,7 +229,9 @@ final class AppModel {
 
     func resetEverything() async {
         alarms.cancelAll()
+        alarms.clearHistory()
         await reminders.cancelAll()
+        calendar.removeAll()
         store.delete(AppGroup.planFile)
         store.delete(AppGroup.alarmRegistryFile)
         settings = AlarmSettings()
@@ -179,6 +263,51 @@ final class AppModel {
         settings.location?.timeZoneIdentifier = identifier
     }
 
+    /// Pull last night's sleep and fill in any completed wake records that lack one. Health
+    /// is only asked for nights that already ended, so the numbers never change under the
+    /// user during the day.
+    func refreshSleep() async {
+        guard settings.healthSleepEnabled else { lastNightSleepMinutes = nil; return }
+        health.refreshAuthorization()
+        guard health.authorization == .authorized else { lastNightSleepMinutes = nil; return }
+
+        // Last night: ended at this morning's alarm if it has rung, else at "now" if it's
+        // past a plausible wake time; otherwise the previous morning.
+        let calendar = settings.calendar
+        let today = todayKey
+        let wakeEnd: Date
+        if let t = plannedDay(for: today)?.alarmTime, t <= .now {
+            wakeEnd = t
+        } else if calendar.component(.hour, from: .now) >= 10 {
+            wakeEnd = .now
+        } else {
+            wakeEnd = plannedDay(for: today.adding(days: -1, in: calendar))?.alarmTime
+                ?? calendar.date(bySettingHour: 8, minute: 0, second: 0, of: today.adding(days: -1, in: calendar).startOfDay(in: calendar))
+                ?? .now
+        }
+        lastNightSleepMinutes = await health.sleepForNight(endingAt: wakeEnd)
+
+        for record in alarms.history.completed where record.sleepMinutes == nil {
+            guard let stopped = record.stopped else { continue }
+            if let minutes = await health.sleepForNight(endingAt: record.rang ?? stopped) {
+                alarms.setSleep(minutes, for: record.date)
+            }
+        }
+    }
+
+    /// Skips are one-off, so once the morning has passed they are just clutter in the
+    /// settings file. Drop everything before today in the location's calendar.
+    private func pruneSkippedDays() {
+        let today = DateKey(date: .now, calendar: settings.calendar)
+        let stale = settings.skippedDays.filter { $0 < today }
+        let staleOverrides = settings.dayOverrides.keys.filter { $0 < today }
+        let pauseOver = settings.pausedUntil.map { $0 <= today } ?? false
+        guard !stale.isEmpty || !staleOverrides.isEmpty || pauseOver else { return }
+        settings.skippedDays.subtract(stale)
+        for key in staleOverrides { settings.dayOverrides.removeValue(forKey: key) }
+        if pauseOver { settings.pausedUntil = nil }
+    }
+
     private func recompute() {
         guard let loc = settings.location else {
             plan = []
@@ -201,6 +330,16 @@ final class AppModel {
 
     private func persistSettings() {
         do { try store.save(settings, to: AppGroup.settingsFile) } catch { lastError = error.localizedDescription }
+        if !applyingRemote { cloud.push(settings) }
+        WatchBridge.shared.push(settings: settings, history: alarms.history)
+    }
+
+    /// Runs the pending sync now instead of after the debounce. For callers that end
+    /// before the debounce would fire: an intent's `perform`, the background task.
+    func flushSync() async {
+        syncTask?.cancel()
+        syncTask = nil
+        await syncNow()
     }
 
     /// Debounced system sync so rapid picker changes don't hammer AlarmKit.
@@ -217,7 +356,8 @@ final class AppModel {
         guard settings.onboardingCompleted else { return }
         await alarms.sync(plan: plan, settings: settings)
         await reminders.sync(plan: plan, settings: settings)
-        lastError = alarms.lastSyncError
+        calendar.sync(plan: plan, settings: settings)
+        lastError = alarms.lastSyncError ?? calendar.lastError
         WidgetRefresher.reload()
     }
 }

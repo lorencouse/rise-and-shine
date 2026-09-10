@@ -18,6 +18,9 @@ public struct PlannedDay: Sendable, Codable, Equatable, Identifiable {
     /// True when the clamp moved the alarm away from the pure sun-relative time.
     public let wasClamped: Bool
 
+    /// True when the user pinned this morning to a fixed clock time.
+    public let isOverridden: Bool
+
     /// The evening before: when to be asleep to meet the sleep goal.
     public let bedtime: Date?
     /// The evening before: when to start winding down.
@@ -29,6 +32,7 @@ public struct PlannedDay: Sendable, Codable, Equatable, Identifiable {
         case weekdayOff        // not an active weekday
         case skipped           // one-off skip
         case noSunEvent        // polar day/night and clamp disabled
+        case paused            // inside a "pause until" span
     }
 
     public var isActive: Bool { status == .active && alarmTime != nil }
@@ -51,12 +55,18 @@ public enum AlarmPlanner {
         calendar: Calendar = .current
     ) -> PlannedDay {
         let (rawTime, clamped) = alarmInstant(settings: settings, day: day, calendar: calendar)
+        let overridden = settings.dayOverrides[day.date] != nil
 
         let status: PlannedDay.Status
         if !settings.isEnabled {
             status = .disabled
         } else if settings.skippedDays.contains(day.date) {
             status = .skipped
+        } else if overridden {
+            // A time the user set by hand for this very morning beats the weekly pattern.
+            status = .active
+        } else if settings.isPaused(day.date) {
+            status = .paused
         } else if !settings.activeWeekdays.contains(day.date.weekday(in: calendar)) {
             status = .weekdayOff
         } else if rawTime == nil {
@@ -76,26 +86,40 @@ public enum AlarmPlanner {
             status: status,
             alarmTime: status == .active ? rawTime : nil,
             wasClamped: clamped,
+            isOverridden: overridden,
             bedtime: bedtime,
             windDownTime: windDown
         )
     }
 
-    /// The sun-relative alarm time with the clamp applied. Independent of enable state.
+    /// The alarm time for a day with the clamp applied: a fixed override if the user set
+    /// one, otherwise the day's profile. Independent of enable state.
     public static func alarmInstant(
         settings: AlarmSettings,
         day: SolarDay,
         calendar: Calendar = .current
     ) -> (time: Date?, clamped: Bool) {
-        let anchorTime = day.time(for: settings.anchor)
-        let sunRelative = anchorTime?.addingTimeInterval(Double(settings.offsetMinutes) * 60)
+        if let fixed = settings.dayOverrides[day.date] {
+            return (fixed.date(on: day.date, calendar: calendar), false)
+        }
+        return alarmInstant(profile: settings.profile(for: day.date, calendar: calendar), day: day, calendar: calendar)
+    }
 
-        guard settings.clampEnabled else {
+    /// The sun-relative time a single rule produces on a day.
+    public static func alarmInstant(
+        profile: WakeProfile,
+        day: SolarDay,
+        calendar: Calendar = .current
+    ) -> (time: Date?, clamped: Bool) {
+        let anchorTime = day.time(for: profile.anchor)
+        let sunRelative = anchorTime?.addingTimeInterval(Double(profile.offsetMinutes) * 60)
+
+        guard profile.clampEnabled else {
             return (sunRelative, false)
         }
 
-        let earliest = settings.earliest.date(on: day.date, calendar: calendar)
-        let latest = settings.latest.date(on: day.date, calendar: calendar)
+        let earliest = profile.earliest.date(on: day.date, calendar: calendar)
+        let latest = profile.latest.date(on: day.date, calendar: calendar)
 
         guard let sunRelative else {
             // No sun event (polar regions): fall back to the latest allowed time so the
