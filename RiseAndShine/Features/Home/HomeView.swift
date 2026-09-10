@@ -68,6 +68,9 @@ struct HomeView: View {
                 case .wakeTime: sheet = .wakeTime
                 case .days: sheet = .days
                 case .sleep: sheet = .sleep
+                case .skipNext:
+                    sheet = .days
+                    Task { await model.skipNext() }
                 }
             }
         }

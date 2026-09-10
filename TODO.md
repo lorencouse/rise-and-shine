@@ -19,7 +19,15 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       is what `scheduleDate(for:)` assumes: alarms neither ring early nor lose the alert.
       Still unconfirmed: that the countdown Live Activity is visible on the Lock Screen and
       in the Dynamic Island while it runs.
-- [ ] Widget Skip button and Control Center toggle actually cancel/reschedule the AlarmKit alarm (they must run in-app; if not, the `LiveActivityIntent` assumption is wrong).
+- [x] Control Center toggle actually cancels/reschedules the AlarmKit alarm. *Verified
+      2026-09-10: turns all alarms on and off.*
+- [ ] Widget Skip: retest after the deep-link change. *The `LiveActivityIntent` assumption
+      was wrong for widget buttons — `Button(intent:)` ran the **extension's** copy of the
+      intent, where `#if !WIDGET_EXTENSION` compiles the AlarmKit call out, so the button did
+      nothing at all. Replaced with a `Link` to `riseandshine://skipNext`, which the app
+      handles on open. Costs a visible app launch. `SkipNextAlarmWidgetIntent` is now unused
+      but left in place. Note the Skip button only exists in `.systemMedium` (the wide
+      widget); `.systemLarge` is not a supported family.*
 - [ ] Polar-night scheduling: an alarm exists on a day with no sunrise when the clamp is on.
 - [ ] `alarmUpdates` observer: registry self-prunes after an alarm is stopped; Home shows the ringing/snoozing pill.
 - [x] Wake history: after a real alarm rings and is stopped, a row appears in Settings ›

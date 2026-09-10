@@ -19,6 +19,11 @@ nonisolated enum AppGroup {
     /// Destinations the widget (and, later, Shortcuts) can open the app at.
     enum DeepLink: String, CaseIterable {
         case home, wakeTime, days, sleep
+        /// Skips the next alarm on open. The widget's Skip button uses this rather than
+        /// firing an intent: the intent source is compiled into both the app and the
+        /// widget extension, and the extension runs its own copy, where the AlarmKit
+        /// path is compiled out. Opening the app is the cost of actually cancelling.
+        case skipNext
 
         var url: URL { URL(string: "\(AppGroup.deepLinkScheme)://\(rawValue)")! }
 

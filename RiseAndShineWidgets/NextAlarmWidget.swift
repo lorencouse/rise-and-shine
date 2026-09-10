@@ -126,12 +126,15 @@ struct NextAlarmView: View {
                     Text(alarmText).font(.system(size: 40, weight: .light, design: .rounded)).monospacedDigit()
                     Label(entry.locationName, systemImage: "location").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     if entry.alarm != nil {
-                        Button(intent: SkipNextAlarmWidgetIntent()) {
+                        // A Link, not Button(intent:): the intent would run in this
+                        // extension's process, where the AlarmKit call is compiled out,
+                        // so the button did nothing. Opening the app performs the skip.
+                        Link(destination: AppGroup.DeepLink.skipNext.url) {
                             Label("Skip", systemImage: "forward.end")
                                 .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .background(WidgetTheme.sun.opacity(0.25), in: .capsule)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(WidgetTheme.sun)
                         .padding(.top, 2)
                     }
                 }
