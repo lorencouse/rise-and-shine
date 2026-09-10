@@ -12,11 +12,13 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
 
 ### Device checks (no simulator AlarmKit; phone is paired)
 
-- [~] **Pre-alarm countdown timing.** Half verified 2026-09-10 by
-      `PreAlarmCountdownTests`: with 10 min set, AlarmKit did **not** alert at the schedule
-      time (silent through 40 s past it), so `scheduleDate(for:)` is not making alarms ring
-      early. Still unverified: that the alert actually *lands* when the countdown ends, and
-      that the Live Activity shows. Needs one real 10-minute wait with eyes on the phone.
+- [x] **Pre-alarm countdown timing.** Verified 2026-09-10 by `PreAlarmCountdownTests` plus
+      one real wait. With 10 min set, the test alarm scheduled at +10 s stayed silent through
+      the schedule time (the test asserts this) and alerted ~10 min later, at 09:15 for a
+      09:05 tap. So AlarmKit runs the `preAlert` countdown and alerts at the end of it, which
+      is what `scheduleDate(for:)` assumes: alarms neither ring early nor lose the alert.
+      Still unconfirmed: that the countdown Live Activity is visible on the Lock Screen and
+      in the Dynamic Island while it runs.
 - [ ] Widget Skip button and Control Center toggle actually cancel/reschedule the AlarmKit alarm (they must run in-app; if not, the `LiveActivityIntent` assumption is wrong).
 - [ ] Polar-night scheduling: an alarm exists on a day with no sunrise when the clamp is on.
 - [ ] `alarmUpdates` observer: registry self-prunes after an alarm is stopped; Home shows the ringing/snoozing pill.
