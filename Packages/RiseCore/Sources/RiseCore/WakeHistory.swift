@@ -172,3 +172,59 @@ extension WakeHistory {
         return out
     }
 }
+
+// MARK: - Mornings no transition was seen for
+
+/// When one day's alarm was set to go off, kept beside the alarm id so the morning can
+/// still be recorded after AlarmKit has dropped the alarm and its schedule with it.
+public struct ScheduledMorning: Sendable, Codable, Equatable {
+    /// The instant handed to AlarmKit: earlier than `alertsAt` by any pre-alarm countdown.
+    public var scheduled: Date
+    /// When the alarm alerts.
+    public var alertsAt: Date
+
+    public init(scheduled: Date, alertsAt: Date) {
+        self.scheduled = scheduled
+        self.alertsAt = alertsAt
+    }
+}
+
+extension WakeHistory {
+    /// Days whose alarm should have gone off by `now`, is no longer scheduled, and left no
+    /// record, oldest first.
+    ///
+    /// `record(from:to:…)` only sees transitions, and only while the app runs. Stop the
+    /// alarm and open the app after AlarmKit has dropped it, and the alarm is in neither
+    /// snapshot: without this the morning is lost. Days older than the retention window
+    /// are left out, since `prune` would drop them again straight away.
+    ///
+    /// - Parameters:
+    ///   - mornings: what was scheduled, per day.
+    ///   - live: days whose alarm the system still holds. Those are still observable.
+    public func unrecordedMornings(_ mornings: [DateKey: ScheduledMorning], live: Set<DateKey>,
+                                   now: Date, calendar: Calendar = .current) -> [DateKey] {
+        let cutoff = DateKey(date: now.addingTimeInterval(-Double(Self.retentionDays) * 86_400), calendar: calendar)
+        return mornings
+            .filter { day, morning in
+                morning.alertsAt <= now && !live.contains(day) && day >= cutoff && self[day] == nil
+            }
+            .keys
+            .sorted()
+    }
+
+    /// Records every morning `unrecordedMornings` finds, as rung on schedule with the stop
+    /// unknown. Returns whether anything changed.
+    ///
+    /// AlarmKit alerts exactly on schedule, so `rang` is as good as an observed one. When it
+    /// was stopped, and how often it was snoozed, cannot be known, so `stopped` stays `nil`
+    /// and the morning does not count toward the streak or the averages.
+    public mutating func recordUnobserved(_ mornings: [DateKey: ScheduledMorning], live: Set<DateKey>,
+                                          now: Date, calendar: Calendar = .current) -> Bool {
+        let missed = unrecordedMornings(mornings, live: live, now: now, calendar: calendar)
+        for day in missed {
+            guard let morning = mornings[day] else { continue }
+            self[day] = WakeRecord(date: day, scheduled: morning.scheduled, rang: morning.alertsAt)
+        }
+        return !missed.isEmpty
+    }
+}

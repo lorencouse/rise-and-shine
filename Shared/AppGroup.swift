@@ -9,6 +9,7 @@ nonisolated enum AppGroup {
     static let settingsFile = "settings.json"
     static let planFile = "plan.json"
     static let alarmRegistryFile = "alarm-registry.json"
+    static let scheduledMorningsFile = "scheduled-mornings.json"
     static let testAlarmFile = "test-alarm.json"
     static let wakeHistoryFile = "wake-history.json"
     static let calendarRegistryFile = "calendar-registry.json"

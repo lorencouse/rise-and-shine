@@ -133,6 +133,77 @@ struct WakeRecordTransitionTests {
     }
 }
 
+/// The morning lost when the app was not opened while the alarm still existed: stopped,
+/// then dropped by AlarmKit before any snapshot saw it go.
+@Suite("Mornings no transition was seen for")
+struct UnobservedMorningTests {
+    private let utc: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC")!
+        return c
+    }()
+    private let day = DateKey(year: 2026, month: 9, day: 10)
+    /// 06:49 UTC on 2026-09-10, with a five-minute pre-alarm countdown before it.
+    private var alertsAt: Date { day.startOfDay(in: utc).addingTimeInterval(6 * 3_600 + 49 * 60) }
+    private var morning: ScheduledMorning { ScheduledMorning(scheduled: alertsAt.addingTimeInterval(-300), alertsAt: alertsAt) }
+    private var later: Date { alertsAt.addingTimeInterval(5_820) }
+
+    @Test("A past morning whose alarm is gone gets a record that rang on schedule")
+    func recordsTheLostMorning() {
+        var h = WakeHistory()
+        #expect(h.unrecordedMornings([day: morning], live: [], now: later, calendar: utc) == [day])
+        let changed = h.recordUnobserved([day: morning], live: [], now: later, calendar: utc)
+        #expect(changed)
+        let r = try! #require(h[day])
+        #expect(r.scheduled == morning.scheduled)
+        #expect(r.rang == alertsAt)
+        #expect(r.stopped == nil)
+        #expect(r.snoozes == 0)
+        // The stop is unknown, so it must not pass for a clean wake.
+        #expect(h.completed.isEmpty)
+        #expect(h.cleanStreak == 0)
+    }
+
+    @Test("An alarm still held by the system is left to the transitions")
+    func liveAlarmIsSkipped() {
+        let h = WakeHistory()
+        #expect(h.unrecordedMornings([day: morning], live: [day], now: later, calendar: utc).isEmpty)
+    }
+
+    @Test("A morning that has not rung yet is not a missed one")
+    func futureMorningIsSkipped() {
+        let h = WakeHistory()
+        let before = alertsAt.addingTimeInterval(-60)
+        #expect(h.unrecordedMornings([day: morning], live: [], now: before, calendar: utc).isEmpty)
+        #expect(h.unrecordedMornings([day: morning], live: [], now: alertsAt, calendar: utc) == [day])
+    }
+
+    @Test("A morning already recorded keeps what the transitions saw")
+    func existingRecordWins() {
+        var h = WakeHistory()
+        _ = h.record(from: .alerting, to: .absent, day: day,
+                     scheduled: morning.scheduled, rangAt: alertsAt, now: alertsAt.addingTimeInterval(120))
+        let seen = h[day]
+        let changed = h.recordUnobserved([day: morning], live: [], now: later, calendar: utc)
+        #expect(!changed)
+        #expect(h[day] == seen)
+    }
+
+    @Test("Several missed mornings come back oldest first, inside the retention window")
+    func severalDaysAndRetention() {
+        let h = WakeHistory()
+        func morning(on key: DateKey) -> ScheduledMorning {
+            let t = key.startOfDay(in: utc).addingTimeInterval(6 * 3_600)
+            return ScheduledMorning(scheduled: t, alertsAt: t)
+        }
+        let recent = (1...3).map { day.adding(days: -$0, in: utc) }
+        let ancient = day.adding(days: -(WakeHistory.retentionDays + 5), in: utc)
+        var mornings = Dictionary(uniqueKeysWithValues: recent.map { ($0, morning(on: $0)) })
+        mornings[ancient] = morning(on: ancient)
+        #expect(h.unrecordedMornings(mornings, live: [], now: later, calendar: utc) == recent.reversed())
+    }
+}
+
 /// Merging the copies two devices keep. The point of the sync is that history survives
 /// a new phone, which means a union, not a last-write-wins overwrite.
 struct WakeHistoryMergeTests {
