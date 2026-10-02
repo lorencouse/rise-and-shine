@@ -30,6 +30,8 @@ final class AlarmScheduler {
         }
     }
 
+    /// Ids handed to `manager.schedule` but not yet recorded in `registry`/`testAlarmID`.
+    /// The orphan sweep treats them as tracked so an overlapping sync can't cancel them.
     @ObservationIgnored private var inFlightIDs: Set<UUID> = []
 
     private let manager = AlarmManager.shared
@@ -221,7 +223,7 @@ final class AlarmScheduler {
     }
 
     /// Reconciles system alarms with `plan`. Safe to call often; it only touches alarms
-    /// whose time changed.
+    /// whose time changed, plus orphans no registry entry tracks.
     func sync(plan: [PlannedDay], settings: AlarmSettings) async {
         refreshAuthorization()
         guard authorization == .authorized else { return }
@@ -302,7 +304,7 @@ final class AlarmScheduler {
         }
     }
 
-    /// Cancels every alarm in `ids` that is neither in `registry` nor the test alarm.
+    /// Cancels every alarm in `ids` that is not in `registry`, the test alarm, or `inFlightIDs`.
     /// `AlarmManager` only reports this app's alarms, so anything untracked is ours and lost.
     private func cancelOrphans(in ids: some Sequence<UUID>, keeping registry: [String: UUID]) -> [String] {
         let tracked = Set(registry.values).union([testAlarmID].compactMap { $0 }).union(inFlightIDs)
