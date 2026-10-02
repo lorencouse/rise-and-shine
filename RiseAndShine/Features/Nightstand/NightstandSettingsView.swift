@@ -57,11 +57,12 @@ struct NightstandSettingsView: View {
     }
 
     private func brightnessSlider(value: Binding<Double>, title: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let percent = value.wrappedValue.formatted(.percent.precision(.fractionLength(0)))
+        return VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(title)
                 Spacer()
-                Text(value.wrappedValue.formatted(.percent.precision(.fractionLength(0))))
+                Text(percent)
                     .foregroundStyle(.secondary)
             }
             .font(.footnote)
@@ -74,6 +75,7 @@ struct NightstandSettingsView: View {
             } maximumValueLabel: {
                 Image(systemName: "sun.max").font(.caption2).accessibilityHidden(true)
             }
+            .accessibilityValue(Text(percent))
         }
     }
 }
