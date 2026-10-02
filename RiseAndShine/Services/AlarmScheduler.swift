@@ -326,8 +326,13 @@ final class AlarmScheduler {
         let configuration = makeConfiguration(fireDate: fire, metadata: metadata, title: "Test alarm", settings: settings)
         cancelTest()
         let id = UUID()
-        _ = try await manager.schedule(id: id, configuration: configuration)
         testAlarmID = id
+        do {
+            _ = try await manager.schedule(id: id, configuration: configuration)
+        } catch {
+            if testAlarmID == id { testAlarmID = nil }
+            throw error
+        }
     }
 
     // MARK: - Configuration
