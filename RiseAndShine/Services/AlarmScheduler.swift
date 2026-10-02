@@ -43,6 +43,14 @@ final class AlarmScheduler {
         set { try? store.save(newValue, to: AppGroup.alarmRegistryFile) }
     }
 
+    /// Day key → when that day's alarm was set for. AlarmKit drops a stopped alarm and its
+    /// schedule with it, so this is what lets a morning no transition was seen for still
+    /// be recorded. Holds only days the registry holds.
+    private var mornings: [String: ScheduledMorning] {
+        get { store.load([String: ScheduledMorning].self, from: AppGroup.scheduledMorningsFile) ?? [:] }
+        set { try? store.save(newValue, to: AppGroup.scheduledMorningsFile) }
+    }
+
     /// Alarms iOS still knows about, refreshed from `alarmUpdates`. `nil` until the first
     /// update arrives.
     private(set) var liveAlarms: [UUID: Alarm]?
@@ -79,12 +87,18 @@ final class AlarmScheduler {
         liveAlarms = Dictionary(alarms.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         record(previous: previous, current: liveAlarms ?? [:])
         var registry = registry
-        let before = registry.count
+        var mornings = mornings
+        let before = (registry, mornings)
+        remember(liveAlarms ?? [:], registry: registry, in: &mornings)
+        // Before the registry forgets them: these are the alarms that went without a trace.
+        recordUnobserved(mornings, registry: registry, live: liveAlarms ?? [:])
         registry = registry.filter { liveAlarms?[$0.value] != nil }
-        if registry.count != before {
+        mornings = mornings.filter { registry[$0.key] != nil }
+        if registry != before.0 {
             self.registry = registry
             scheduledCount = registry.count
         }
+        if mornings != before.1 { self.mornings = mornings }
         if let id = testAlarmID, liveAlarms?[id] == nil {
             testAlarmID = nil
         }
@@ -145,6 +159,34 @@ final class AlarmScheduler {
             history.prune(before: cutoff)
             persist(history)
         }
+    }
+
+    /// Fills in when each tracked alarm is set for, from the alarms themselves. `sync` notes
+    /// it on scheduling; this covers alarms scheduled before that was kept.
+    private func remember(_ alarms: [UUID: Alarm], registry: [String: UUID], in mornings: inout [String: ScheduledMorning]) {
+        for (key, id) in registry where mornings[key] == nil {
+            guard let alarm = alarms[id], case .fixed(let d)? = alarm.schedule else { continue }
+            mornings[key] = ScheduledMorning(scheduled: d, alertsAt: d.addingTimeInterval(alarm.countdownDuration?.preAlert ?? 0))
+        }
+    }
+
+    /// Records the mornings `record` cannot: the alarm rang and was stopped, then AlarmKit
+    /// dropped it before any snapshot saw it go, because the app was not running. It rang
+    /// on schedule; when it was stopped is unknown.
+    private func recordUnobserved(_ mornings: [String: ScheduledMorning], registry: [String: UUID], live: [UUID: Alarm]) {
+        var tracked: [DateKey: ScheduledMorning] = [:]
+        var liveDays: Set<DateKey> = []
+        for (key, id) in registry {
+            guard let day = DateKey(string: key), let morning = mornings[key] else { continue }
+            tracked[day] = morning
+            if live[id] != nil { liveDays.insert(day) }
+        }
+        let now = Date()
+        var history = history
+        guard history.recordUnobserved(tracked, live: liveDays, now: now) else { return }
+        let cutoff = DateKey(date: now.addingTimeInterval(-Double(WakeHistory.retentionDays) * 86_400))
+        history.prune(before: cutoff)
+        persist(history)
     }
 
     /// Replace history with a copy merged elsewhere (iCloud). Not `record`'s job: this
@@ -229,6 +271,7 @@ final class AlarmScheduler {
         guard authorization == .authorized else { return }
 
         var registry = registry
+        var mornings = mornings
         var errors: [String] = []
         var scheduled: Set<UUID> = []
         defer { inFlightIDs.subtract(scheduled) }
@@ -242,6 +285,9 @@ final class AlarmScheduler {
             return
         }
 
+        remember(existing, registry: registry, in: &mornings)
+        recordUnobserved(mornings, registry: registry, live: existing)
+
         let now = Date()
         let wanted = plan.filter { $0.isActive && ($0.alarmTime ?? .distantPast) > now }
         let wantedKeys = Set(wanted.map { $0.date.description })
@@ -252,6 +298,7 @@ final class AlarmScheduler {
                 do { try manager.cancel(id: id) } catch { errors.append("cancel \(key): \(error.localizedDescription)") }
             }
             registry.removeValue(forKey: key)
+            mornings.removeValue(forKey: key)
         }
 
         // 1b. Cancel orphans: alarms the system holds that no registry entry points at. They
@@ -283,12 +330,14 @@ final class AlarmScheduler {
                 let configuration = makeConfiguration(fireDate: fireDate, day: day, settings: settings)
                 _ = try await manager.schedule(id: id, configuration: configuration)
                 registry[key] = id
+                mornings[key] = ScheduledMorning(scheduled: scheduleDate(for: fireDate, settings: settings), alertsAt: fireDate)
             } catch {
                 errors.append("schedule \(key): \(error.localizedDescription)")
             }
         }
 
         self.registry = registry
+        self.mornings = mornings.filter { registry[$0.key] != nil }
         scheduledCount = registry.count
         lastSyncError = errors.isEmpty ? nil : errors.joined(separator: "\n")
     }
@@ -297,6 +346,7 @@ final class AlarmScheduler {
     func cancelAll() {
         for (_, id) in registry { try? manager.cancel(id: id) }
         registry = [:]
+        mornings = [:]
         scheduledCount = 0
         cancelTest()
         if let alarms = try? manager.alarms {

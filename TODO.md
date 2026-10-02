@@ -106,12 +106,17 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       confirm end to end; the record already on the phone keeps its bad 08:26 stamp unless
       history is cleared.*
 
-- [ ] **A morning is missed entirely if the app is not opened while the alarm still exists.**
+- [x] **A morning is missed entirely if the app is not opened while the alarm still exists.**
       Records are only created from a state *transition*, so if you stop the alarm and do not
       open the app until AlarmKit has dropped the alarm, it appears in neither snapshot and no
-      record is written. Would need reconciling the registry against past dates at launch
-      rather than relying on transitions. Found while fixing the `rang` bug; not reproduced
-      yet.
+      record is written. Found while fixing the `rang` bug; not reproduced yet. *Fixed:
+      `AlarmScheduler` now keeps each day's schedule beside the registry
+      (`scheduled-mornings.json`), and before the registry forgets a gone alarm it records
+      every past morning with no record as rung on schedule, stop unknown
+      (`WakeHistory.recordUnobserved`, tested in `UnobservedMorningTests`). With no stop
+      those mornings stay out of the streak and averages. Alarms scheduled before this
+      change are covered once a snapshot has seen them. Needs one real morning to confirm:
+      stop the alarm, open the app an hour later.*
 
 - [x] **The wake-record logic has no test.** *Extracted into `WakeHistory.record(from:to:…)`
       in RiseCore behind an `AlarmPhase` enum that mirrors `Alarm.State`; `AlarmScheduler`
