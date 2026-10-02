@@ -30,7 +30,7 @@ final class AlarmScheduler {
         }
     }
 
-    @ObservationIgnored private var pendingTestID: UUID?
+    @ObservationIgnored private var inFlightIDs: Set<UUID> = []
 
     private let manager = AlarmManager.shared
     private let store = SharedStore.shared
@@ -228,6 +228,8 @@ final class AlarmScheduler {
 
         var registry = registry
         var errors: [String] = []
+        var scheduled: Set<UUID> = []
+        defer { inFlightIDs.subtract(scheduled) }
 
         // What the system currently has, keyed by id.
         let existing: [UUID: Alarm]
@@ -273,6 +275,8 @@ final class AlarmScheduler {
             }
 
             let id = UUID()
+            scheduled.insert(id)
+            inFlightIDs.insert(id)
             do {
                 let configuration = makeConfiguration(fireDate: fireDate, day: day, settings: settings)
                 _ = try await manager.schedule(id: id, configuration: configuration)
@@ -301,7 +305,7 @@ final class AlarmScheduler {
     /// Cancels every alarm in `ids` that is neither in `registry` nor the test alarm.
     /// `AlarmManager` only reports this app's alarms, so anything untracked is ours and lost.
     private func cancelOrphans(in ids: some Sequence<UUID>, keeping registry: [String: UUID]) -> [String] {
-        let tracked = Set(registry.values).union([testAlarmID, pendingTestID].compactMap { $0 })
+        let tracked = Set(registry.values).union([testAlarmID].compactMap { $0 }).union(inFlightIDs)
         var errors: [String] = []
         for id in ids where !tracked.contains(id) {
             do { try manager.cancel(id: id) } catch { errors.append("cancel orphan \(id): \(error.localizedDescription)") }
@@ -328,8 +332,8 @@ final class AlarmScheduler {
         let configuration = makeConfiguration(fireDate: fire, metadata: metadata, title: "Test alarm", settings: settings)
         cancelTest()
         let id = UUID()
-        pendingTestID = id
-        defer { if pendingTestID == id { pendingTestID = nil } }
+        inFlightIDs.insert(id)
+        defer { inFlightIDs.remove(id) }
         _ = try await manager.schedule(id: id, configuration: configuration)
         testAlarmID = id
     }
