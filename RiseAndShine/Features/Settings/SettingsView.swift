@@ -211,13 +211,16 @@ struct SettingsView: View {
             Spacer()
             switch state {
             case .granted: Label("Allowed", systemImage: "checkmark.circle.fill").foregroundStyle(.green).labelStyle(.iconOnly)
+                .accessibilityHidden(true)
             case .denied: Button("Open Settings") { openSystemSettings() }.font(.footnote)
             case .unknown: Button("Allow", action: request).font(.footnote)
             }
         }
         // One element ("Alarms, Allow, button"), not a bare "Allow" with the permission's
-        // name a swipe away.
+        // name a swipe away. Combining drops the child button's title from the label, so
+        // the state/action goes in the value.
         .accessibilityElement(children: .combine)
+        .accessibilityValue(state == .granted ? "Allowed" : state == .denied ? "Open Settings" : "Allow")
     }
 
     private func displayName(_ file: String) -> String {
