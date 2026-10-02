@@ -21,6 +21,7 @@ struct TrendsSheet: View {
             Card(isHero: true) {
                 if points.isEmpty {
                     ProgressView().frame(maxWidth: .infinity).frame(height: 260)
+                        .accessibilityLabel("Loading trends")
                 } else {
                     TrendChart(range: range, points: points, window: window, timeZone: model.timeZone)
                     legend
@@ -51,6 +52,8 @@ struct TrendsSheet: View {
             if window != nil { key(color: Theme.moon, text: "Wake window") }
         }
         .font(.caption2).foregroundStyle(Theme.faint)
+        // A colour key means nothing read aloud; the chart's own label names the series.
+        .accessibilityHidden(true)
     }
 
     private func key(color: Color, text: String) -> some View {

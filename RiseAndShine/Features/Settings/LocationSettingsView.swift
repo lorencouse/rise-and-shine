@@ -46,9 +46,11 @@ struct LocationSettingsView: View {
                                 Spacer()
                                 if model.settings.location == place {
                                     Image(systemName: "checkmark").foregroundStyle(Theme.sunrise)
+                                        .accessibilityHidden(true)
                                 }
                             }
                         }
+                        .accessibilityAddTraits(model.settings.location == place ? .isSelected : [])
                     }
                     .onDelete { offsets in
                         for i in offsets { model.forgetPlace(model.settings.savedPlaces[i]) }
@@ -84,6 +86,7 @@ struct LocationSettingsView: View {
                             Text(Formatters.coordinate(place.latitude, place.longitude)).font(.caption).foregroundStyle(.secondary)
                         }
                     }
+                    .accessibilityHint("Sets this as your location")
                 }
             }
         }

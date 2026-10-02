@@ -162,9 +162,14 @@ What a feature-complete, professional release still lacks. Ordered by impact.
       `onHistoryChanged`/`onHistoryCleared` and the mirror runs on every history write.*
 - [ ] **Export of history.** CSV/JSON share sheet, for taking the record somewhere the
       app is not.
-- [ ] **Accessibility pass.** Only ~12 `accessibilityLabel`s exist, all on Home and
-      Components; onboarding, Settings and the sheets are unaudited, and no view honours
-      `reduceMotion` (sun arc, day paging). An alarm app is used with eyes shut.
+- [x] **Accessibility pass.** Settings, its sub-screens, the quick-edit sheets and
+      onboarding now read as sentences: decorative icons are hidden, selected rows carry
+      the selected trait, row buttons name their day, card titles are headings. Reduce
+      Motion goes through `.motion(_:value:)` and `Motion.respectingReduceMotion`, which
+      swap springs for a short ease-in-out without bounce, so size and position changes
+      still animate briefly; inserted or removed views fade, so day paging crossfades
+      instead of sliding, the sun arc fades between days, and onboarding pages change
+      without the slide. Still worth a VoiceOver walk-through on the phone.
 - [ ] **What's New sheet** on a version bump. Onboarding exists; nothing greets an update.
 - [ ] **Review prompt.** No StoreKit at all. `requestReview` after ~5 successfully stopped
       alarms, never during onboarding.
