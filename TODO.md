@@ -175,8 +175,8 @@ What a feature-complete, professional release still lacks. Ordered by impact.
       submission: tip jar vs. Pro, where the Watch app, light control and insights are the
       natural paywall line.
 - [ ] **App Store surface.** Support URL, privacy policy page, screenshots, App Preview.
-- [ ] **CI.** No `.github/`. A workflow running `swift test` on RiseCore and
-      `xcodebuild test` on the app would catch by machine what has been caught by hand.
+- [ ] **CI.** `.github/workflows/ci.yml` runs `swift test` on RiseCore and an unsigned
+      iOS Simulator build of the app. Still missing: `xcodebuild test` on the app targets.
 
 ## Notes
 
