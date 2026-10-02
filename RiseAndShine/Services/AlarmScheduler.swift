@@ -45,6 +45,11 @@ final class AlarmScheduler {
 
     /// What happened on past mornings, derived from alarm state transitions.
     private(set) var history: WakeHistory = SharedStore.shared.load(WakeHistory.self, from: AppGroup.wakeHistoryFile) ?? WakeHistory()
+
+    /// Fired whenever history changes here, so it can be mirrored outward — to iCloud
+    /// and to the watch. History used to reach the watch only when a *setting* changed,
+    /// which meant a morning could sit unmirrored for days.
+    var onHistoryChanged: ((WakeHistory) -> Void)?
     private var updatesTask: Task<Void, Never>?
 
     init() {
@@ -134,23 +139,42 @@ final class AlarmScheduler {
         if changed {
             let cutoff = DateKey(date: now.addingTimeInterval(-Double(WakeHistory.retentionDays) * 86_400))
             history.prune(before: cutoff)
-            self.history = history
-            try? store.save(history, to: AppGroup.wakeHistoryFile)
+            persist(history)
         }
+    }
+
+    /// Replace history with a copy merged elsewhere (iCloud). Not `record`'s job: this
+    /// is adoption of an outside truth, not an observation of this device's alarms.
+    func adopt(_ merged: WakeHistory) {
+        guard merged != history else { return }
+        history = merged
+        try? store.save(merged, to: AppGroup.wakeHistoryFile)
+    }
+
+    private func persist(_ new: WakeHistory) {
+        history = new
+        try? store.save(new, to: AppGroup.wakeHistoryFile)
+        onHistoryChanged?(new)
     }
 
     /// Attach a Health sleep figure to a completed record.
     func setSleep(_ minutes: Int, for day: DateKey) {
         guard var record = history[day], record.sleepMinutes != minutes else { return }
         record.sleepMinutes = minutes
-        history[day] = record
-        try? store.save(history, to: AppGroup.wakeHistoryFile)
+        var updated = history
+        updated[day] = record
+        persist(updated)
     }
 
     func clearHistory() {
         history = WakeHistory()
         store.delete(AppGroup.wakeHistoryFile)
+        onHistoryCleared?()
     }
+
+    /// Separate from `onHistoryChanged` because a clear must propagate as a clear: a
+    /// pushed empty history would just be merged away by the next device to sync.
+    var onHistoryCleared: (() -> Void)?
 
     enum LiveState: Equatable { case ringing, snoozing, paused }
 

@@ -136,3 +136,39 @@ extension WakeHistory {
         }
     }
 }
+
+// MARK: - Merging copies from two devices
+
+extension WakeRecord {
+    /// Combine two observations of the same morning, field by field.
+    ///
+    /// Not last-write-wins: the two copies are usually *both* partial. The phone that was
+    /// on the nightstand saw the ring and the stop; a second device may have seen only
+    /// the schedule, and Health may have filled the sleep figure in on either. Taking the
+    /// whole newer blob would throw away whichever half it lacked.
+    public func merged(with other: WakeRecord) -> WakeRecord {
+        precondition(date == other.date, "Only records for the same morning can merge.")
+        var out = self
+        // The earliest observation of an event is the truthful one: a later stamp means
+        // the other device noticed late, not that the alarm rang twice.
+        out.scheduled = min(scheduled, other.scheduled)
+        out.rang = [rang, other.rang].compactMap { $0 }.min()
+        out.stopped = [stopped, other.stopped].compactMap { $0 }.min()
+        // Snoozes are counted, not observed at an instant, so the device that saw more
+        // of the morning has the better number.
+        out.snoozes = max(snoozes, other.snoozes)
+        out.sleepMinutes = sleepMinutes ?? other.sleepMinutes
+        return out
+    }
+}
+
+extension WakeHistory {
+    /// The union of two histories, merging any morning both of them hold.
+    public func merged(with other: WakeHistory) -> WakeHistory {
+        var out = self
+        for record in other.records {
+            out[record.date] = out[record.date].map { $0.merged(with: record) } ?? record
+        }
+        return out
+    }
+}

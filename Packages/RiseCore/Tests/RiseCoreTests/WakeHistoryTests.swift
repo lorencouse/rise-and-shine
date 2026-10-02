@@ -132,3 +132,75 @@ struct WakeRecordTransitionTests {
         #expect(h[day] == nil)
     }
 }
+
+/// Merging the copies two devices keep. The point of the sync is that history survives
+/// a new phone, which means a union, not a last-write-wins overwrite.
+struct WakeHistoryMergeTests {
+    private let day = DateKey(year: 2026, month: 9, day: 12)
+    private let base = Date(timeIntervalSince1970: 1_788_030_000)
+
+    private func record(scheduled: Double = 0, rang: Double? = nil, stopped: Double? = nil,
+                        snoozes: Int = 0, sleep: Int? = nil) -> WakeRecord {
+        WakeRecord(date: day,
+                   scheduled: base.addingTimeInterval(scheduled),
+                   rang: rang.map { base.addingTimeInterval($0) },
+                   stopped: stopped.map { base.addingTimeInterval($0) },
+                   snoozes: snoozes,
+                   sleepMinutes: sleep)
+    }
+
+    @Test func mergeFillsInWhatEachCopyIsMissing() {
+        let mine = record(rang: 0, snoozes: 1)
+        let theirs = record(stopped: 300, sleep: 430)
+        let merged = mine.merged(with: theirs)
+        #expect(merged.rang == base)
+        #expect(merged.stopped == base.addingTimeInterval(300))
+        #expect(merged.snoozes == 1)
+        #expect(merged.sleepMinutes == 430)
+    }
+
+    /// A device that only noticed at its next launch stamps the event late; the earlier
+    /// stamp is the one that actually happened.
+    @Test func mergeKeepsTheEarliestObservation() {
+        let early = record(rang: 0, stopped: 120)
+        let late = record(rang: 5_000, stopped: 6_000)
+        #expect(early.merged(with: late).rang == base)
+        #expect(late.merged(with: early).stopped == base.addingTimeInterval(120))
+    }
+
+    @Test func mergeTakesTheHigherSnoozeCount() {
+        #expect(record(snoozes: 1).merged(with: record(snoozes: 3)).snoozes == 3)
+        #expect(record(snoozes: 3).merged(with: record(snoozes: 1)).snoozes == 3)
+    }
+
+    /// The case the whole feature exists for: a fresh phone with nothing takes the lot.
+    @Test func historyMergeIsAUnionAcrossDays() {
+        var mine = WakeHistory()
+        mine[DateKey(year: 2026, month: 9, day: 1)] = WakeRecord(date: DateKey(year: 2026, month: 9, day: 1), scheduled: base)
+        var theirs = WakeHistory()
+        theirs[DateKey(year: 2026, month: 9, day: 2)] = WakeRecord(date: DateKey(year: 2026, month: 9, day: 2), scheduled: base)
+
+        let merged = mine.merged(with: theirs)
+        #expect(merged.records.map(\.date.day) == [1, 2])
+        #expect(WakeHistory().merged(with: theirs).records.count == 1)
+    }
+
+    @Test func historyMergeCombinesTheSameMorningRatherThanReplacingIt() {
+        var mine = WakeHistory()
+        mine[day] = record(rang: 0)
+        var theirs = WakeHistory()
+        theirs[day] = record(stopped: 300, sleep: 400)
+
+        let merged = mine.merged(with: theirs)
+        #expect(merged.records.count == 1)
+        #expect(merged[day]?.rang == base)
+        #expect(merged[day]?.stopped == base.addingTimeInterval(300))
+        #expect(merged[day]?.sleepMinutes == 400)
+    }
+
+    @Test func mergeIsOrderIndependent() {
+        let a = record(rang: 0, snoozes: 2)
+        let b = record(stopped: 600, sleep: 415)
+        #expect(a.merged(with: b) == b.merged(with: a))
+    }
+}

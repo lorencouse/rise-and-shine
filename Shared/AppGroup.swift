@@ -4,7 +4,7 @@ import Foundation
 /// Change `bundleIdentifier` in one place: project.yml.
 nonisolated enum AppGroup {
     /// The App Group container both targets can read. Must match the entitlements.
-    static let identifier = "group.com.lomaco.riseandshine"
+    static let identifier = "group.com.lomaco.riseandshine.shared"
 
     static let settingsFile = "settings.json"
     static let planFile = "plan.json"

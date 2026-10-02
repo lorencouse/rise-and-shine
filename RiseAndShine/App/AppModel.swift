@@ -36,6 +36,7 @@ final class AppModel {
 
     private let store = SharedStore.shared
     private let cloud = CloudSettings()
+    private var cloudHistory: CloudHistory?
     private var syncTask: Task<Void, Never>?
 
     // MARK: Init
@@ -45,6 +46,24 @@ final class AppModel {
         let local = settings ?? SharedStore.shared.loadSettings()
         self.settings = local ?? cloud.remote()?.settings ?? AlarmSettings()
         recompute()
+        // History syncs on its own key with its own rule: merged per morning, because
+        // two devices usually hold different halves of the same one.
+        let history = CloudHistory(local: { [weak self] in self?.alarms.history ?? WakeHistory() })
+        cloudHistory = history
+        history.onRemoteChange = { [weak self] merged in
+            self?.alarms.adopt(merged)
+            self?.mirrorHistory(merged)
+        }
+        alarms.onHistoryChanged = { [weak self] new in
+            history.push(new)
+            self?.mirrorHistory(new)
+        }
+        alarms.onHistoryCleared = { [weak self] in
+            history.pushCleared()
+            self?.mirrorHistory(WakeHistory())
+        }
+        history.reconcile()
+
         cloud.onRemoteChange = { [weak self] remote in
             guard let self else { return }
             // Keep this device's own location fix; take everything else from the other device.
@@ -114,6 +133,20 @@ final class AppModel {
         return t
     }
 
+    /// The stretch where a phone on the nightstand is a clock, not a phone: from an hour
+    /// before you would need to be asleep, through to the end of the sunrise glow.
+    /// Nightstand mode offers itself only inside it, so plugging in at lunchtime does
+    /// nothing. Reckoned backwards from the next alarm rather than from tonight's
+    /// bedtime, because after midnight tonight's bedtime has already passed and
+    /// `tonight` has rolled on to the next evening.
+    var isNightWindow: Bool {
+        guard let alarm = nextAlarm?.alarmTime else { return false }
+        let now = Date.now
+        let opens = alarm.addingTimeInterval(-Double(settings.sleepGoalMinutes + 60) * 60)
+        let closes = alarm.addingTimeInterval(Double(SunriseGlow.holdMinutes) * 60)
+        return now >= opens && now <= closes
+    }
+
     /// Today in the location's calendar.
     var todayKey: DateKey { DateKey(date: .now, calendar: settings.calendar) }
 
@@ -176,6 +209,7 @@ final class AppModel {
             }
         }
         await backfillTimeZone()
+        cloudHistory?.reconcile()
         pruneSkippedDays()
         await refreshSleep()
         recompute()
@@ -332,6 +366,13 @@ final class AppModel {
         do { try store.save(settings, to: AppGroup.settingsFile) } catch { lastError = error.localizedDescription }
         if !applyingRemote { cloud.push(settings) }
         WatchBridge.shared.push(settings: settings, history: alarms.history)
+    }
+
+    /// A history change has to reach the watch and the widgets too. Previously only a
+    /// *settings* save pushed history, so a morning could sit unmirrored for days.
+    private func mirrorHistory(_ history: WakeHistory) {
+        WatchBridge.shared.push(settings: settings, history: history)
+        WidgetRefresher.reload()
     }
 
     /// Runs the pending sync now instead of after the debounce. For callers that end

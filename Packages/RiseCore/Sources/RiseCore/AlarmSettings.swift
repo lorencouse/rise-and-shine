@@ -158,6 +158,19 @@ public struct AlarmSettings: Sendable, Codable, Equatable {
     /// Places the user has picked before, most recent first, for one-tap switching.
     public var savedPlaces: [SavedLocation] = []
 
+    /// Minutes of gradual screen sunrise before the alarm, shown in nightstand mode.
+    /// 0 turns it off. Independent of `preAlarmMinutes`, which is the Live Activity.
+    public var sunriseGlowMinutes: Int = 0
+
+    /// How bright the glow gets at the alarm, 0...1.
+    public var sunriseGlowMaxBrightness: Double = 0.85
+
+    /// Enter nightstand mode by itself when the phone is charging with the app open.
+    public var nightstandAutoEnabled: Bool = true
+
+    /// Screen brightness held by nightstand mode outside the glow ramp.
+    public var nightstandBrightness: Double = 0.12
+
     /// Mirror each planned night (bedtime → alarm) into the user's calendar.
     public var calendarEventsEnabled: Bool = false
 
@@ -216,6 +229,10 @@ public struct AlarmSettings: Sendable, Codable, Equatable {
         snoozeMinutes = value(.snoozeMinutes, d.snoozeMinutes)
         preAlarmMinutes = value(.preAlarmMinutes, d.preAlarmMinutes)
         savedPlaces = value(.savedPlaces, d.savedPlaces)
+        sunriseGlowMinutes = value(.sunriseGlowMinutes, d.sunriseGlowMinutes)
+        sunriseGlowMaxBrightness = value(.sunriseGlowMaxBrightness, d.sunriseGlowMaxBrightness)
+        nightstandAutoEnabled = value(.nightstandAutoEnabled, d.nightstandAutoEnabled)
+        nightstandBrightness = value(.nightstandBrightness, d.nightstandBrightness)
         calendarEventsEnabled = value(.calendarEventsEnabled, d.calendarEventsEnabled)
         healthSleepEnabled = value(.healthSleepEnabled, d.healthSleepEnabled)
         sleepGoalMinutes = value(.sleepGoalMinutes, d.sleepGoalMinutes)

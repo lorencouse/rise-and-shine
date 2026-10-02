@@ -4,8 +4,13 @@ import RiseCore
 @main
 struct RiseAndShineApp: App {
     private let model = AppModel.shared
+    /// Only there to answer UIKit's rotation question; see `OrientationLock`.
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
-    init() { WatchBridge.shared.activate() }
+    init() {
+        WatchBridge.shared.activate()
+        ScreenController.shared.startMonitoringCharge()
+    }
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {

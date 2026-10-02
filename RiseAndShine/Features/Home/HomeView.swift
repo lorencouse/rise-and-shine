@@ -10,6 +10,10 @@ struct HomeView: View {
     /// The day the hero and light card are showing. `nil` is the resting state: the next
     /// alarm and today's light. Swiping either card pages through days.
     @State private var focus = DayFocus()
+    @State private var showNightstand = false
+    /// Auto-entry offers itself once per plugging-in, not every time the view redraws.
+    @State private var offeredNightstand = false
+    private let screen = ScreenController.shared
 
     var body: some View {
         NavigationStack {
@@ -43,12 +47,20 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { locationButton }
                 ToolbarItem(placement: .topBarTrailing) {
+                    Button { showNightstand = true } label: { Image(systemName: "moon.stars") }
+                        .accessibilityLabel("Nightstand mode")
+                        .accessibilityIdentifier("home.nightstand")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button { sheet = .settings } label: { Image(systemName: "gearshape") }
                         .accessibilityLabel("Settings")
                         .accessibilityIdentifier("home.settings")
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
+            .fullScreenCover(isPresented: $showNightstand) {
+                NightstandView().environment(model)
+            }
             .sheet(item: $sheet) { which in
                 switch which {
                 case .wakeTime: WakeTimeSheet()
@@ -58,6 +70,16 @@ struct HomeView: View {
                 case .trends: TrendsSheet()
                 case .customTime(let day): CustomTimeSheet(day: day)
                 }
+            }
+            // Plugging in at night is the gesture that means "this is now a clock".
+            // Only then, and only once per connection, so it never hijacks the app.
+            .onChange(of: screen.isCharging) { _, charging in
+                guard charging else { offeredNightstand = false; return }
+                guard !offeredNightstand,
+                      model.settings.nightstandAutoEnabled,
+                      model.isNightWindow, sheet == nil else { return }
+                offeredNightstand = true
+                showNightstand = true
             }
             // No `.task { refresh }` here: the scene-phase handler in the App already
             // refreshes on every activation, including launch.

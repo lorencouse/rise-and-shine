@@ -19,8 +19,8 @@ settings:
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     SWIFT_STRICT_CONCURRENCY: complete
     CODE_SIGN_STYLE: Automatic
-    # Set your Apple Developer team id here (or select it once in Xcode › Signing).
-    DEVELOPMENT_TEAM: "QQB33452MG"
+    # Kouzr, Inc., the team that owns the shipped App Store app.
+    DEVELOPMENT_TEAM: "4J28Z4QS4C"
     # Must stay above the last shipped App Store version (3.74); the SwiftUI rewrite was
     # called 2.0 internally, but App Store Connect rejects a version that goes backwards.
     MARKETING_VERSION: "4.0.0"
@@ -65,7 +65,9 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.lifestyle
-        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Portrait everywhere except nightstand mode, which is landscape on a dock.
+        # `OrientationLock` narrows this back to portrait for every other screen.
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UILaunchScreen:
           UIColorName: LaunchBackground
@@ -83,16 +85,13 @@ targets:
     entitlements:
       path: RiseAndShine/RiseAndShine.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.lomaco.riseandshine]
+        com.apple.security.application-groups: [group.com.lomaco.riseandshine.shared]
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
-        # iCloud key-value store: settings follow the user to a new phone. Restore for
-        # release alongside time-sensitive below; personal teams cannot sign it, and without
-        # it CloudSettings simply never syncs.
-        # com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
-        # Restore for release. Apple does not issue this capability to free/personal
-        # teams, so signing fails on one; without it reminders cannot break a Focus.
-        # com.apple.developer.usernotifications.time-sensitive: true
+        # iCloud key-value store: settings follow the user to a new phone.
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        # Lets wind-down and bedtime reminders break through a Focus.
+        com.apple.developer.usernotifications.time-sensitive: true
 
   RiseAndShineWidgets:
     type: app-extension
@@ -121,7 +120,7 @@ targets:
     entitlements:
       path: RiseAndShineWidgets/RiseAndShineWidgets.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.lomaco.riseandshine]
+        com.apple.security.application-groups: [group.com.lomaco.riseandshine.shared]
 
   # Apple Watch companion app. Computes its own plan with RiseCore from settings the phone
   # mirrors over WatchConnectivity, so it works on the wrist without the phone nearby.
@@ -160,7 +159,7 @@ targets:
     entitlements:
       path: Watch/App/RiseAndShineWatch.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.lomaco.riseandshine]
+        com.apple.security.application-groups: [group.com.lomaco.riseandshine.shared]
 
   RiseAndShineWatchWidgets:
     type: app-extension
@@ -189,7 +188,7 @@ targets:
     entitlements:
       path: Watch/Widgets/RiseAndShineWatchWidgets.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.lomaco.riseandshine]
+        com.apple.security.application-groups: [group.com.lomaco.riseandshine.shared]
 
   RiseAndShineTests:
     type: bundle.unit-test

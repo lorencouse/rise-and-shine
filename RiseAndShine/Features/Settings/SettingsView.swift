@@ -29,6 +29,12 @@ struct SettingsView: View {
                     NavigationLink { SoundPickerView() } label: {
                         row("Alarm sound", value: displayName(model.settings.soundFile), systemImage: "speaker.wave.2.fill")
                     }
+                    NavigationLink { NightstandSettingsView() } label: {
+                        row("Nightstand", value: model.settings.sunriseGlowMinutes > 0
+                            ? "Light \(Formatters.duration(minutes: model.settings.sunriseGlowMinutes)) before"
+                            : "Clock only", systemImage: "moon.stars.fill")
+                    }
+                    .accessibilityIdentifier("settings.nightstandLink")
                 } header: {
                     Text("Alarm")
                 } footer: {
@@ -43,7 +49,7 @@ struct SettingsView: View {
                 } header: {
                     Text("History")
                 } footer: {
-                    Text("Recorded on your phone from when the alarm rang, snoozed and stopped. Nothing is uploaded.")
+                    Text("Recorded on your phone from when the alarm rang, snoozed and stopped, and kept in your own iCloud so a new phone starts with it. Nothing is uploaded to us.")
                 }
 
                 Section {

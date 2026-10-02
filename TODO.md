@@ -17,8 +17,8 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
 
 ### Release-time entitlements (personal team cannot sign these; restore on the paid team)
 
-- [ ] `com.apple.developer.usernotifications.time-sensitive` — without it wind-down/bedtime reminders are silently downgraded from time-sensitive. Uncomment in `project.yml`.
-- [ ] `com.apple.developer.ubiquity-kvstore-identifier` — without it `CloudSettings` never syncs. Uncomment in `project.yml`, enable iCloud KVS on the App ID.
+- [x] `com.apple.developer.usernotifications.time-sensitive` — without it wind-down/bedtime reminders are silently downgraded from time-sensitive. Uncomment in `project.yml`.
+- [x] `com.apple.developer.ubiquity-kvstore-identifier` — without it `CloudSettings` never syncs. Uncomment in `project.yml`, enable iCloud KVS on the App ID.
 
 ### Device checks (no simulator AlarmKit; phone is paired)
 
@@ -54,6 +54,29 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
       needed.*
 - [x] Dark/tinted icon variants render acceptably on the Home Screen. *Verified 2026-09-10.*
 - [x] Health: toggle prompts for Sleep read access; after allowing, "Last night" appears in Settings › Health and on the Tonight card. *Verified 2026-09-10.*
+
+### Device checks for history sync
+
+- [ ] With the iCloud entitlement restored: a morning recorded on the phone appears on a
+      second device, and a clear on either empties both.
+- [ ] A fresh install with an existing iCloud copy adopts the history at first launch
+      rather than starting empty.
+
+### Device checks for nightstand and the sunrise light
+
+- [x] `NightstandTests` pass on the phone. *Verified 2026-09-10: nightstand presents from
+      Home, shows the clock and the alarm line, a tap brings the faded controls back and
+      Done returns to Home; the Settings row is reachable. Deliberately read-only about
+      the glow length — this runs on the real phone and must not leave the screen set to
+      light up on a morning the user did not ask for.*
+- [ ] Brightness actually ramps on hardware and the user's own level comes back on Done,
+      on backgrounding, and after a force-quit from inside nightstand.
+- [ ] Landscape: nightstand rotates, every other screen stays portrait, and returning to
+      Home from a landscape nightstand does not leave Home sideways.
+- [ ] Auto-entry: plugging in during the night window presents it once, and plugging in
+      during the day does nothing.
+- [ ] A real morning with the glow on: the ramp is visible from the pillow at 10 min out,
+      and the alarm still rings on time with the screen at full.
 
 ### Device checks for the Watch (paired watch needed)
 
@@ -100,7 +123,63 @@ at the bottom. Nothing here is committed yet — the working tree carries all of
 - [x] HealthKit: read sleep analysis and show actual sleep against the goal; attach slept time to each wake record. *`HealthService` (read-only), Health section in Settings, last-night line on the Tonight card, average sleep in history. Signs on the personal team.*
 - [x] Apple Watch app: next alarm, skip, alarm toggle, next-7-days list, and four accessory complication families. Watch computes its own plan with RiseCore from settings mirrored over WatchConnectivity. *Verified running on 49 mm and 40 mm simulators. Needs `xcodebuild -downloadPlatform watchOS`, already installed here.*
 
+### Completeness audit 2026-09-10
+
+What a feature-complete, professional release still lacks. Ordered by impact.
+
+- [x] **Sunrise light simulation (screen).** `SunriseGlow` in RiseCore: a ramp from
+      near-black to a chosen ceiling over the last N minutes before the alarm, held for
+      30 min after it. Brightness is squared against progress because the backlight is
+      far from linear. Nine tests in `SunriseGlowTests`. Rendered by `NightstandView`,
+      which owns the backlight for the session. Length, ceiling and a one-minute preview
+      are in Settings › Nightstand.
+- [ ] **Sunrise light simulation (real bulbs).** HomeKit/Matter ramp so lamps brighten
+      with the plan. The screen version is the same arithmetic, so this is mostly the
+      HomeKit accessory plumbing plus a background trigger that does not depend on the
+      app being open.
+- [x] **Nightstand mode.** Full-screen dim clock, next alarm and sunrise, screen kept
+      awake, controls fading after 6 s. Offers itself once per connection when the phone
+      starts charging inside the night window (next alarm minus sleep goal minus an hour,
+      through the end of the glow); always available from the moon button on Home.
+      Landscape is now allowed in the Info.plist and narrowed back to portrait for every
+      other screen by `OrientationLock` + a one-method `AppDelegate`.
+- [ ] **Wake-up insights.** `WakeHistory` plus HealthKit sleep is already stored but only
+      listed. A weekly card ("your wake drifted 22 min later this month", "6h48 of a 7h30
+      goal") and a sunrise-vs-actual-wake trend would make the recorded data worth opening.
+- [x] **Backup of history.** `CloudHistory` mirrors `WakeHistory` on its own iCloud KVS
+      key. Merged per morning rather than last-write-wins — two devices usually hold
+      different halves of the same one — by `WakeHistory.merged(with:)` in RiseCore, with
+      six tests. A clear propagates as a clear (`history.v1.cleared`), or the other
+      device would hand the records straight back. Needs the same
+      `ubiquity-kvstore-identifier` entitlement as settings, so it does nothing on the
+      personal team. *Fixed alongside: history reached the watch only when a **setting**
+      changed, so a morning could sit unmirrored for days. `AlarmScheduler` now has
+      `onHistoryChanged`/`onHistoryCleared` and the mirror runs on every history write.*
+- [ ] **Export of history.** CSV/JSON share sheet, for taking the record somewhere the
+      app is not.
+- [ ] **Accessibility pass.** Only ~12 `accessibilityLabel`s exist, all on Home and
+      Components; onboarding, Settings and the sheets are unaudited, and no view honours
+      `reduceMotion` (sun arc, day paging). An alarm app is used with eyes shut.
+- [ ] **What's New sheet** on a version bump. Onboarding exists; nothing greets an update.
+- [ ] **Review prompt.** No StoreKit at all. `requestReview` after ~5 successfully stopped
+      alarms, never during onboarding.
+- [ ] **Diagnostics for support.** A "Copy diagnostics" row (scheduled count, permission
+      states, background-refresh state, last sync) so a bug report is actionable without
+      adding analytics.
+- [ ] **Monetization decision.** No StoreKit. If this is paid or freemium, decide before
+      submission: tip jar vs. Pro, where the Watch app, light control and insights are the
+      natural paywall line.
+- [ ] **App Store surface.** Support URL, privacy policy page, screenshots, App Preview.
+- [ ] **CI.** No `.github/`. A workflow running `swift test` on RiseCore and
+      `xcodebuild test` on the app would catch by machine what has been caught by hand.
+
 ## Notes
+
+- A `CODE_SIGNING_ALLOWED=NO` build for `generic/platform=iOS` writes an **unsigned**
+  `RiseAndShine.app` into `Build/Products/Debug-iphoneos`, and a later device test run
+  reuses it rather than rebuilding: every test then fails with "No code signature found"
+  or "Lost pending connection to the test runner". Delete that directory before running
+  on the phone, or do the syntax-only build somewhere else.
 
 - **Verified on device 2026-09-10:** a real scheduled alarm sounded at the planned time
   while Sleep Focus was active. AlarmKit's Focus bypass works with no critical-alert
