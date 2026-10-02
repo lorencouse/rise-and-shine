@@ -166,9 +166,10 @@ What a feature-complete, professional release still lacks. Ordered by impact.
       onboarding now read as sentences: decorative icons are hidden, selected rows carry
       the selected trait, row buttons name their day, card titles are headings. Reduce
       Motion goes through `.motion(_:value:)` and `Motion.respectingReduceMotion`, which
-      swap springs for a short fade; day paging crossfades instead of sliding, the sun arc
-      fades between days, and onboarding pages change without the slide. Still worth a
-      VoiceOver walk-through on the phone.
+      swap springs for a short ease-in-out without bounce, so size and position changes
+      still animate briefly; inserted or removed views fade, so day paging crossfades
+      instead of sliding, the sun arc fades between days, and onboarding pages change
+      without the slide. Still worth a VoiceOver walk-through on the phone.
 - [ ] **What's New sheet** on a version bump. Onboarding exists; nothing greets an update.
 - [ ] **Review prompt.** No StoreKit at all. `requestReview` after ~5 successfully stopped
       alarms, never during onboarding.
