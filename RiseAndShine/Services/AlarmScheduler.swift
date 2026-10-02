@@ -30,6 +30,10 @@ final class AlarmScheduler {
         }
     }
 
+    /// Ids handed to `manager.schedule` but not yet recorded in `registry`/`testAlarmID`.
+    /// The orphan sweep treats them as tracked so an overlapping sync can't cancel them.
+    @ObservationIgnored private var inFlightIDs: Set<UUID> = []
+
     private let manager = AlarmManager.shared
     private let store = SharedStore.shared
 
@@ -219,13 +223,15 @@ final class AlarmScheduler {
     }
 
     /// Reconciles system alarms with `plan`. Safe to call often; it only touches alarms
-    /// whose time changed.
+    /// whose time changed, plus orphans no registry entry tracks.
     func sync(plan: [PlannedDay], settings: AlarmSettings) async {
         refreshAuthorization()
         guard authorization == .authorized else { return }
 
         var registry = registry
         var errors: [String] = []
+        var scheduled: Set<UUID> = []
+        defer { inFlightIDs.subtract(scheduled) }
 
         // What the system currently has, keyed by id.
         let existing: [UUID: Alarm]
@@ -248,6 +254,11 @@ final class AlarmScheduler {
             registry.removeValue(forKey: key)
         }
 
+        // 1b. Cancel orphans: alarms the system holds that no registry entry points at. They
+        // appear when the registry is lost (an App Group change, a failed save) and would
+        // otherwise ring alongside the fresh set with no way to cancel them from the app.
+        errors += cancelOrphans(in: existing.keys, keeping: registry)
+
         // 2. Schedule or reschedule the wanted ones.
         for day in wanted {
             // No sunrise is not a reason to skip: in polar night the clamp still yields a
@@ -266,6 +277,8 @@ final class AlarmScheduler {
             }
 
             let id = UUID()
+            scheduled.insert(id)
+            inFlightIDs.insert(id)
             do {
                 let configuration = makeConfiguration(fireDate: fireDate, day: day, settings: settings)
                 _ = try await manager.schedule(id: id, configuration: configuration)
@@ -286,6 +299,20 @@ final class AlarmScheduler {
         registry = [:]
         scheduledCount = 0
         cancelTest()
+        if let alarms = try? manager.alarms {
+            _ = cancelOrphans(in: alarms.map(\.id), keeping: [:])
+        }
+    }
+
+    /// Cancels every alarm in `ids` that is not in `registry`, the test alarm, or `inFlightIDs`.
+    /// `AlarmManager` only reports this app's alarms, so anything untracked is ours and lost.
+    private func cancelOrphans(in ids: some Sequence<UUID>, keeping registry: [String: UUID]) -> [String] {
+        let tracked = Set(registry.values).union([testAlarmID].compactMap { $0 }).union(inFlightIDs)
+        var errors: [String] = []
+        for id in ids where !tracked.contains(id) {
+            do { try manager.cancel(id: id) } catch { errors.append("cancel orphan \(id): \(error.localizedDescription)") }
+        }
+        return errors
     }
 
     func cancelTest() {
@@ -307,6 +334,8 @@ final class AlarmScheduler {
         let configuration = makeConfiguration(fireDate: fire, metadata: metadata, title: "Test alarm", settings: settings)
         cancelTest()
         let id = UUID()
+        inFlightIDs.insert(id)
+        defer { inFlightIDs.remove(id) }
         _ = try await manager.schedule(id: id, configuration: configuration)
         testAlarmID = id
     }

@@ -34,7 +34,7 @@ Then in Xcode select your team under *Signing & Capabilities* for both the app a
 ## How alarms work
 
 1. `AppModel.recompute()` builds a `PlannedDay` for each of the next 14 days: sun events, alarm time (with the wake-window clamp), bedtime and wind-down.
-2. `AlarmScheduler.sync` reconciles those with the system: one fixed-date AlarmKit alarm per active morning, cancelling days that were skipped or fell out of the window. The day → alarm-id map lives in the App Group.
+2. `AlarmScheduler.sync` reconciles those with the system: one fixed-date AlarmKit alarm per active morning, cancelling days that were skipped or fell out of the window, and any alarm the map no longer tracks (e.g. after the App Group changes). The day → alarm-id map lives in the App Group.
 3. Alarms belong to iOS once scheduled, so they survive the app being killed or the phone restarting. The app extends the horizon on every launch and via Background App Refresh.
 4. Wind-down and bedtime reminders are ordinary time-sensitive notifications (they respect a Sleep Focus on purpose).
 
