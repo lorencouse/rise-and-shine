@@ -68,6 +68,7 @@ private struct PreviewStrip: View {
     @Environment(AppModel.self) private var model
     var settings: AlarmSettings
     @ScaledMetric(relativeTo: .title) private var bigSize: CGFloat = 32
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var tomorrow: Date {
         settings.calendar.date(byAdding: .day, value: 1, to: .now) ?? .now
@@ -87,7 +88,7 @@ private struct PreviewStrip: View {
                         .font(.bigTime(bigSize))
                         .foregroundStyle(Theme.sun)
                         .monospacedDigit()
-                        .contentTransition(.numericText())
+                        .contentTransition(reduceMotion ? .opacity : .numericText())
                 }
                 Spacer(minLength: 0)
                 if let solar = plan?.solar, let anchorTime = solar.time(for: settings.anchor) {
@@ -106,7 +107,19 @@ private struct PreviewStrip: View {
                     .font(.caption).foregroundStyle(Theme.sun)
             }
         }
-        .animation(Motion.card, value: alarmTime)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityText(alarmTime: alarmTime, plan: plan))
+        .motion(Motion.card, value: alarmTime)
+    }
+
+    /// One sentence instead of four fragments, two of them shouted eyebrows.
+    private func accessibilityText(alarmTime: Date?, plan: PlannedDay?) -> String {
+        var parts = ["Tomorrow's alarm \(alarmTime.map { Formatters.time($0, in: settings.timeZone) } ?? "not set")"]
+        if let anchorTime = plan?.solar.time(for: settings.anchor) {
+            parts.append("\(settings.anchor.title) \(Formatters.time(anchorTime, in: settings.timeZone))")
+        }
+        if plan?.wasClamped == true { parts.append("held inside your wake window") }
+        return parts.joined(separator: ", ")
     }
 }
 
@@ -149,7 +162,7 @@ struct WakeTimeSheet: View {
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .animation(Motion.card, value: model.settings.clampEnabled)
+            .motion(Motion.card, value: model.settings.clampEnabled)
 
             Card(title: "Snooze", systemImage: "zzz") {
                 Stepper("\(model.settings.snoozeMinutes) minutes", value: $model.settings.snoozeMinutes, in: 1...30)
@@ -224,8 +237,8 @@ private struct WeekendCard: View {
                     .font(.caption).foregroundStyle(Theme.faint)
             }
         }
-        .animation(Motion.card, value: model.settings.weekendProfile != nil)
-        .animation(Motion.card, value: model.settings.weekendProfile?.clampEnabled)
+        .motion(Motion.card, value: model.settings.weekendProfile != nil)
+        .motion(Motion.card, value: model.settings.weekendProfile?.clampEnabled)
     }
 }
 
@@ -267,6 +280,7 @@ struct DaysSheet: View {
                                 .foregroundStyle(Theme.mist)
                             Button("Clear") { model.clearOverride(day.date) }
                                 .font(.footnote.weight(.semibold))
+                                .accessibilityLabel("Clear custom time for \(Formatters.dayLabel(day.date.startOfDay(in: model.settings.calendar), in: model.timeZone))")
                         }
                         .padding(.vertical, 2)
                     }
@@ -285,6 +299,7 @@ struct DaysSheet: View {
                             Spacer()
                             Button("Restore") { model.toggleSkip(day) }
                                 .font(.footnote.weight(.semibold))
+                                .accessibilityLabel("Restore \(Formatters.dayLabel(day.date.startOfDay(in: model.settings.calendar), in: model.timeZone))")
                         }
                         .padding(.vertical, 2)
                     }
@@ -298,7 +313,7 @@ struct DaysSheet: View {
         let isOn = model.settings.activeWeekdays == days
         return Button {
             Haptics.selection()
-            withAnimation(Motion.quick) { model.settings.activeWeekdays = days }
+            withAnimation(Motion.respectingReduceMotion(Motion.quick)) { model.settings.activeWeekdays = days }
         } label: {
             Text(title)
                 .font(.system(.caption, design: .rounded).weight(.semibold))
@@ -307,6 +322,7 @@ struct DaysSheet: View {
                 .foregroundStyle(isOn ? Theme.night : Theme.mist)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }
 
@@ -354,7 +370,7 @@ private struct PauseCard: View {
                     .font(.caption).foregroundStyle(Theme.faint)
             }
         }
-        .animation(Motion.card, value: model.settings.pausedUntil != nil)
+        .motion(Motion.card, value: model.settings.pausedUntil != nil)
     }
 }
 
@@ -444,7 +460,7 @@ struct SleepSheet: View {
                     .font(.caption).foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .animation(Motion.card, value: model.settings.remindersEnabled)
+            .motion(Motion.card, value: model.settings.remindersEnabled)
         }
     }
 }

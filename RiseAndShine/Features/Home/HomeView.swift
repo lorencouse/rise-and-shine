@@ -37,7 +37,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, Metrics.screenPadding)
                     .padding(.bottom, 40)
-                    .animation(Motion.card, value: model.settings.isEnabled)
+                    .motion(Motion.card, value: model.settings.isEnabled)
                 }
                 .refreshable { await model.refresh() }
                 .accessibilityIdentifier("home.scroll")
@@ -217,12 +217,12 @@ extension DayFocus {
         // Landing back on the resting day returns to the resting state, so the countdown
         // and "NEXT ALARM" come back rather than a frozen copy of the same day.
         let resting = model.nextAlarm?.date ?? today
-        withAnimation(Motion.card) { day = target == resting ? nil : target }
+        withAnimation(Motion.respectingReduceMotion(Motion.card)) { day = target == resting ? nil : target }
     }
 
     mutating func reset() {
         direction = .backward
-        withAnimation(Motion.card) { day = nil }
+        withAnimation(Motion.respectingReduceMotion(Motion.card)) { day = nil }
     }
 }
 
@@ -231,6 +231,7 @@ struct NextAlarmHero: View {
     @Binding var sheet: HomeSheet?
     @Binding var focus: DayFocus
     @ScaledMetric(relativeTo: .largeTitle) private var displaySize: CGFloat = 68
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var focusedKey: DateKey { focus.resolved(model) }
     private var focusedDay: PlannedDay? { model.plannedDay(for: focusedKey) }
@@ -240,8 +241,11 @@ struct NextAlarmHero: View {
         return Formatters.dayLabel(focusedKey.startOfDay(in: model.settings.calendar), in: model.timeZone).uppercased()
     }
 
+    /// Paging slides the old day out and the new one in from the side it came from. With
+    /// Reduce Motion the days crossfade in place instead.
     private var slide: AnyTransition {
-        .asymmetric(
+        if reduceMotion { return .opacity }
+        return .asymmetric(
             insertion: .move(edge: focus.direction == .forward ? .trailing : .leading).combined(with: .opacity),
             removal: .move(edge: focus.direction == .forward ? .leading : .trailing).combined(with: .opacity)
         )
@@ -292,7 +296,7 @@ struct NextAlarmHero: View {
                 }
             }
             .clipped()
-            .animation(Motion.card, value: focus)
+            .motion(Motion.card, value: focus)
 
             // Direct manipulation: the settings that define the alarm sit under it. Side by
             // side when they fit, stacked at accessibility text sizes — a truncated
@@ -369,7 +373,7 @@ struct NextAlarmHero: View {
                     .font(.displayTime(displaySize))
                     .foregroundStyle(.white)
                     .monospacedDigit()
-                    .contentTransition(.numericText())
+                    .contentTransition(reduceMotion ? .opacity : .numericText())
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 HStack(spacing: 6) {
@@ -641,7 +645,7 @@ struct TodayLightCard: View {
                     .foregroundStyle(Theme.sunrise)
             }
             .modifier(DayPagingGesture(focus: $focus))
-            .animation(Motion.card, value: key)
+            .motion(Motion.card, value: key)
         }
     }
 }
@@ -774,7 +778,7 @@ struct UpcomingRow: View {
         .padding(.vertical, 10)
         .contentShape(.rect)
         .opacity(day.isActive && !hasRung ? 1 : 0.55)
-        .animation(Motion.quick, value: day.status)
+        .motion(Motion.quick, value: day.status)
         .accessibilityElement(children: .combine)
         .accessibilityHint(hasRung || day.status == .disabled ? "" : "Touch and hold for a custom time")
         .contextMenu {
@@ -805,7 +809,7 @@ struct UpcomingRow: View {
     private var skipButton: some View {
         Button {
             Haptics.impact(isSkipped ? .light : .medium)
-            withAnimation(Motion.quick) { model.toggleSkip(day) }
+            withAnimation(Motion.respectingReduceMotion(Motion.quick)) { model.toggleSkip(day) }
         } label: {
             Image(systemName: isSkipped ? "arrow.uturn.backward" : "forward.end")
                 .font(.footnote.weight(.semibold))

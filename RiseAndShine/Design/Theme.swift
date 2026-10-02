@@ -53,6 +53,33 @@ nonisolated enum Metrics {
 nonisolated enum Motion {
     static let card = Animation.spring(response: 0.35, dampingFraction: 0.85)
     static let quick = Animation.easeInOut(duration: 0.18)
+    /// What Reduce Motion gets instead of either: a short fade, no spring and no travel.
+    static let reduced = Animation.easeInOut(duration: 0.15)
+
+    /// For `withAnimation` calls made outside a view, where the environment's
+    /// `accessibilityReduceMotion` can't be read.
+    @MainActor
+    static func respectingReduceMotion(_ animation: Animation) -> Animation {
+        UIAccessibility.isReduceMotionEnabled ? reduced : animation
+    }
+}
+
+extension View {
+    /// `.animation(_:value:)` that turns into `Motion.reduced` when Reduce Motion is on, so
+    /// cards that grow or slide fade instead.
+    func motion<V: Equatable>(_ animation: Animation, value: V) -> some View {
+        modifier(ReduceMotionAnimation(animation: animation, value: value))
+    }
+}
+
+private struct ReduceMotionAnimation<V: Equatable>: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let animation: Animation
+    let value: V
+
+    func body(content: Content) -> some View {
+        content.animation(reduceMotion ? Motion.reduced : animation, value: value)
+    }
 }
 
 /// Small wrapper so feedback is consistent and easy to remove.

@@ -20,14 +20,18 @@ struct SoundPickerView: View {
                             Image(systemName: playing == file ? "speaker.wave.3.fill" : "speaker.wave.2")
                                 .foregroundStyle(playing == file ? Theme.sun : .secondary)
                                 .frame(width: 24)
+                                .accessibilityHidden(true)
                             Text((file as NSString).deletingPathExtension)
                                 .foregroundStyle(.primary)
                             Spacer()
                             if model.settings.soundFile == file {
                                 Image(systemName: "checkmark").foregroundStyle(Theme.sunrise)
+                                    .accessibilityHidden(true)
                             }
                         }
                     }
+                    .accessibilityAddTraits(model.settings.soundFile == file ? .isSelected : [])
+                    .accessibilityHint("Plays a preview")
                 }
             } footer: {
                 Text("Tap to preview. The alarm plays through Silent mode at the alarm volume set in Settings › Sounds & Haptics.")

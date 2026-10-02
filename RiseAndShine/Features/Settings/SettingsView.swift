@@ -133,6 +133,7 @@ struct SettingsView: View {
                             Spacer()
                             if testState == .scheduled {
                                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                                    .accessibilityHidden(true)
                             }
                         }
                     }
@@ -140,6 +141,7 @@ struct SettingsView: View {
                     .disabled(testState == .scheduling)
                     if case .failed(let message) = testState {
                         Text(message).font(.footnote).foregroundStyle(Theme.horizon)
+                            .accessibilityLabel("Test alarm failed: \(message)")
                     }
                     Stepper("Schedule \(model.settings.horizonDays) days ahead", value: $model.settings.horizonDays, in: 3...30)
                 } header: {
@@ -213,6 +215,9 @@ struct SettingsView: View {
             case .unknown: Button("Allow", action: request).font(.footnote)
             }
         }
+        // One element ("Alarms, Allow, button"), not a bare "Allow" with the permission's
+        // name a swipe away.
+        .accessibilityElement(children: .combine)
     }
 
     private func displayName(_ file: String) -> String {
@@ -265,6 +270,9 @@ struct WakeHistoryView: View {
                             }
                             .font(.caption).foregroundStyle(.secondary)
                         }
+                        // The icons carry the meaning ("bell 6:30, stop 6:34"), so spell it out.
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(morningDescription(r))
                     }
                 }
                 Section {
@@ -279,6 +287,15 @@ struct WakeHistoryView: View {
         .confirmationDialog("Clear wake history?", isPresented: $confirmClear, titleVisibility: .visible) {
             Button("Clear", role: .destructive) { model.alarms.clearHistory() }
         }
+    }
+
+    private func morningDescription(_ r: WakeRecord) -> String {
+        var parts = [Formatters.dayLabel(r.date.startOfDay(in: model.settings.calendar), in: model.timeZone)]
+        if let rang = r.rang { parts.append("rang \(Formatters.time(rang, in: model.timeZone))") }
+        if let stopped = r.stopped { parts.append("stopped \(Formatters.time(stopped, in: model.timeZone))") }
+        if r.snoozes > 0 { parts.append("snoozed \(r.snoozes) \(r.snoozes == 1 ? "time" : "times")") }
+        if let slept = r.sleepMinutes { parts.append("slept \(Formatters.duration(minutes: slept))") }
+        return parts.joined(separator: ", ")
     }
 }
 

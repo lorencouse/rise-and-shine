@@ -7,8 +7,12 @@ struct OnboardingFlow: View {
     @Environment(AppModel.self) private var model
     @State private var step = 0
     @State private var draft = AlarmSettings()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let stepCount = 5
+
+    /// Pages slide sideways; with Reduce Motion the step just changes.
+    private var pageAnimation: Animation? { reduceMotion ? nil : .easeInOut }
 
     var body: some View {
         ZStack {
@@ -20,7 +24,7 @@ struct OnboardingFlow: View {
                     ProgressDots(count: stepCount, index: step)
                     HStack {
                         Button {
-                            withAnimation { step = max(step - 1, 0) }
+                            withAnimation(pageAnimation) { step = max(step - 1, 0) }
                         } label: {
                             Image(systemName: "chevron.left")
                                 .font(.body.weight(.semibold))
@@ -43,14 +47,14 @@ struct OnboardingFlow: View {
                     PermissionsPage(finish: finish).tag(4)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut, value: step)
+                .animation(pageAnimation, value: step)
             }
         }
         .onAppear { draft = model.settings }
     }
 
     private func advance() {
-        withAnimation { step = min(step + 1, stepCount - 1) }
+        withAnimation(pageAnimation) { step = min(step + 1, stepCount - 1) }
     }
 
     private func finish() {
@@ -70,6 +74,8 @@ private struct ProgressDots: View {
                     .frame(width: i == index ? 22 : 6, height: 6)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Step \(index + 1) of \(count)")
     }
 }
 
@@ -90,10 +96,12 @@ private struct PageScaffold<Content: View>: View {
                         .font(.system(size: 48, weight: .thin))
                         .foregroundStyle(Theme.sunGradient)
                         .symbolRenderingMode(.hierarchical)
+                        .accessibilityHidden(true)
                     VStack(spacing: 8) {
                         Text(title)
                             .font(.system(.title, design: .rounded).weight(.semibold))
                             .multilineTextAlignment(.center)
+                            .accessibilityAddTraits(.isHeader)
                         Text(subtitle)
                             .font(.subheadline).foregroundStyle(Theme.mist)
                             .multilineTextAlignment(.center)
@@ -135,11 +143,13 @@ private struct WelcomePage: View {
     private func feature(_ icon: String, _ title: String, _ text: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon).foregroundStyle(Theme.sun).frame(width: 26)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.cardTitle)
                 Text(text).font(.footnote).foregroundStyle(Theme.mist)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -161,6 +171,7 @@ private struct LocationPage: View {
                     Card {
                         HStack {
                             Image(systemName: loc.followsDevice ? "location.fill" : "mappin")
+                                .accessibilityHidden(true)
                             VStack(alignment: .leading) {
                                 Text(loc.name).font(.cardTitle)
                                 if let preview = model.preview(draft), let s = preview.solar.sunrise {
@@ -169,7 +180,10 @@ private struct LocationPage: View {
                             }
                             Spacer()
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.sun)
+                                .accessibilityHidden(true)
                         }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Chosen: \(accessibilityDescription(loc))")
                     }
                 }
                 SecondaryButton(title: model.location.isLocating ? "Locating…" : "Use my current location", systemImage: "location") {
@@ -203,15 +217,22 @@ private struct LocationPage: View {
                             Text(place.name)
                             Spacer()
                             Image(systemName: "plus.circle")
+                                .accessibilityHidden(true)
                         }
                         .padding(.horizontal, 14).padding(.vertical, 10)
                         .background(Theme.card, in: .rect(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityHint("Chooses this city")
                 }
             }
             PrimaryButton(title: "Next", isEnabled: draft.location != nil, action: next)
         }
+    }
+
+    private func accessibilityDescription(_ loc: SavedLocation) -> String {
+        guard let preview = model.preview(draft), let s = preview.solar.sunrise else { return loc.name }
+        return "\(loc.name), sunrise today \(Formatters.time(s, in: draft.timeZone))"
     }
 }
 
@@ -239,8 +260,10 @@ private struct WakeTimePage: View {
                     let inst = AlarmPlanner.alarmInstant(settings: draft, day: p.solar)
                     HStack {
                         StatView(title: "\(draft.anchor.title) tomorrow", value: p.solar.time(for: draft.anchor).map { Formatters.time($0, in: draft.timeZone) } ?? "—", systemImage: "sunrise")
+                            .accessibilityElement(children: .combine)
                         Spacer()
                         StatView(title: "Alarm", value: inst.time.map { Formatters.time($0, in: draft.timeZone) } ?? "—", systemImage: "alarm", emphasis: true)
+                            .accessibilityElement(children: .combine)
                     }
                     .padding(.horizontal, 8)
                     if inst.clamped {
@@ -361,11 +384,13 @@ private struct PermissionsPage: View {
                     Image(systemName: granted ? "checkmark.circle.fill" : denied ? "xmark.circle.fill" : "circle")
                         .foregroundStyle(granted ? .green : denied ? Theme.horizon : Theme.faint)
                         .font(.title3)
+                        .accessibilityHidden(true)
                 }
             }
         }
         .buttonStyle(.plain)
         .disabled(granted || requesting)
+        .accessibilityValue(granted ? "Allowed" : denied ? "Not allowed" : "Not asked yet")
         .accessibilityHint(granted ? "Already allowed" : denied ? "Opens Settings to allow" : "Asks for permission")
     }
 }

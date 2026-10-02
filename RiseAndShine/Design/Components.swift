@@ -25,6 +25,8 @@ struct Card<Content: View, Accessory: View>: View {
                         }
                         .foregroundStyle(Theme.faint)
                         .labelStyle(.titleAndIcon)
+                        // Read as a heading so the VoiceOver rotor can jump card to card.
+                        .accessibilityAddTraits(.isHeader)
                     }
                     Spacer(minLength: 8)
                     accessory
@@ -65,7 +67,7 @@ struct PrimaryButton: View {
             action()
         } label: {
             HStack(spacing: 8) {
-                if let systemImage { Image(systemName: systemImage) }
+                if let systemImage { Image(systemName: systemImage).accessibilityHidden(true) }
                 Text(title).fontWeight(.semibold)
             }
             .font(.system(.body, design: .rounded))
@@ -87,7 +89,7 @@ struct SecondaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                if let systemImage { Image(systemName: systemImage) }
+                if let systemImage { Image(systemName: systemImage).accessibilityHidden(true) }
                 Text(title)
             }
             .font(.system(.body, design: .rounded))
@@ -117,12 +119,14 @@ struct ControlChip<Label: View>: View {
                 Image(systemName: systemImage)
                     .font(.footnote)
                     .foregroundStyle(tint)
+                    .accessibilityHidden(true)
                 label
                     .font(.system(.footnote, design: .rounded).weight(.medium))
                     .foregroundStyle(.white)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Theme.faint)
+                    .accessibilityHidden(true)
             }
             .lineLimit(1)
             .padding(.horizontal, 12)
@@ -282,7 +286,7 @@ struct WeekdayPicker: View {
                 let on = selection.contains(day)
                 Button {
                     Haptics.selection()
-                    withAnimation(Motion.quick) {
+                    withAnimation(Motion.respectingReduceMotion(Motion.quick)) {
                         if on { selection.remove(day) } else { selection.insert(day) }
                     }
                 } label: {
@@ -401,6 +405,7 @@ struct PermissionBanner: View {
                 Image(systemName: isBlocking ? "exclamationmark.triangle.fill" : "info.circle.fill")
                     .foregroundStyle(tint)
                     .font(.body)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
                         .font(.cardTitle)
@@ -419,6 +424,7 @@ struct PermissionBanner: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Theme.faint)
                     .padding(.top, 3)
+                    .accessibilityHidden(true)
             }
             .multilineTextAlignment(.leading)
             .padding(14)

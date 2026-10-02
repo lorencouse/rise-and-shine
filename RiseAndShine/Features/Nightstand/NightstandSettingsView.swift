@@ -65,12 +65,14 @@ struct NightstandSettingsView: View {
                     .foregroundStyle(.secondary)
             }
             .font(.footnote)
+            // The slider below already speaks its title and percentage.
+            .accessibilityHidden(true)
             Slider(value: value, in: 0.05...1) {
                 Text(title)
             } minimumValueLabel: {
-                Image(systemName: "sun.min").font(.caption2)
+                Image(systemName: "sun.min").font(.caption2).accessibilityHidden(true)
             } maximumValueLabel: {
-                Image(systemName: "sun.max").font(.caption2)
+                Image(systemName: "sun.max").font(.caption2).accessibilityHidden(true)
             }
         }
     }
