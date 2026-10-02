@@ -53,7 +53,9 @@ nonisolated enum Metrics {
 nonisolated enum Motion {
     static let card = Animation.spring(response: 0.35, dampingFraction: 0.85)
     static let quick = Animation.easeInOut(duration: 0.18)
-    /// What Reduce Motion gets instead of either: a short fade, no spring and no travel.
+    /// What Reduce Motion gets instead of either: a short ease-in-out with no spring, so size
+    /// and position changes still animate briefly but without bounce; inserted or removed
+    /// views fade.
     static let reduced = Animation.easeInOut(duration: 0.15)
 
     /// For `withAnimation` calls made outside a view, where the environment's
@@ -66,7 +68,7 @@ nonisolated enum Motion {
 
 extension View {
     /// `.animation(_:value:)` that turns into `Motion.reduced` when Reduce Motion is on, so
-    /// cards that grow or slide fade instead.
+    /// cards that grow or slide do it briefly without the spring's bounce.
     func motion<V: Equatable>(_ animation: Animation, value: V) -> some View {
         modifier(ReduceMotionAnimation(animation: animation, value: value))
     }
