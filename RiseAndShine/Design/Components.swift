@@ -159,7 +159,7 @@ struct StatView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
-                if let systemImage { Image(systemName: systemImage).font(.caption) }
+                if let systemImage { Image(systemName: systemImage).font(.caption).accessibilityHidden(true) }
                 Text(title)
             }
             .font(.label)
